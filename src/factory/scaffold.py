@@ -17,6 +17,23 @@ from factory.util import today
 
 PLACEHOLDER = "TODO(factory)"
 
+# Instalación para pyproject.toml: venv propio del proyecto; check.sh se ejecuta dentro de él.
+PYTHON_INSTALL = """\
+if [ ! -d .venv ]; then
+  if command -v uv >/dev/null 2>&1; then
+    uv venv .venv
+  else
+    python3 -m venv .venv
+  fi
+fi
+export VIRTUAL_ENV="$PWD/.venv"
+export PATH="$VIRTUAL_ENV/bin:$PATH"
+if command -v uv >/dev/null 2>&1; then
+  uv pip install --python "$VIRTUAL_ENV/bin/python" -e .
+else
+  "$VIRTUAL_ENV/bin/python" -m pip install -e .
+fi"""
+
 # (plantilla empaquetada, ruta en el destino, ejecutable)
 FILES: tuple[tuple[str, str, bool], ...] = (
     ("AGENTS.md", "{entry}", False),
@@ -71,7 +88,7 @@ def detect(target: Path) -> Detection:
         verify = ["python3 -m pytest -q"]
         if "ruff" in text:
             verify.append("python3 -m ruff check .")
-        return Detection(verify, "python3 -m pip install -e .", "pyproject.toml")
+        return Detection(verify, PYTHON_INSTALL, "pyproject.toml")
     return Detection()
 
 
