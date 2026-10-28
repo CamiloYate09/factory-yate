@@ -180,7 +180,7 @@
 ## 9. Integración y validación end-to-end
 
 - [x] 9.1 Validación completa. Verificar que `./scripts/check.sh` termina en 0, que `factory doctor` sobre este repo pasa todas las comprobaciones críticas, que `openspec validate add-harness-loop-engine --strict` es válido y que todas las features de la fase 2 están en `passing` con evidencia.
-- [ ] 9.2 **Con aprobación del usuario para el gasto** (0,50 USD o menos): ejecutar la prueba `live` opt-in (`pytest -m live`). Corre un objetivo trivial contra `claude -p` en un repo temporal y resuelve dos preguntas:
+- 9.2 **DESCARTADA por decisión del usuario (2026-10-28).** El dogfooding real (9.3) ya confirmó, con `claude -p`, que la salida estructurada de ambos roles se parsea y que el JSON incluye `permission_denials`. También se comprobó que no hay ningún `CLAUDE.md` por encima del worktree hermano. Queda sin registrar en qué clave exacta llega la salida estructurada; el adaptador acepta las dos variantes. Texto original: **Con aprobación del usuario para el gasto** (0,50 USD o menos): ejecutar la prueba `live` opt-in (`pytest -m live`). Corre un objetivo trivial contra `claude -p` en un repo temporal y resuelve dos preguntas:
   - en qué campo devuelve el CLI la salida de `--json-schema` (pregunta abierta del diseño);
   - si el resultado JSON expone las herramientas denegadas, para registrarlas en `events.jsonl` cuando sea posible;
 
