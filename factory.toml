@@ -1,0 +1,47 @@
+# Configuración de factory. Todas las claves son opcionales; los valores por defecto están en
+# src/factory/config.py y se documentan en docs/harness/loops.md.
+
+[harness]
+entry_file = "AGENTS.md"
+feature_list = "feature_list.json"
+progress_file = "progress.md"
+start_command = "./init.sh"
+verify_command = "./scripts/check.sh"
+
+[loop]
+max_rounds = 8
+max_budget_usd = 5.0
+no_progress_rounds = 3
+consecutive_passes = 1
+round_timeout_min = 20
+agent_error_rounds = 2
+summary_max_chars = 4000
+main_branch = "main"
+# Vacío: ../factory-yate.factory-worktrees (fuera del árbol del repo).
+worktrees_dir = ""
+
+[tick]
+max_rounds = 3
+budget_per_tick_usd = 2.0
+daily_budget_usd = 10.0
+circuit_after = 3
+
+[alerts]
+inbox_pending_max = 3
+token_growth_ratio = 2.0
+pending_lines_max = 500
+
+[agent]
+command = "claude"
+
+# Roles: el maker implementa; el checker revisa en solo lectura y con otro modelo.
+# Nunca uses permission_mode = "bypassPermissions": se rechaza al cargar.
+[roles.maker]
+model = "sonnet"
+prompt = "prompts/maker.md"
+permission_mode = "acceptEdits"
+
+[roles.checker]
+model = "opus"
+prompt = "prompts/checker.md"
+permission_mode = "dontAsk"

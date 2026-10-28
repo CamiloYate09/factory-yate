@@ -1,0 +1,112 @@
+{
+ "duration_api_ms": 8590,
+ "stop_reason": "end_turn",
+ "session_id": "c9d14bcc-9945-40e5-869d-181bb35b7fe6",
+ "total_cost_usd": 0.0516442,
+ "usage": {
+  "input_tokens": 4,
+  "cache_creation_input_tokens": 10042,
+  "cache_read_input_tokens": 9182,
+  "output_tokens": 1055,
+  "output_tokens_details": {
+   "thinking_tokens": 52
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 10042,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "global",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 813,
+    "cache_read_input_tokens": 9182,
+    "cache_creation_input_tokens": 860,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 860
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "modelUsage": {
+  "claude-sonnet-5-5": {
+   "inputTokens": 4,
+   "outputTokens": 1055,
+   "cacheReadInputTokens": 9182,
+   "cacheCreationInputTokens": 10042,
+   "webSearchRequests": 0,
+   "costUSD": 0.0516442,
+   "contextWindow": 1000000,
+   "maxOutputTokens": 128000,
+   "thinkingTokens": 52,
+   "canonicalModel": "claude-sonnet-5-5",
+   "provider": "firstParty",
+   "costBasis": "list"
+  }
+ },
+ "permission_denials": [],
+ "terminal_reason": "completed",
+ "fast_mode_state": "off",
+ "fast_mode_disabled_reason": "sdk_opt_in_required",
+ "subagent_stats": {
+  "spawned": 0,
+  "requested": {
+   "background": 0,
+   "foreground": 0,
+   "unset": 0
+  },
+  "started_in_background": 0,
+  "max_depth": 0,
+  "spawned_by_subagents": 0,
+  "completed": 0,
+  "failed": 0,
+  "killed": {
+   "parent": 0,
+   "user": 0,
+   "system": 0
+  },
+  "refused": {
+   "depth_limit": 0,
+   "concurrency_limit": 0,
+   "budget": 0
+  },
+  "by_type": {}
+ },
+ "safety_stops": 0,
+ "is_error": false,
+ "num_turns": 2,
+ "subtype": "success",
+ "api_error_status": null,
+ "result": "",
+ "ttft_ms": 1621,
+ "type": "result",
+ "duration_ms": 8652,
+ "uuid": "7b3b778a-33a5-4359-80e8-f00ca1889236",
+ "ttft_stream_ms": 827,
+ "time_to_request_ms": 34,
+ "first_content_frame_ms": 827,
+ "queued_turn_count": 0,
+ "result_index": 0,
+ "structured_output": {
+  "verdict": "fail",
+  "summary": "WIP relajado",
+  "findings": [
+   {
+    "severity": "critical",
+    "location": "src/factory/features.py:132",
+    "description": "Rompe WIP=1",
+    "evidence": "len(active) > 2",
+    "suggestion": "Revertir a > 1"
+   }
+  ]
+ }
+}

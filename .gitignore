@@ -1,0 +1,15 @@
+# Entorno virtual y cachés de Python
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+
+# Estado operativo de los loops de factory (ver docs/harness/loops.md)
+.factory/
+
+# Configuración personal del IDE
+.idea/

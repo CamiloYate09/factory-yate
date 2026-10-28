@@ -1,0 +1,26 @@
+{
+  "_generated_by": "factory init — adaptado de walkinglabs/learn-harness-engineering (MIT)",
+  "project": "{{PROJECT}}",
+  "last_updated": "{{TODAY}}",
+  "rules": {
+    "single_active_feature": true,
+    "passing_requires_evidence": true,
+    "do_not_skip_verification": true
+  },
+  "features": [
+    {
+      "id": "ejemplo-001",
+      "priority": 1,
+      "area": "TODO(factory)",
+      "title": "TODO(factory): sustituye esta feature de ejemplo",
+      "user_visible_behavior": "TODO(factory): qué observa un usuario cuando funciona.",
+      "status": "not_started",
+      "verification": [
+        "{{VERIFY}}"
+      ],
+      "manual_checks": [],
+      "evidence": [],
+      "notes": "Cada feature necesita comportamiento + comandos de verificación + estado."
+    }
+  ]
+}

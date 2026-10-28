@@ -1,0 +1,41 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "factory-yate"
+dynamic = ["version"]
+description = "Harness y motor de loops (goal, maker-checker, tick) para agentes de codificación con Claude Code."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["pyyaml>=6.0"]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.scripts]
+factory = "factory.cli:main"
+
+[tool.hatch.version]
+path = "src/factory/__init__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/factory"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-exclude = [".factory"]
+
+[tool.ruff.format]
+# Solo código Python: los bloques de código dentro de Markdown no forman parte de la verificación.
+exclude = ["*.md"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+norecursedirs = [".factory", ".venv", ".git"]
+markers = ["live: llama a `claude -p` real; opt-in y con coste (pytest -m live)"]
+addopts = "-m 'not live'"

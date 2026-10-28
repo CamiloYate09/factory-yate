@@ -1,0 +1,24 @@
+# Configuración de factory (generada por `factory init`). Todas las claves son opcionales.
+# Adaptado de walkinglabs/learn-harness-engineering (MIT).
+
+[harness]
+entry_file = "{{ENTRY}}"
+feature_list = "feature_list.json"
+progress_file = "progress.md"
+start_command = "./init.sh"
+verify_command = "./scripts/check.sh"
+
+[loop]
+max_rounds = 8
+max_budget_usd = 5.0
+main_branch = "main"
+
+[roles.maker]
+model = "sonnet"
+prompt = "prompts/maker.md"
+permission_mode = "acceptEdits"
+
+[roles.checker]
+model = "opus"
+prompt = "prompts/checker.md"
+permission_mode = "dontAsk"
