@@ -26,11 +26,14 @@ if [ ! -d .venv ]; then
     python3 -m venv .venv
   fi
 fi
+[ -e .venv/.gitignore ] || printf '*\\n' > .venv/.gitignore
 export VIRTUAL_ENV="$PWD/.venv"
 export PATH="$VIRTUAL_ENV/bin:$PATH"
 if command -v uv >/dev/null 2>&1; then
   uv pip install --python "$VIRTUAL_ENV/bin/python" -e .
 else
+  "$VIRTUAL_ENV/bin/python" -m pip --version >/dev/null 2>&1 \\
+    || "$VIRTUAL_ENV/bin/python" -m ensurepip --upgrade
   "$VIRTUAL_ENV/bin/python" -m pip install -e .
 fi"""
 

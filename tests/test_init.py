@@ -101,6 +101,9 @@ def test_init_sh_pyproject_usa_venv(tmp_path):
     assert ".venv" in text and "VIRTUAL_ENV" in text
     assert "python3 -m pip install -e ." not in text
     assert "-m pip install -e ." in text
+    assert "if [ ! -d .venv ]" in text
+    assert ".venv/.gitignore" in text
+    assert 'uv pip install --python "$VIRTUAL_ENV/bin/python" -e .' in text
     assert text.index("export PATH") < text.index("exec ./scripts/check.sh")
     assert subprocess.run(["bash", "-n", "init.sh"], cwd=tmp_path).returncode == 0
 
