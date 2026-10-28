@@ -19,6 +19,9 @@ summary_max_chars = 4000
 main_branch = "main"
 # Vacío: ../factory-yate.factory-worktrees (fuera del árbol del repo).
 worktrees_dir = ""
+# Archivos existentes que ninguna ronda puede modificar, borrar ni renombrar (sí crear nuevos).
+# Se suman a los críticos: feature_list.json, factory.toml, prompts/** y el script de verificación.
+protected_paths = ["tests/**"]
 
 [tick]
 max_rounds = 3

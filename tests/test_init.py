@@ -27,6 +27,7 @@ def test_repositorio_sin_harness(tmp_path, capsys):
         "factory.toml",
         "prompts/maker.md",
         "prompts/checker.md",
+        "prompts/intake.md",
         "goals/_template.md",
         "docs/harness/clean-state-checklist.md",
     ]

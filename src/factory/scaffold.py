@@ -29,6 +29,7 @@ FILES: tuple[tuple[str, str, bool], ...] = (
     ("factory.toml", "factory.toml", False),
     ("prompts/maker.md", "prompts/maker.md", False),
     ("prompts/checker.md", "prompts/checker.md", False),
+    ("prompts/intake.md", "prompts/intake.md", False),
     ("goals/_template.md", "goals/_template.md", False),
     ("docs/harness/clean-state-checklist.md", "docs/harness/clean-state-checklist.md", False),
 )

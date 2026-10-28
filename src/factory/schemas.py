@@ -158,3 +158,116 @@ def parse_maker_report(data: Any) -> tuple[MakerReport | None, list[str]]:
         ),
         [],
     )
+
+
+INTAKE_DECISIONS = ("ACCEPT", "NEEDS-INFO", "REJECT")
+RISKS = ("low", "medium", "high")
+
+INTAKE_SCHEMA: dict[str, Any] = {
+    "type": "object",
+    "required": ["decision", "risk", "surfaces", "rescoped", "why"],
+    "properties": {
+        "decision": {"type": "string", "enum": list(INTAKE_DECISIONS)},
+        "risk": {"type": "string", "enum": list(RISKS)},
+        "surfaces": {"type": "array", "items": {"type": "string"}},
+        "rescoped": {"type": "boolean"},
+        "scope": {"type": "string"},
+        "left_out": {"type": "array", "items": {"type": "string"}},
+        "why": {"type": "string"},
+        "question": {"type": "string"},
+        "goal": {
+            "type": "object",
+            "required": ["objective", "acceptance"],
+            "properties": {
+                "objective": {"type": "string"},
+                "acceptance": {
+                    "type": "array",
+                    "items": {
+                        "type": "object",
+                        "required": ["name", "run"],
+                        "properties": {"name": {"type": "string"}, "run": {"type": "string"}},
+                    },
+                },
+                "scope": {
+                    "type": "object",
+                    "properties": {
+                        "allow": {"type": "array", "items": {"type": "string"}},
+                        "deny": {"type": "array", "items": {"type": "string"}},
+                        "protected": {"type": "array", "items": {"type": "string"}},
+                    },
+                },
+                "body": {"type": "string"},
+            },
+        },
+    },
+}
+
+
+@dataclass
+class IntakeDecision:
+    decision: str
+    risk: str
+    surfaces: list[str]
+    rescoped: bool
+    why: str
+    scope: str = ""
+    left_out: list[str] = field(default_factory=list)
+    question: str = ""
+    goal: dict[str, Any] = field(default_factory=dict)
+
+
+def _str_list(value: Any) -> bool:
+    return isinstance(value, list) and all(isinstance(v, str) for v in value)
+
+
+def parse_intake(data: Any) -> tuple[IntakeDecision | None, list[str]]:
+    """Valida la decisión del intake; con ACCEPT exige un objetivo con criterios ejecutables."""
+    if not isinstance(data, dict):
+        return None, ["la decisión del intake no es un objeto JSON"]
+    errors = []
+    if data.get("decision") not in INTAKE_DECISIONS:
+        errors.append(f"decision debe ser uno de {INTAKE_DECISIONS}")
+    if data.get("risk") not in RISKS:
+        errors.append(f"risk debe ser uno de {RISKS}")
+    if not _str_list(data.get("surfaces")):
+        errors.append("surfaces debe ser una lista de texto")
+    if not isinstance(data.get("rescoped"), bool):
+        errors.append("rescoped debe ser booleano")
+    if not _text(data.get("why")):
+        errors.append("falta why")
+    if "left_out" in data and not _str_list(data["left_out"]):
+        errors.append("left_out debe ser una lista de texto")
+    goal = data.get("goal") or {}
+    if data.get("decision") == "ACCEPT":
+        if not _text(data.get("scope")):
+            errors.append("con ACCEPT hace falta scope")
+        acceptance = goal.get("acceptance") if isinstance(goal, dict) else None
+        if not isinstance(goal, dict) or not _text(goal.get("objective")):
+            errors.append("con ACCEPT hace falta goal.objective")
+        if (
+            not isinstance(acceptance, list)
+            or not acceptance
+            or not all(
+                isinstance(c, dict) and _text(c.get("name")) and _text(c.get("run"))
+                for c in acceptance
+            )
+        ):
+            errors.append("con ACCEPT hace falta goal.acceptance con al menos un {name, run}")
+    if data.get("decision") == "NEEDS-INFO" and not _text(data.get("question")):
+        errors.append("con NEEDS-INFO hace falta question")
+    if errors:
+        return None, errors
+    return (
+        IntakeDecision(
+            decision=data["decision"],
+            risk=data["risk"],
+            surfaces=[s.strip() for s in data["surfaces"] if s.strip() and s.strip() != "none"],
+            rescoped=data["rescoped"],
+            why=data["why"].strip(),
+            scope=str(data.get("scope", "")).strip(),
+            left_out=list(data.get("left_out", [])),
+            question=str(data.get("question", "")).strip(),
+            goal=goal if isinstance(goal, dict) else {},
+        ),
+        [],
+    )

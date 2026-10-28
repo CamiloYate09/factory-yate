@@ -50,10 +50,16 @@ def finding(severity: str = "medium", location: str = "src/x.py:1", **extra: str
 class FakeRunner:
     """Consume un guion por rol; si se agota, repite el último paso."""
 
-    def __init__(self, maker: list[FakeStep] | None = None, checker: list[FakeStep] | None = None):
+    def __init__(
+        self,
+        maker: list[FakeStep] | None = None,
+        checker: list[FakeStep] | None = None,
+        intake: list[FakeStep] | None = None,
+    ):
         self.scripts: dict[str, list[FakeStep]] = {
             "maker": list(maker or [maker_done()]),
             "checker": list(checker or [verdict("pass")]),
+            "intake": list(intake or [FakeStep(output={})]),
         }
         self.calls: list[AgentRequest] = []
 

@@ -178,6 +178,7 @@ def tick(
     make_runner: Callable[[Config], AgentRunner],
     echo: Callable[[str], None] = print,
 ) -> TickRecord:
+    goal.require_executable()
     if goal.mode != "monitor":
         raise GoalError(
             f"'{goal.id}' es un objetivo finito: `factory tick` solo acepta mode: monitor. "

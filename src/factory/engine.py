@@ -13,12 +13,13 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from importlib import resources
 
-from factory import features
+from factory import artifacts, features
 from factory.agents.base import AgentRequest, AgentResult, AgentRunner
 from factory.config import Config, RoleConfig
 from factory.gitops import Worktree, create_worktree, diffstat, preflight, remove_worktree
 from factory.goal import Goal, out_of_scope
-from factory.inbox import Inbox, run_entry
+from factory.inbox import Inbox, InboxError, run_entry
+from factory.protection import violations as find_protected
 from factory.records import EventLog, append_result
 from factory.schemas import (
     CHECKER_VERDICT_SCHEMA,
@@ -36,7 +37,7 @@ from factory.state import (
     build_summary,
     new_run_id,
 )
-from factory.util import now_iso
+from factory.util import atomic_write_text, git, now_iso
 from factory.verify import Verification, run_criteria
 
 EXIT_CODES = {
@@ -94,6 +95,8 @@ class RoundOutcome:
     stall_signature: str = ""
     agent_error: bool = False
     blocked: bool = False
+    verification: Verification | None = None
+    verdict: Verdict | None = None
 
 
 @dataclass
@@ -104,6 +107,8 @@ class LoopEngine:
     limits: Limits | None = None
     kind: str = "goal"
     echo: Callable[[str], None] = print
+    parent: RunState | None = None  # retrabajo: ejecución padre
+    answer: str = ""  # retrabajo: respuesta humana
     store: RunStore = field(init=False)
     inbox: Inbox = field(init=False)
 
@@ -115,12 +120,22 @@ class LoopEngine:
             name: self.goal.role(name, self.config.roles[name]) for name in ("maker", "checker")
         }
         self.prompts = {name: load_prompt(self.config, role) for name, role in self.roles.items()}
+        self.protection = self.goal.protection_for(
+            self.config.root,
+            self.config.loop.protected_paths,
+            self.config.effective_verify_command(),
+        )
         self.state: RunState | None = None
 
     # ------------------------------------------------------------------ ciclo de vida
     def run(self) -> RunState:
+        self.goal.require_executable()  # defensa en profundidad: un borrador nunca se ejecuta
         root = self.config.root
         base = preflight(root, self.config.loop.main_branch)
+        start = base
+        if self.parent:
+            base = self.parent.base_commit
+            start = git(root, "rev-parse", f"refs/heads/{self.parent.branch}")
         self._check_feature()
         state = RunState(
             run_id=new_run_id(self.goal.id),
@@ -131,13 +146,19 @@ class LoopEngine:
             kind=self.kind,
             criteria_total=len(self.goal.acceptance),
             manual_checks=self._manual_checks(),
+            parent_run_id=self.parent.run_id if self.parent else "",
+            start_commit=start,
         )
         self.store.create(state, self.goal.raw)
         self.state = state
         self.events = EventLog(self.store.run_dir(state.run_id))
         worktree: Worktree | None = None
         try:
-            worktree = create_worktree(root, self.config.worktrees_path, state.run_id, base)
+            worktree = create_worktree(
+                root, self.config.worktrees_path, state.run_id, base, start_point=start
+            )
+            if self.parent:
+                self._ack_parent(state)
             state.branch, state.worktree = worktree.branch, str(worktree.path)
             self.store.save(state, self.limits.max_rounds)
             self.echo(f"Ejecución {state.run_id} en {worktree.path} (rama {worktree.branch})")
@@ -152,6 +173,32 @@ class LoopEngine:
         finally:
             self._finalize(state, worktree)
         return state
+
+    def _initial_feedback(self) -> str:
+        """En un retrabajo, la respuesta humana y el contexto de la ejecución padre."""
+        if not self.parent:
+            return ""
+        parts = [f"RESPUESTA HUMANA (retrabajo de {self.parent.run_id}): {self.answer}"]
+        if self.parent.question:
+            parts.append(f"Pregunta que hizo la ejecución anterior: {self.parent.question}")
+        parts.append(
+            f"La ejecución anterior terminó {self.parent.status}: {self.parent.stop_reason}"
+        )
+        if self.parent.rounds:
+            last = self.parent.rounds[-1]
+            failed = [name for name, ok in last.criteria.items() if not ok]
+            if failed:
+                parts.append("Criterios que fallaban: " + ", ".join(failed))
+            if last.note:
+                parts.append("Notas de su última ronda: " + last.note)
+        parts.append("Partes de la punta de su rama: su trabajo ya está en el árbol.")
+        return "\n".join(parts)
+
+    def _ack_parent(self, state: RunState) -> None:
+        try:
+            self.inbox.ack(self.parent.run_id, resolution=f"retrabajo → {state.run_id}")
+        except InboxError:
+            pass  # sin entrada o ya revisada: nada que cerrar
 
     def _check_feature(self) -> None:
         if not self.goal.feature:
@@ -168,14 +215,15 @@ class LoopEngine:
     def _loop(self, state: RunState, wt: Worktree) -> None:
         limits = self.limits
         baseline = self._verify(wt, 0)
-        state.best_score, state.best_commit, state.best_round = baseline.score, wt.base, 0
+        state.best_score, state.best_commit, state.best_round = baseline.score, wt.start, 0
         self.store.save(state, limits.max_rounds)
-        feedback, passes, errors, stall = "", 0, 0, []
+        feedback, passes, errors, stall = self._initial_feedback(), 0, 0, []
         for number in range(1, limits.max_rounds + 1):
             if state.total_cost_usd >= limits.max_budget_usd:
                 return self._stop(state, "budget_exhausted", self._budget_reason(state))
             outcome = self._round(state, wt, number, feedback)
             state.rounds.append(outcome.record)
+            self._write_round(state, outcome)
             self.store.save(state, limits.max_rounds)
             self._result_row(state, outcome.record)
             self.echo(self._round_line(outcome.record))
@@ -228,8 +276,10 @@ class LoopEngine:
         )
         record.cost_usd += maker.cost_usd
         record.maker_input_tokens = maker.input_tokens
+        record.maker_model = maker.model or self.roles["maker"].model
         if not maker.ok:
             wt.reset_to(pre_commit)
+            record.reverted_to = pre_commit
             record.decision, record.note = "error", f"error del maker: {maker.error}"
             record.next_plan = "reintentar la ronda"
             return self._close(record, started, agent_error=True, feedback=feedback)
@@ -245,6 +295,7 @@ class LoopEngine:
         violations = out_of_scope(changed, self.goal)
         if violations:
             wt.reset_to(pre_commit)
+            record.reverted_to = pre_commit
             record.changed_files = changed
             record.decision = "scope_revert"
             record.note = "violación de alcance (ronda revertida): " + ", ".join(violations)
@@ -259,6 +310,25 @@ class LoopEngine:
         record.changed_files = changed
         commit = wt.snapshot(f"factory({state.run_id}): ronda {number}") or pre_commit
         record.commit = commit
+
+        found = find_protected(wt.name_status(state.base_commit), self.protection)
+        if found:
+            wt.reset_to(pre_commit)
+            record.reverted_to = pre_commit
+            listed = ", ".join(str(v) for v in found)
+            record.protected_violations = [str(v) for v in found]
+            record.decision = "protected_revert"
+            record.note = _join(record.note, f"rutas protegidas (ronda revertida): {listed}")
+            record.next_plan = "repetir sin modificar, borrar ni renombrar archivos protegidos"
+            fb = (
+                f"La ronda anterior se REVIRTIÓ por cambiar archivos protegidos: {listed}. "
+                "Puedes CREAR archivos nuevos (por ejemplo, tests nuevos), pero no modificar, "
+                "borrar ni renombrar los existentes protegidos. Si de verdad hace falta, termina "
+                "con status needs_human y explica por qué."
+            )
+            return self._close(
+                record, started, feedback=fb, stall="protected:" + ",".join(v.path for v in found)
+            )
 
         if report and report.status == "needs_human":
             record.human_needed = True
@@ -278,7 +348,7 @@ class LoopEngine:
                 record.note, "presupuesto agotado tras el maker: checker no invocado"
             )
             self._ratchet(state, wt, record, verification.score, commit)
-            return self._close(record, started, stall=record.signature)
+            return self._close(record, started, stall=record.signature, verification=verification)
         before = wt.tree_hash()
         checker = self._invoke(
             state,
@@ -288,6 +358,7 @@ class LoopEngine:
             wt,
         )
         record.cost_usd += checker.cost_usd
+        record.checker_model = checker.model or self.roles["checker"].model
         role_violation = wt.tree_hash() != before
         if role_violation:
             wt.reset_to(commit)
@@ -315,7 +386,13 @@ class LoopEngine:
         fb = self._feedback(state, record, verification, verdict)
         agent_error = not checker.ok and not role_violation
         return self._close(
-            record, started, feedback=fb, stall=record.signature, agent_error=agent_error
+            record,
+            started,
+            feedback=fb,
+            stall=record.signature,
+            agent_error=agent_error,
+            verification=verification,
+            verdict=verdict,
         )
 
     def _ratchet(
@@ -325,6 +402,7 @@ class LoopEngine:
         ronda pasa a ser la nueva referencia."""
         if score < state.best_score:
             wt.reset_to(state.best_commit)
+            record.reverted_to = state.best_commit
             record.decision = "revert"
             record.note = _join(
                 record.note,
@@ -343,10 +421,23 @@ class LoopEngine:
         stall: str = "",
         agent_error: bool = False,
         blocked: bool = False,
+        verification: Verification | None = None,
+        verdict: Verdict | None = None,
     ) -> RoundOutcome:
         record.finished = now_iso()
         record.duration_s = round(time.monotonic() - started, 3)
-        return RoundOutcome(record, feedback, stall, agent_error, blocked)
+        return RoundOutcome(record, feedback, stall, agent_error, blocked, verification, verdict)
+
+    def _write_round(self, state: RunState, outcome: RoundOutcome) -> None:
+        """Artefactos legibles de la ronda en rounds/<n>/ (spec loop-state)."""
+        directory = self.store.run_dir(state.run_id) / "rounds" / str(outcome.record.number)
+        files = {
+            "maker.md": artifacts.render_maker(outcome.record),
+            "checks.md": artifacts.render_checks(outcome.record, outcome.verification),
+            "review.md": artifacts.render_review(outcome.record, outcome.verdict),
+        }
+        for name, text in files.items():
+            atomic_write_text(directory / name, text)
 
     # ------------------------------------------------------------------ agentes y verificación
     def _invoke(
@@ -386,7 +477,15 @@ class LoopEngine:
 
     # ------------------------------------------------------------------ prompts
     def _scope_text(self) -> str:
-        return f"Permitido: {', '.join(self.goal.allow)}\nProhibido: {', '.join(self.goal.deny)}"
+        return "\n".join(
+            [
+                f"Permitido: {', '.join(self.goal.allow)}",
+                f"Prohibido: {', '.join(self.goal.deny)}",
+                *self.protection.describe(),
+                "Los archivos protegidos existentes no se pueden modificar, borrar ni renombrar; "
+                "sí se pueden crear archivos nuevos.",
+            ]
+        )
 
     def _criteria_text(self) -> str:
         return "\n".join(f"- {c.name}: `{c.run}`" for c in self.goal.acceptance)
@@ -483,6 +582,9 @@ class LoopEngine:
             self._promote(state, wt)
         state.finished = now_iso()
         state.summary = self._summary(state)
+        atomic_write_text(
+            self.store.run_dir(state.run_id) / "decision.md", artifacts.render_decision(state)
+        )
         files, lines, stat = (
             diffstat(self.config.root, state.base_commit, wt.branch) if wt else ([], 0, "")
         )

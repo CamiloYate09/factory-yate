@@ -138,6 +138,111 @@
         }
       ],
       "notes": "OpenSpec add-harness-loop-engine, grupo 8"
+    },
+    {
+      "id": "protected-paths",
+      "priority": 7,
+      "area": "loop",
+      "title": "Rutas protegidas",
+      "user_visible_behavior": "Una ronda que modifica, borra o renombra un archivo protegido existente se revierte; crear archivos nuevos se permite y los archivos críticos del harness nunca se liberan.",
+      "status": "passing",
+      "verification": [
+        "python -m pytest -q tests/test_protected_config.py tests/test_protected_paths.py"
+      ],
+      "manual_checks": [],
+      "evidence": [
+        {
+          "command": "python -m pytest -q tests/test_protected_config.py tests/test_protected_paths.py",
+          "exit_code": 0,
+          "date": "2026-10-28T04:50:45+00:00",
+          "commit": "7563c8feeae20abd652ff413aade3dbdd63980bd"
+        }
+      ],
+      "notes": "OpenSpec extend-factory-pipeline, grupo 2"
+    },
+    {
+      "id": "round-artifacts",
+      "priority": 8,
+      "area": "loop",
+      "title": "Artefactos legibles por ronda",
+      "user_visible_behavior": "Cada ronda deja maker.md, checks.md y review.md con cabeceras CLAVE: valor, y cada ejecución deja decision.md.",
+      "status": "passing",
+      "verification": [
+        "python -m pytest -q tests/test_artifacts.py tests/test_round_artifacts.py"
+      ],
+      "manual_checks": [],
+      "evidence": [
+        {
+          "command": "python -m pytest -q tests/test_artifacts.py tests/test_round_artifacts.py",
+          "exit_code": 0,
+          "date": "2026-10-28T04:54:02+00:00",
+          "commit": "7563c8feeae20abd652ff413aade3dbdd63980bd"
+        }
+      ],
+      "notes": "OpenSpec extend-factory-pipeline, grupo 3"
+    },
+    {
+      "id": "run-rework",
+      "priority": 9,
+      "area": "loop",
+      "title": "Retrabajo desde una ejecución anterior",
+      "user_visible_behavior": "`factory goal rework <run-id> --answer …` continúa una ejecución atascada desde la punta de su rama, con la respuesta humana y el commit base original.",
+      "status": "passing",
+      "verification": [
+        "python -m pytest -q tests/test_rework.py"
+      ],
+      "manual_checks": [],
+      "evidence": [
+        {
+          "command": "python -m pytest -q tests/test_rework.py",
+          "exit_code": 0,
+          "date": "2026-10-28T04:57:05+00:00",
+          "commit": "7563c8feeae20abd652ff413aade3dbdd63980bd"
+        }
+      ],
+      "notes": "OpenSpec extend-factory-pipeline, grupo 4"
+    },
+    {
+      "id": "run-landing",
+      "priority": 10,
+      "area": "loop",
+      "title": "Integración asistida",
+      "user_visible_behavior": "`factory land <run-id>` verifica el merge exacto sobre el main actual en un worktree temporal y solo entonces avanza main, sin push.",
+      "status": "passing",
+      "verification": [
+        "python -m pytest -q tests/test_land.py"
+      ],
+      "manual_checks": [],
+      "evidence": [
+        {
+          "command": "python -m pytest -q tests/test_land.py",
+          "exit_code": 0,
+          "date": "2026-10-28T05:00:50+00:00",
+          "commit": "7563c8feeae20abd652ff413aade3dbdd63980bd"
+        }
+      ],
+      "notes": "OpenSpec extend-factory-pipeline, grupo 5"
+    },
+    {
+      "id": "request-intake",
+      "priority": 11,
+      "area": "loop",
+      "title": "Intake de peticiones",
+      "user_visible_behavior": "`factory intake` decide ACCEPT/NEEDS-INFO/REJECT con un agente de solo lectura y genera borradores que no se ejecutan hasta `factory goal promote --yes`.",
+      "status": "passing",
+      "verification": [
+        "python -m pytest -q tests/test_requests.py tests/test_intake.py tests/test_drafts.py"
+      ],
+      "manual_checks": [],
+      "evidence": [
+        {
+          "command": "python -m pytest -q tests/test_requests.py tests/test_intake.py tests/test_drafts.py",
+          "exit_code": 0,
+          "date": "2026-10-28T05:08:04+00:00",
+          "commit": "7563c8feeae20abd652ff413aade3dbdd63980bd"
+        }
+      ],
+      "notes": "OpenSpec extend-factory-pipeline, grupo 6"
     }
   ]
 }

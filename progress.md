@@ -5,7 +5,7 @@
 - Raíz del repositorio: `factory-yate/`, la que contiene `AGENTS.md`.
 - Arranque estándar: `./init.sh`.
 - Verificación estándar: `./scripts/check.sh`.
-- Cambio OpenSpec en curso: `openspec/changes/add-harness-loop-engine/`. Progreso en su `tasks.md`.
+- OpenSpec: specs principales en `openspec/specs/` (6 capacidades). El cambio `add-harness-loop-engine` está archivado. Cambio activo: `extend-factory-pipeline` (22/22 tareas, pendiente de archivar).
 - Feature activa / siguiente: ver `.venv/bin/factory features list`.
 - Commits: `d7c3d5b` (commit inicial) y `9d74594` (evidencia de las features con hash real).
 - Bloqueos actuales: la prueba live (9.2) no está aprobada. El contrato de `--json-schema` se valida con el dogfooding (9.3).
@@ -107,3 +107,30 @@
   - revisar y decidir la rama del dogfooding (`factory inbox ack <run-id>` al terminar);
   - hacer commit de `progress.md`, `tasks.md` y `goals/dogfood-cli-help.md`, que no están commiteados;
   - decidir la prueba live 9.2, que no está aprobada.
+
+### Sesión 004 — 2026-10-28
+
+- Objetivo: archivar `add-harness-loop-engine` y aplicar `extend-factory-pipeline`, que adapta patrones de *Software Factory v2* (ZazenCodes, GPLv3) sin copiar código.
+- Completado:
+  - Archivo del cambio anterior, con las 6 specs principales sincronizadas.
+  - Rutas protegidas: críticas siempre protegidas, `tests/**` en este repo y `scope.allow_modify`.
+  - Artefactos por ronda: `rounds/<n>/{maker,checks,review}.md` y `decision.md`.
+  - `factory goal rework`.
+  - `factory land`: merge exacto verificado, `--ff-only`, sin push.
+  - `factory intake` y `factory goal promote`, con borradores no ejecutables.
+  - README: guía paso a paso con requisitos y pasos A–F.
+  - Documentos temáticos nuevos: `intake.md`, `revision.md` y `vigilancia.md`.
+- Verificación ejecutada:
+  - `./scripts/check.sh` → código 0 (272 tests, ruff y doctor).
+  - `openspec validate extend-factory-pipeline --strict` → válido.
+  - Pasos B–D del README sobre un proyecto nuevo, con instalación no editable → en verde.
+- Evidencia: `factory features verify` → `passing` en `protected-paths`, `round-artifacts`, `run-rework`, `run-landing` y `request-intake`. El commit de la evidencia es `7563c8f` porque los cambios aún no están commiteados.
+- Tarea 7.2 (aprobada, 1 USD como máximo): intake real de la petición "init.sh de factory init con .venv en proyectos Python".
+  - Resultado: `ACCEPT`, riesgo `medium`, superficie `harness`, sin recorte. `claude-opus-5-5`, 12 turnos, **0,4389 USD**, sin denegaciones de permisos.
+  - El borrador cita `scaffold.py:68-74` y propone 3 criterios ejecutables.
+  - En la revisión de `goal promote`, el plan mostró que `tests/**` está protegido, mientras el borrador pedía añadir tests a `tests/test_init.py`, que ya existe. Se añadió `allow_modify: [tests/test_init.py]`, después `promote --yes` y luego `goal run --dry-run` → en verde. Petición en `promoted`; objetivo en `goals/en-repos-con-pyproject-toml-factory.md`, listo para un `goal run` real.
+  - Hallazgo: el intake no conoce `protected_paths`. Mejora propuesta: dárselos en el prompt y admitir `scope.allow_modify` en su esquema.
+- Riesgos / pendientes:
+  - Ningún cambio de esta sesión está commiteado.
+  - El `init.sh` que genera `factory init` en proyectos Python instala con pip en el Python global; queda como mejora fuera de alcance (avisado en el README).
+- Mejor próximo paso: `/opsx:archive extend-factory-pipeline`. Después, opcionalmente, `factory goal run goals/en-repos-con-pyproject-toml-factory.md` (real, con coste) y `factory land`.

@@ -54,6 +54,10 @@ class RoundRecord:
     human_needed: bool = False
     note: str = ""
     next_plan: str = ""
+    protected_violations: list[str] = field(default_factory=list)
+    reverted_to: str = ""  # commit al que volvió la rama si la ronda se revirtió
+    maker_model: str = ""
+    checker_model: str = ""
 
     @property
     def total(self) -> int:
@@ -85,6 +89,9 @@ class RunState:
     blockers: list[str] = field(default_factory=list)
     question: str = ""
     summary: str = ""
+    parent_run_id: str = ""  # ejecución de la que parte un retrabajo
+    start_commit: str = ""  # punta de la que parte la rama (= base salvo en retrabajo)
+    landed_commit: str = ""  # commit de main tras `factory land`
 
     @property
     def is_final(self) -> bool:

@@ -20,11 +20,13 @@ def test_todas_las_plantillas_se_cargan_desde_el_paquete():
 def test_plantillas_con_atribucion():
     for template, _relative, _exe in FILES:
         text = read_template(template)
-        assert "walkinglabs" in text or "learn-harness-engineering" in text, template
+        assert any(
+            mark in text for mark in ("walkinglabs", "learn-harness-engineering", "factory-yate")
+        ), template
 
 
 def test_prompts_empaquetados_iguales_a_los_del_repo():
-    for role in ("maker", "checker"):
+    for role in ("maker", "checker", "intake"):
         repo = (ROOT / "prompts" / f"{role}.md").read_text(encoding="utf-8")
         assert read_template(f"prompts/{role}.md") == repo, f"prompts/{role}.md divergió"
 

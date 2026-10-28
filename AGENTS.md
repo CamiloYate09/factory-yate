@@ -29,7 +29,7 @@ El objetivo de una sesión no es producir más código, sino dejar el repositori
 - **WIP=1**: solo una feature en `in_progress`. Actívala con `factory features start <id>`.
 - **Nunca edites a mano `status` ni `evidence`** de `feature_list.json`. Solo `factory features verify <id>` promueve a `passing`, y solo si la verificación pasa.
 - **No debilites, borres ni omitas tests** para que algo pase. Si un test es incorrecto, documéntalo en `progress.md` y pide revisión.
-- **No hagas push, merge ni PRs** desde un agente.
+- **No hagas push, merge ni PRs** desde un agente. `factory land` y `factory goal promote --yes` son decisiones humanas: no los ejecutes sin una petición explícita.
 - **No cambies las reglas de verificación** (`scripts/check.sh` y la configuración de ruff/pytest) sin una petición explícita.
 - **No uses modos que omiten permisos** (`bypassPermissions`, `--dangerously-skip-permissions`).
 - **Respeta el alcance** de la feature activa. Un arreglo de soporte solo se permite si bloquea, y debe quedar anotado.
@@ -63,6 +63,9 @@ Léelos solo cuando la tarea lo requiera:
 - [Roles](docs/harness/roles.md): separación maker/checker, cuándo pedir revisión independiente y permisos por rol.
 - [Loops](docs/harness/loops.md): `goal.md`, `factory goal run`, `factory tick`, anti-patrones y seguridad.
 - [Observabilidad](docs/harness/observabilidad.md): estado de cada ejecución, bandeja y costes silenciosos.
+- [Intake](docs/harness/intake.md): triaje de peticiones, borradores y `factory goal promote`.
+- [Revisión](docs/harness/revision.md): leer resultados, `factory goal rework` y `factory land`.
+- [Vigilancia](docs/harness/vigilancia.md): `factory tick`, guardas y programación.
 - [Cambios OpenSpec](openspec/changes/): requisitos y tareas del cambio en curso.
 
 ## Estructura

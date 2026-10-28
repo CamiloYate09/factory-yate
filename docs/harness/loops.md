@@ -52,6 +52,14 @@ Revisa cada `ConfigError` de `src/factory/config.py` y añade un test por mensaj
 | `stop` | no | `max_rounds`, `max_budget_usd`, `no_progress_rounds`, `consecutive_passes`, `round_timeout_min` |
 | `roles` | no | overrides por rol: `model`, `permission_mode`, `allowed_tools`, `denied_tools` |
 
+### Rutas protegidas
+
+Tras cada ronda, si un archivo **que ya existía en la base** y es protegido aparece modificado, borrado o renombrado, la ronda se revierte y se marca `protected_revert`. Crear archivos nuevos en esas rutas sí está permitido; así el maker puede añadir tests pero no debilitar los existentes.
+
+- **Siempre protegidos:** `feature_list.json`, `factory.toml`, `prompts/**`, el script de `verify_command` y los scripts relativos de `acceptance` (por ejemplo `./scripts/check.sh` o `bash tools/x.sh`). Nadie puede liberarlos: una rama nunca cambia las reglas con las que se la juzga.
+- **Configurables:** `[loop] protected_paths` en `factory.toml` (en este repo, `tests/**`) y `scope.protected` en `goal.md`.
+- **Liberación explícita:** `scope.allow_modify` en un objetivo que de verdad debe cambiar un archivo protegido no crítico, por ejemplo un test cuyo comportamiento cambia. `goal validate` y `goal run --dry-run` muestran la protección efectiva.
+
 Lo que omitas en `stop` toma el valor de `[loop]` en `factory.toml`. Todos los límites son finitos. `factory goal validate goals/x.md` muestra los límites efectivos y marca cuáles vienen por defecto.
 
 Los criterios los ejecuta **el orquestador** en el worktree de la ejecución. Lo que diga el agente sobre su trabajo nunca basta para declarar éxito.
@@ -109,46 +117,17 @@ Qué pasa en cada ronda:
 | 7 | `agent_error` | `agent_error_rounds` rondas seguidas con error del CLI (no instalado, timeout, salida ilegible) |
 | 130 | `interrupted` | Ctrl+C: el estado queda legible y marcado como interrumpido |
 
-### Revisar el resultado
+### Revisar, retrabajar e integrar
 
-El loop **nunca** hace merge a `main` ni push. Al terminar elimina el worktree, conserva la rama y deja una entrada en la bandeja:
+Cómo leer el resultado, continuar una ejecución atascada con `factory goal rework` e integrarla con `factory land`: ver [revision.md](revision.md).
 
-```bash
-.venv/bin/factory inbox list
-git log --oneline <base>..factory/<run-id>   # instantáneas por ronda
-git diff <base>...factory/<run-id>           # qué cambió en total
-cat .factory/runs/<run-id>/loop-state.md     # por qué: rondas, hallazgos, decisiones
-.venv/bin/factory inbox ack <run-id>         # marcar como revisada
-```
+## Peticiones: `factory intake`
 
-Integrar la rama es una decisión humana: `git merge`, cherry-pick o descartarla con `git branch -D`. Si el objetivo declaraba `feature:`, la promoción a `passing` ya está **en la rama**, con evidencia y `run_id`.
+Triaje de peticiones en lenguaje natural (aceptar con borrador, pedir información o rechazar) y promoción explícita de borradores: ver [intake.md](intake.md).
 
 ## Vigilancia: `factory tick`
 
-Para objetivos con `mode: monitor`, como `goals/vigilancia-check.md`, que vigila `./scripts/check.sh`:
-
-```bash
-.venv/bin/factory tick goals/vigilancia-check.md                    # un tick
-.venv/bin/factory schedule goals/vigilancia-check.md --every 30m    # imprime cron / launchd / /loop
-.venv/bin/factory tick goals/vigilancia-check.md --reset-breaker    # tras revisar un escalado
-```
-
-Cada tick **verifica primero, sin agentes y con coste 0**. Si todo pasa, registra `noop`. Si algo falla, aplica estas guardas en orden:
-
-| Resultado | Cuándo | ¿Invoca agentes? |
-|---|---|---|
-| `noop` | los criterios pasan | no (0 USD) |
-| `skipped` | otro tick del mismo objetivo sigue en curso (bloqueo con PID; se recupera si el proceso murió o es demasiado antiguo) | no |
-| `circuit_open` | `circuit_after` ticks seguidos sin `completed`. Se crea una entrada de **escalado** en la bandeja | no, hasta `--reset-breaker` |
-| `awaiting_review` | ya hay una ejecución de un tick anterior pendiente en la bandeja | no |
-| `budget_exhausted` | se alcanzó `daily_budget_usd` del día | no |
-| `run` | falla y las guardas lo permiten: loop acotado (`[tick] max_rounds`, `budget_per_tick_usd`) | sí |
-
-`factory tick` sale con 0 en `noop`, `skipped` y `run` completado, y con 1 si el problema sigue sin resolverse. Así cron puede avisar.
-
-**Ojo:** el tick verifica el **árbol de trabajo** del repo principal, pero la ejecución parte del **último commit de `main`**. Si el fallo lo causan cambios sin commitear, la ejecución puede no reproducirlo y terminar en `completed` sin cambios. Vigila sobre un árbol limpio.
-
-`factory schedule` **no instala nada**: imprime la línea de cron, la plantilla de launchd y el comando `/loop`. El `/loop` solo vive mientras la sesión de Claude Code está abierta. El historial queda en `.factory/ticks/<id>.jsonl` y se resume en `factory status`.
+Objetivos `mode: monitor`: verifican sin coste y solo lanzan un loop acotado si algo falla. Bloqueo, guardas, cortacircuitos y programación: ver [vigilancia.md](vigilancia.md).
 
 ## Anti-patrones (L13)
 

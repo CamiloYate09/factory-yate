@@ -12,6 +12,7 @@ from pathlib import Path
 
 import yaml
 
+from factory import protection
 from factory.config import (
     ConfigError,
     LoopConfig,
@@ -20,6 +21,7 @@ from factory.config import (
     check_permission_mode,
     enforce_role_policy,
 )
+from factory.globs import glob_to_regex, matches  # noqa: F401  (API pública de goal)
 
 MODES = ("finite", "monitor")
 PROTECTED_PATHS = ("feature_list.json",)
@@ -69,6 +71,27 @@ class Goal:
     roles: dict[str, dict] = field(default_factory=dict)
     defaults_applied: list[str] = field(default_factory=list)
     raw: str = ""
+    protected: list[str] = field(default_factory=list)
+    allow_modify: list[str] = field(default_factory=list)
+    status: str = ""  # "draft": generado por `factory intake`, no ejecutable hasta promoverlo
+    request: str = ""
+    risk: str = ""
+    surfaces: list[str] = field(default_factory=list)
+
+    @property
+    def is_draft(self) -> bool:
+        return self.status == "draft"
+
+    def require_executable(self) -> None:
+        """Los borradores no se ejecutan: ningún comando propuesto por un agente corre sin
+        revisión humana (spec request-intake)."""
+        if self.is_draft:
+            where = self.path or self.id
+            raise GoalError(
+                f"'{self.id}' es un BORRADOR (status: draft) generado por el intake: no se "
+                "ejecuta. Revisa sus comandos y promuévelo con "
+                f"`factory goal promote {where} --yes`."
+            )
 
     def role(self, name: str, base: RoleConfig) -> RoleConfig:
         """Rol efectivo: factory.toml + overrides del objetivo + políticas obligatorias."""
@@ -76,8 +99,21 @@ class Goal:
         apply_values(merged, self.roles.get(name, {}), f"roles.{name}")
         return enforce_role_policy(name, merged)
 
-    def describe(self) -> str:
+    def protection_for(self, root: Path, config_paths: list[str], verify_command: str | None):
+        """Rutas protegidas efectivas para este objetivo en `root`."""
+        commands = [c.run for c in self.acceptance] + ([verify_command] if verify_command else [])
+        return protection.effective(root, config_paths, self.protected, self.allow_modify, commands)
+
+    def describe(self, prot: protection.Protection | None = None) -> str:
         lines = [
+            *(
+                [
+                    f"BORRADOR (status: draft, petición {self.request or '—'}, riesgo "
+                    f"{self.risk or '—'}): revísalo y promuévelo con `factory goal promote`."
+                ]
+                if self.is_draft
+                else []
+            ),
             f"Objetivo '{self.id}' ({self.mode}): {self.objective}",
             "Criterios de aceptación:",
             *(f"  - {c.name}: {c.run}" for c in self.acceptance),
@@ -90,36 +126,12 @@ class Goal:
             lines.append(f"  - {key} = {getattr(self.stop, key)}{origin}")
         if self.feature:
             lines.append(f"Feature asociada: {self.feature}")
+        if prot is not None:
+            lines.extend(prot.describe())
+        elif self.protected or self.allow_modify:
+            lines.append(f"Rutas protegidas (objetivo): {', '.join(self.protected) or '—'}")
+            lines.append(f"Liberadas por el objetivo: {', '.join(self.allow_modify) or '—'}")
         return "\n".join(lines)
-
-
-def glob_to_regex(pattern: str) -> re.Pattern[str]:
-    """Glob con `**` (cualquier profundidad), `*` y `?` (sin cruzar `/`). Anclado a la raíz."""
-    pattern = pattern.strip().removeprefix("./")
-    if pattern.endswith("/"):
-        pattern += "**"
-    out, i = [], 0
-    while i < len(pattern):
-        if pattern.startswith("**/", i):
-            out.append("(?:.*/)?")
-            i += 3
-        elif pattern.startswith("**", i):
-            out.append(".*")
-            i += 2
-        elif pattern[i] == "*":
-            out.append("[^/]*")
-            i += 1
-        elif pattern[i] == "?":
-            out.append("[^/]")
-            i += 1
-        else:
-            out.append(re.escape(pattern[i]))
-            i += 1
-    return re.compile("^" + "".join(out) + "$")
-
-
-def matches(path: str, patterns: list[str]) -> bool:
-    return any(glob_to_regex(p).match(path) for p in patterns)
 
 
 def out_of_scope(paths: list[str], goal: Goal) -> list[str]:
@@ -220,7 +232,20 @@ def parse_goal_text(text: str, defaults: LoopConfig, path: Path | None = None) -
         raise GoalError(f"Frontmatter YAML inválido: {exc}") from exc
     if not isinstance(meta, dict):
         raise GoalError("El frontmatter debe ser un objeto YAML")
-    known = {"id", "objective", "mode", "feature", "acceptance", "scope", "stop", "roles"}
+    known = {
+        "id",
+        "objective",
+        "mode",
+        "feature",
+        "acceptance",
+        "scope",
+        "stop",
+        "roles",
+        "status",
+        "request",
+        "risk",
+        "surfaces",
+    }
     unknown = set(meta) - known
     if unknown:
         raise GoalError(f"Claves desconocidas en el frontmatter: {', '.join(sorted(unknown))}")
@@ -244,6 +269,25 @@ def parse_goal_text(text: str, defaults: LoopConfig, path: Path | None = None) -
     allow = _str_list(scope.get("allow"), "scope.allow") or ["**"]
     deny = _str_list(scope.get("deny"), "scope.deny")
     deny += [p for p in PROTECTED_PATHS if p not in deny]
+    protected = _str_list(scope.get("protected"), "scope.protected")
+    allow_modify = _str_list(scope.get("allow_modify"), "scope.allow_modify")
+    critical = [p for p in allow_modify if protection.releases_critical(p)]
+    if critical:
+        raise GoalError(
+            "scope.allow_modify no puede liberar archivos críticos del harness "
+            f"({', '.join(protection.STATIC_CRITICAL)}): {', '.join(critical)}"
+        )
+
+    status = meta.get("status") or ""
+    if status not in ("", "draft"):
+        raise GoalError(f"status '{status}' inválido: el único valor admitido es `draft`")
+    risk = meta.get("risk") or ""
+    if risk not in ("", "low", "medium", "high"):
+        raise GoalError(f"risk '{risk}' inválido; usa low, medium o high")
+    surfaces = _str_list(meta.get("surfaces"), "surfaces")
+    request = meta.get("request") or ""
+    if not isinstance(request, str):
+        raise GoalError("`request` debe ser el id de una petición")
 
     stop, applied = _stop(meta.get("stop"), defaults)
     return Goal(
@@ -260,6 +304,12 @@ def parse_goal_text(text: str, defaults: LoopConfig, path: Path | None = None) -
         roles=_roles(meta.get("roles")),
         defaults_applied=applied,
         raw=text,
+        protected=protected,
+        allow_modify=allow_modify,
+        status=status,
+        request=request,
+        risk=risk,
+        surfaces=surfaces,
     )
 
 

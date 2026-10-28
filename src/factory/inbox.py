@@ -41,6 +41,7 @@ class InboxEntry:
     lines_changed: int = 0
     cost_usd: float = 0.0
     question: str = ""
+    resolution: str = ""
     body: str = ""
 
     def meta(self) -> dict[str, Any]:
@@ -88,13 +89,14 @@ class Inbox:
             if e.goal_id == goal_id and e.kind == kind and origin in (None, e.origin)
         ]
 
-    def ack(self, entry_id: str) -> InboxEntry:
+    def ack(self, entry_id: str, resolution: str = "") -> InboxEntry:
         path = self.path(entry_id)
         if not path.exists():
             raise InboxError(f"No hay ninguna entrada '{entry_id}' en la bandeja")
         entry = self.load(path)
         entry.status = REVIEWED
         entry.reviewed_at = now_iso()
+        entry.resolution = resolution or entry.resolution
         self.save(entry)
         return entry
 

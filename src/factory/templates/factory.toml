@@ -12,6 +12,9 @@ verify_command = "./scripts/check.sh"
 max_rounds = 8
 max_budget_usd = 5.0
 main_branch = "main"
+# Archivos existentes que ninguna ronda puede modificar, borrar ni renombrar (sí crear nuevos).
+# Ejemplo: protege los tests para que un agente no los debilite.
+# protected_paths = ["tests/**"]
 
 [roles.maker]
 model = "sonnet"

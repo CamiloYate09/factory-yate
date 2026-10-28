@@ -54,7 +54,11 @@ class Worktree:
     root: Path
     path: Path
     branch: str
-    base: str
+    base: str  # commit base de la ejecución (para diffs acumulados y rutas protegidas)
+    start: str = ""  # commit del que parte la rama; = base salvo en un retrabajo
+
+    def __post_init__(self) -> None:
+        self.start = self.start or self.base
 
     def git(self, *args: str, check: bool = True) -> str:
         return git(self.path, *args, check=check)
@@ -62,7 +66,7 @@ class Worktree:
     def head(self) -> str:
         return self.git("rev-parse", "HEAD")
 
-    def _identity(self) -> tuple[str, ...]:
+    def identity(self) -> tuple[str, ...]:
         has_name = self.git("config", "user.name", check=False)
         has_email = self.git("config", "user.email", check=False)
         return () if has_name and has_email else FALLBACK_IDENTITY
@@ -72,7 +76,7 @@ class Worktree:
         self.git("add", "-A")
         if not self.git("status", "--porcelain"):
             return None
-        self.git(*self._identity(), "commit", "-q", "--no-verify", "-m", message)
+        self.git(*self.identity(), "commit", "-q", "--no-verify", "-m", message)
         return self.head()
 
     def reset_to(self, commit: str) -> None:
@@ -94,13 +98,34 @@ class Worktree:
     def diff(self, since: str, until: str = "HEAD") -> str:
         return self.git("diff", f"{since}..{until}")
 
+    def name_status(self, since: str, until: str = "HEAD") -> list[tuple[str, str, str | None]]:
+        return name_status(self.path, since, until)
 
-def create_worktree(root: Path, worktrees_dir: Path, run_id: str, base: str) -> Worktree:
+
+def name_status(cwd: Path, since: str, until: str) -> list[tuple[str, str, str | None]]:
+    """(estado, ruta, ruta nueva) de `git diff --name-status -M`; en renombrados, la ruta es la
+    original y la nueva va aparte."""
+    entries = []
+    for line in git(cwd, "diff", "--name-status", "-M", f"{since}..{until}").splitlines():
+        parts = line.split("\t")
+        if len(parts) == 3:
+            entries.append((parts[0], parts[1], parts[2]))
+        elif len(parts) == 2:
+            entries.append((parts[0], parts[1], None))
+    return entries
+
+
+def create_worktree(
+    root: Path, worktrees_dir: Path, run_id: str, base: str, start_point: str | None = None
+) -> Worktree:
+    """Worktree y rama nuevos. `start_point` (por defecto `base`) permite partir de la punta de
+    otra rama sin perder el commit base original."""
     path = worktrees_dir / run_id
     branch = BRANCH_PREFIX + run_id
     worktrees_dir.mkdir(parents=True, exist_ok=True)
-    git(root, "worktree", "add", "-q", "-b", branch, str(path), base)
-    return Worktree(root=root, path=path, branch=branch, base=base)
+    start = start_point or base
+    git(root, "worktree", "add", "-q", "-b", branch, str(path), start)
+    return Worktree(root=root, path=path, branch=branch, base=base, start=start)
 
 
 def remove_worktree(worktree: Worktree) -> None:

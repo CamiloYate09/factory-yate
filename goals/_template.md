@@ -18,6 +18,8 @@ acceptance:
 scope:
   allow: ["src/**", "tests/**"]
   deny: ["pyproject.toml", "scripts/**", "init.sh"]
+  # protected: ["src/api/**"]          # existentes que no se pueden modificar/borrar/renombrar
+  # allow_modify: ["tests/test_x.py"]  # libera rutas protegidas que este objetivo SÍ debe tocar
 
 # Condiciones de parada. Las que omitas toman el valor de factory.toml ([loop]).
 stop:

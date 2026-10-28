@@ -73,6 +73,7 @@ Defensas que no dependen de los permisos del CLI:
 
 - El maker trabaja en un **worktree fuera del repo** y en su propia rama. El directorio principal no se toca.
 - Tras cada ronda, el orquestador revierte los cambios en rutas fuera de `scope.allow` o dentro de `scope.deny`.
+- Tras cada ronda, también revierte cualquier modificación, borrado o renombrado de archivos protegidos existentes (tests, scripts de verificación, `factory.toml`, `prompts/`). Ver [loops.md](loops.md#rutas-protegidas).
 - Antes y después del checker se compara el estado del árbol. Si cambió, el veredicto se descarta y la ronda falla.
   - Limitación: la huella usa `git status` y `git diff`, así que **no detecta escrituras en archivos ignorados por git**. Por eso el checker también tiene `Edit` y `Write` denegados.
 - Las denegaciones de publicación de ambos roles y la restricción de solo lectura del checker son **obligatorias**: ni `factory.toml` ni `goal.md` pueden quitarlas.

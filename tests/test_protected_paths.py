@@ -1,0 +1,183 @@
+"""Escenarios de `goal-loop`: rutas protegidas (detección y motor)."""
+
+import subprocess
+
+from conftest import make_loop_repo, write_goal
+
+from factory.agents.fake import FakeRunner, FakeStep, maker_done
+from factory.cli import main
+from factory.config import load_config
+from factory.engine import LoopEngine
+from factory.gitops import create_worktree, preflight
+from factory.goal import load_goal
+from factory.protection import Protection, violations
+from factory.util import git
+
+
+def _wt(git_repo):
+    (git_repo / "tests").mkdir()
+    (git_repo / "tests" / "test_a.py").write_text("assert 1 == 1\n")
+    (git_repo / "tests" / "test_b.py").write_text("assert 2 == 2\n")
+    git(git_repo, "add", "-A")
+    git(git_repo, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "tests")
+    base = preflight(git_repo, "main")
+    return create_worktree(git_repo, load_config(git_repo).worktrees_path, "r", base), base
+
+
+PROT = Protection(critical=["factory.toml"], protected=["tests/**"])
+
+
+def test_detecta_modificar_borrar_y_renombrar_pero_no_anadir(git_repo):
+    wt, base = _wt(git_repo)
+    (wt.path / "tests" / "test_a.py").write_text("assert True  # debilitado\n")
+    (wt.path / "tests" / "test_b.py").rename(wt.path / "tests" / "test_b_renombrado.py")
+    (wt.path / "tests" / "test_nuevo.py").write_text("assert 3 == 3\n")
+    wt.snapshot("ronda")
+    entries = wt.name_status(base)
+    found = {(v.path, v.change) for v in violations(entries, PROT)}
+    assert found == {("tests/test_a.py", "modificado"), ("tests/test_b.py", "renombrado")}
+
+
+def test_borrado_de_archivo_protegido(git_repo):
+    wt, base = _wt(git_repo)
+    (wt.path / "tests" / "test_a.py").unlink()
+    wt.snapshot("ronda")
+    assert [str(v) for v in violations(wt.name_status(base), PROT)] == ["tests/test_a.py (borrado)"]
+
+
+def test_archivo_creado_y_luego_modificado_no_es_violacion(git_repo):
+    wt, base = _wt(git_repo)
+    (wt.path / "tests" / "test_nuevo.py").write_text("x = 1\n")
+    wt.snapshot("ronda 1")
+    (wt.path / "tests" / "test_nuevo.py").write_text("x = 2\n")
+    wt.snapshot("ronda 2")
+    assert violations(wt.name_status(base), PROT) == []
+
+
+def test_liberadas_y_criticas():
+    prot = Protection(critical=["factory.toml"], protected=["tests/**"], released=["tests/a.py"])
+    assert not prot.is_protected("tests/a.py") and prot.is_protected("tests/b.py")
+    assert prot.is_protected("factory.toml")
+
+
+# ---------------------------------------------------------------- escenarios con el motor
+
+
+def _protected_repo(tmp_path, toml='[loop]\nprotected_paths = ["tests/**"]\n'):
+    root = make_loop_repo(tmp_path)
+    (root / "tests").mkdir()
+    (root / "tests" / "test_a.py").write_text("assert 1 == 1\n")
+    (root / "tests" / "test_b.py").write_text("assert 2 == 2\n")
+    (root / "scripts").mkdir()
+    check = root / "scripts" / "check.sh"
+    check.write_text("#!/usr/bin/env bash\nexit 0\n")
+    check.chmod(0o755)
+    (root / "factory.toml").write_text(toml)
+    subprocess.run(["git", "add", "-A"], cwd=root, check=True)
+    subprocess.run(["git", "commit", "-qm", "tests"], cwd=root, check=True)
+    return root
+
+
+def _run(root, runner, extra="", files=("a.txt",), max_rounds=3):
+    config = load_config(root)
+    goal = load_goal(write_goal(root, files=files, extra=extra, max_rounds=max_rounds), config.loop)
+    return LoopEngine(config, goal, runner, echo=lambda _: None).run()
+
+
+def test_el_maker_modifica_un_test_existente_protegido(tmp_path):
+    root = _protected_repo(tmp_path)
+    runner = FakeRunner(
+        maker=[
+            maker_done("debilito", **{"a.txt": "1", "tests/test_a.py": "assert True\n"}),
+            maker_done("bien", **{"a.txt": "1"}),
+        ]
+    )
+    state = _run(root, runner)
+    first = state.rounds[0]
+    assert first.decision == "protected_revert"
+    assert first.protected_violations == ["tests/test_a.py (modificado)"]
+    assert "tests/test_a.py (modificado)" in runner.calls_for("maker")[1].prompt
+    assert git(root, "show", f"{state.branch}:tests/test_a.py") == "assert 1 == 1"
+    assert state.status == "completed"
+
+
+def test_el_maker_anade_un_test_nuevo(tmp_path):
+    root = _protected_repo(tmp_path)
+    runner = FakeRunner(maker=[maker_done("nuevo", **{"a.txt": "1", "tests/test_c.py": "x = 1\n"})])
+    state = _run(root, runner)
+    assert state.rounds[0].decision == "keep" and state.status == "completed"
+    assert "tests/test_c.py" in git(root, "ls-tree", "-r", "--name-only", state.branch)
+
+
+def test_renombrar_un_archivo_protegido(tmp_path):
+    root = _protected_repo(tmp_path)
+
+    def rename(request):
+        (request.cwd / "tests" / "test_b.py").rename(request.cwd / "tests" / "test_b2.py")
+
+    runner = FakeRunner(
+        maker=[
+            FakeStep(output={"status": "done", "summary": "renombro"}, action=rename),
+            maker_done("bien", **{"a.txt": "1"}),
+        ]
+    )
+    state = _run(root, runner)
+    assert state.rounds[0].protected_violations == ["tests/test_b.py (renombrado)"]
+
+
+def test_el_maker_edita_el_script_de_verificacion(tmp_path):
+    root = _protected_repo(tmp_path, toml="")
+    criteria = "  - name: check\n    run: ./scripts/check.sh\n  - name: a\n    run: test -f a.txt\n"
+    runner = FakeRunner(
+        maker=[
+            maker_done("trampa", **{"a.txt": "1", "scripts/check.sh": "#!/bin/sh\nexit 0 # x\n"}),
+            maker_done("bien", **{"a.txt": "1"}),
+        ]
+    )
+    config = load_config(root)
+    goal = load_goal(write_goal(root, criteria=criteria), config.loop)
+    state = LoopEngine(config, goal, runner, echo=lambda _: None).run()
+    assert state.rounds[0].protected_violations == ["scripts/check.sh (modificado)"]
+
+
+def test_objetivo_que_debe_actualizar_un_test_existente(tmp_path):
+    root = _protected_repo(tmp_path)
+    text_goal = write_goal(root)
+    content = text_goal.read_text().replace(
+        'scope:\n  allow: ["**"]\n',
+        'scope:\n  allow: ["**"]\n  allow_modify: ["tests/test_a.py"]\n',
+    )
+    text_goal.write_text(content)  # el objetivo libera solo tests/test_a.py
+    runner = FakeRunner(
+        maker=[
+            maker_done("actualizo a", **{"a.txt": "1", "tests/test_a.py": "assert 10 == 10\n"}),
+        ]
+    )
+    config = load_config(root)
+    state = LoopEngine(config, load_goal(text_goal, config.loop), runner, echo=lambda _: None).run()
+    assert state.rounds[0].decision == "keep" and state.status == "completed"
+    runner_b = FakeRunner(
+        maker=[maker_done("toco b", **{"a.txt": "1", "tests/test_b.py": "assert 0 == 0\n"})]
+    )
+    state_b = LoopEngine(
+        config, load_goal(text_goal, config.loop), runner_b, echo=lambda _: None
+    ).run()
+    assert state_b.rounds[0].protected_violations == ["tests/test_b.py (modificado)"]
+
+
+def test_simulacion_muestra_la_proteccion_efectiva(tmp_path, capsys):
+    root = _protected_repo(tmp_path)
+    goal = write_goal(root)
+    goal.write_text(
+        goal.read_text().replace(
+            'scope:\n  allow: ["**"]\n',
+            'scope:\n  allow: ["**"]\n  allow_modify: ["tests/test_a.py"]\n',
+        )
+    )
+    assert main(["--root", str(root), "goal", "run", str(goal), "--dry-run"]) == 0
+    out = capsys.readouterr().out
+    assert (
+        "Rutas protegidas (críticas, siempre): feature_list.json, factory.toml, prompts/**" in out
+    )
+    assert "Rutas protegidas (configuración/objetivo): tests/**" in out
+    assert "Liberadas por el objetivo: tests/test_a.py" in out

@@ -16,7 +16,8 @@ CONFIG_FILE = "factory.toml"
 VALID_PERMISSION_MODES = ("acceptEdits", "auto", "manual", "dontAsk", "plan")
 FORBIDDEN_PERMISSION_MODES = ("bypassPermissions",)
 
-ROLES = ("maker", "checker")
+ROLES = ("maker", "checker", "intake")
+READ_ONLY_ROLES = ("checker", "intake")
 
 
 class ConfigError(ValueError):
@@ -49,6 +50,8 @@ class LoopConfig:
     state_dir: str = ".factory"
     # Vacío: ../<repo>.factory-worktrees (fuera del árbol del repo; diseño D5).
     worktrees_dir: str = ""
+    # Globs de archivos existentes que una ronda no puede modificar, borrar ni renombrar.
+    protected_paths: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -101,6 +104,7 @@ CHECKER_READ_ONLY = ("Read", "Glob", "Grep")
 MANDATORY_DENIED = {
     "maker": [*PUBLISH_DENIED, "Edit(feature_list.json)", "Write(feature_list.json)"],
     "checker": ["Edit", "Write", "NotebookEdit", "Bash", *PUBLISH_DENIED],
+    "intake": ["Edit", "Write", "NotebookEdit", "Bash", *PUBLISH_DENIED],
 }
 
 
@@ -110,7 +114,7 @@ def enforce_role_policy(name: str, role: RoleConfig) -> RoleConfig:
     denied = list(role.denied_tools)
     denied += [tool for tool in MANDATORY_DENIED[name] if tool not in denied]
     allowed = list(role.allowed_tools)
-    if name == "checker":
+    if name in READ_ONLY_ROLES:
         allowed = [tool for tool in allowed if tool in CHECKER_READ_ONLY]
     return RoleConfig(role.model, role.prompt, role.permission_mode, allowed, denied)
 
@@ -137,6 +141,14 @@ def default_roles() -> dict[str, RoleConfig]:
         "checker": RoleConfig(
             model="opus",
             prompt="prompts/checker.md",
+            permission_mode="dontAsk",
+            allowed_tools=["Read", "Glob", "Grep"],
+            denied_tools=["Edit", "Write", "NotebookEdit", "Bash", *PUBLISH_DENIED],
+        ),
+        # Triaje de peticiones: una sola invocación por petición, solo lectura (request-intake).
+        "intake": RoleConfig(
+            model="opus",
+            prompt="prompts/intake.md",
             permission_mode="dontAsk",
             allowed_tools=["Read", "Glob", "Grep"],
             denied_tools=["Edit", "Write", "NotebookEdit", "Bash", *PUBLISH_DENIED],

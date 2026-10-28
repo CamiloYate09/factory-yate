@@ -10,34 +10,110 @@ Una "fábrica" para que los agentes de codificación (Claude Code) trabajen **de
 
 El humano pasa de escribir cada instrucción a definir objetivos y revisar resultados. Los loops nunca integran en `main` ni hacen push.
 
-## Inicio rápido
+## Qué necesitas en tu computador
 
-Requiere Python ≥ 3.12 y git.
+| Herramienta | Versión | Para qué | Comprobar |
+|---|---|---|---|
+| macOS o Linux | — | `bash`, `flock` y worktrees de git (Windows solo con WSL) | — |
+| Python | ≥ 3.12 | el CLI `factory` y sus tests | `python3 --version` |
+| git | ≥ 2.30 | ramas y worktrees de cada ejecución | `git --version` |
+| Claude Code (`claude`) | ≥ 2.1, con sesión iniciada | **solo** para los loops reales (`goal run`, `tick` con fallo, `intake`); cuestan dinero | `claude --version` |
+| OpenSpec (`openspec`) | opcional | planificar cambios con `/opsx:*` | `openspec --version` |
+| uv | opcional | si está instalado, `init.sh` lo usa en lugar de `pip` | `uv --version` |
+
+## Paso a paso
+
+### A. Poner en marcha factory-yate en un equipo nuevo
 
 ```bash
-./init.sh                          # crea .venv, instala y ejecuta la verificación de referencia
-./scripts/check.sh                 # verificación completa: lint, formato, tests y auditoría del harness
-.venv/bin/factory doctor           # estado del harness por subsistema
-.venv/bin/factory features list    # features por prioridad y estado
+git clone <url-de-tu-repo> factory-yate     # o copia la carpeta del proyecto
+cd factory-yate
+./init.sh                                    # crea .venv, instala y verifica (debe terminar en "Verificación completa: OK")
+.venv/bin/factory --version                  # factory 0.1.0
+.venv/bin/factory doctor                     # 0 críticas fallidas
+source .venv/bin/activate                    # opcional: usar `factory` sin escribir .venv/bin/
 ```
 
-Los loops reales necesitan además el CLI `claude` (Claude Code ≥ 2.1) en el `PATH` y al menos un commit en `main`.
+Si vas a usar loops reales, abre `claude` una vez para iniciar sesión y comprueba `claude --version`.
 
-## Usar factory en otro repositorio
+### B. Instalar `factory` para usarlo desde otros proyectos
+
+`factory` vive en el `.venv` de factory-yate. Para usarlo en otros repos sin depender de esa carpeta, instálalo en un entorno propio:
 
 ```bash
-.venv/bin/factory init --target ../otro-proyecto                      # detecta Makefile / package.json / pyproject
-.venv/bin/factory init --target ../otro-proyecto --commands "make lint,make test"
-.venv/bin/factory --root ../otro-proyecto doctor                       # auditoría por subsistema (--json para CI)
+python3 -m venv ~/.factory-venv
+~/.factory-venv/bin/pip install /ruta/a/factory-yate     # instalación normal (no editable)
+export PATH="$HOME/.factory-venv/bin:$PATH"              # añádelo a ~/.zshrc o ~/.bashrc
+factory --version
 ```
 
-`factory init` crea el harness mínimo: `AGENTS.md`, `CLAUDE.md`, `feature_list.json`, `progress.md`, `session-handoff.md`, `init.sh`, `scripts/check.sh`, `factory.toml`, los prompts de los roles, la plantilla de objetivo y la checklist de clean state.
+También puedes llamarlo con la ruta completa: `/ruta/a/factory-yate/.venv/bin/factory`.
 
-- **Archivos existentes**: **no sobrescribe** ninguno sin `--force`; los omitidos aparecen en la salida.
-- **Marcadores**: los textos `TODO(factory)` que hay que completar se listan al terminar.
-- **Verificación**: los comandos detectados, o los que pases con `--commands`, se agrupan en `scripts/check.sh`, la ruta única. Si no se detecta ninguno, la verificación falla a propósito hasta que los definas.
+### C. Aplicar el harness a otro proyecto
 
-`factory doctor` evalúa los cinco subsistemas (instrucciones, estado, verificación, alcance y ciclo de vida). Marca cada comprobación como crítica o recomendada y le adjunta una acción concreta. Señala el subsistema más débil y sale con un código distinto de cero si falla alguna crítica.
+```bash
+cd /ruta/a/otro-proyecto
+git init -b main                                  # si aún no es un repo git
+factory init --target .                           # detecta Makefile / package.json / pyproject
+# o, indicando tú la verificación:
+factory init --target . --commands "make lint,make test"
+```
+
+Después:
+
+1. Completa los marcadores `TODO(factory)` que lista la salida: la descripción en `AGENTS.md`, la feature de ejemplo en `feature_list.json` y la línea de instalación de `init.sh`.
+   - **Ojo en proyectos Python:** la línea detectada es `python3 -m pip install -e .`, que instala en el Python **global**. Cámbiala por un entorno virtual, por ejemplo `python3 -m venv .venv && .venv/bin/pip install -e .`.
+2. `./init.sh` debe terminar en 0.
+3. `factory --root . doctor` no debe mostrar críticas fallidas.
+4. `git add -A && git commit -m "Harness de factory"`. Los loops necesitan al menos un commit en `main`.
+5. Recomendado: protege tus tests en `factory.toml` con `protected_paths = ["tests/**"]`, para que ningún loop pueda debilitar o borrar los existentes (sí puede añadir nuevos).
+
+`factory init` crea `AGENTS.md`, `CLAUDE.md`, `feature_list.json`, `progress.md`, `session-handoff.md`, `init.sh`, `scripts/check.sh`, `factory.toml`, los prompts de los roles, la plantilla de objetivo y la checklist de clean state.
+
+- **Archivos existentes:** **no sobrescribe** ninguno sin `--force`; los omitidos aparecen en la salida.
+- **Verificación:** los comandos detectados, o los de `--commands`, se agrupan en `scripts/check.sh`, la ruta única. Si no se detecta ninguno, la verificación falla a propósito hasta que la definas.
+- **`factory doctor`:** evalúa los cinco subsistemas (instrucciones, estado, verificación, alcance y ciclo de vida) y sale con código distinto de cero si falla alguna comprobación crítica.
+
+### D. Primer objetivo con un loop
+
+```bash
+cp goals/_template.md goals/mi-objetivo.md        # edita objetivo, criterios (comandos), alcance y límites
+factory goal validate goals/mi-objetivo.md        # límites efectivos
+factory goal run goals/mi-objetivo.md --dry-run   # plan completo, sin agentes ni coste
+factory goal run goals/mi-objetivo.md             # ejecución real (cuesta dinero)
+factory inbox list                                # resultado pendiente de tu revisión
+factory status                                    # ejecuciones y costes silenciosos
+```
+
+El resultado queda en una rama `factory/<run-id>`. El loop **nunca** integra en `main` ni hace push.
+
+### E. Revisar el resultado y continuar
+
+```bash
+factory inbox list                                     # qué terminó y por qué
+cat .factory/runs/<run-id>/decision.md                 # RESULT, REASON, BRANCH, BEST_ROUND
+cat .factory/runs/<run-id>/rounds/1/checks.md          # verificación de cada ronda (también maker.md y review.md)
+git diff main...factory/<run-id>                       # qué cambió
+factory goal rework <run-id> --answer "tu respuesta"   # si quedó bloqueada o sin terminar: continúa desde su rama
+factory land <run-id> --dry-run                        # si terminó completed: verifica el merge sobre el main actual
+factory land <run-id>                                  # e integra en main (merge --no-ff, sin push; marca la bandeja)
+```
+
+Para descartar una ejecución: `git branch -D factory/<run-id>` y `factory inbox ack <run-id>`.
+
+### F. De una idea a un objetivo, con triaje (opcional)
+
+Si prefieres describir lo que quieres en lenguaje natural en lugar de escribir el `goal.md`:
+
+```bash
+factory intake "Añade la función restar con su test"          # ACCEPT → borrador en goals/drafts/
+factory intake --answer <request-id> "tu respuesta"           # si contestó NEEDS-INFO
+factory goal promote goals/drafts/<id>.md                     # revisa los comandos que se ejecutarían
+factory goal promote goals/drafts/<id>.md --yes               # crea goals/<id>.md
+factory goal run goals/<id>.md --dry-run                      # y sigue con el paso D
+```
+
+El intake usa `claude` (cuesta dinero), solo lee el repo y nunca ejecuta comandos. Un borrador no se puede ejecutar hasta que lo promueves.
 
 ## Loops
 
@@ -58,7 +134,7 @@ Ver [docs/harness/loops.md](docs/harness/loops.md):
 | `init.sh`, `scripts/check.sh` | rutas estándar de arranque y verificación |
 | `src/factory/` | paquete y CLI `factory` |
 | `.claude/agents/checker.md` | revisor independiente de solo lectura para sesiones interactivas |
-| `openspec/` | specs y cambios. El plan de este trabajo está en `openspec/changes/add-harness-loop-engine/` |
+| `openspec/` | specs principales en `openspec/specs/`; el cambio que construyó todo esto está archivado en `openspec/changes/archive/2026-10-27-add-harness-loop-engine/` |
 
 ## Reglas clave
 
