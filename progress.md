@@ -7,10 +7,8 @@
 - Verificación estándar: `./scripts/check.sh`.
 - Cambio OpenSpec en curso: `openspec/changes/add-harness-loop-engine/`. Progreso en su `tasks.md`.
 - Feature activa / siguiente: ver `.venv/bin/factory features list`.
-- Bloqueos actuales:
-  - `main` no tiene commits; el commit inicial (tarea 3.9) espera aprobación humana.
-  - Sin ese commit no se puede ejecutar ningún loop real (`factory goal run` / `factory tick` con fallo), ni el dogfooding (9.3), ni la parte de clonado de la prueba de arranque en frío (3.10).
-  - La evidencia de todas las features tiene `commit: sin-commit`.
+- Commits: `d7c3d5b` (commit inicial) y `9d74594` (evidencia de las features con hash real).
+- Bloqueos actuales: la prueba live (9.2) no está aprobada. El contrato de `--json-schema` se valida con el dogfooding (9.3).
 
 ## Registro de sesiones
 
@@ -81,3 +79,31 @@
   - repetir `factory features verify` para registrar los hashes;
   - ejecutar 3.10 desde un clon;
   - lanzar el dogfooding (9.3).
+
+### Sesión 003 — 2026-10-27
+
+- Objetivo: tareas 3.9, 3.10 y 9.3 (aprobadas).
+- Completado:
+  - commit inicial `d7c3d5b`;
+  - repetición de `factory features verify` en las 6 features (la evidencia apunta a `d7c3d5b`) y commit `9d74594`.
+- Verificación ejecutada:
+  - `git clone` en el scratchpad y `./init.sh` → código 0 (doctor sin fallos).
+  - Sesión nueva (haiku, solo lectura) sobre el clon: respondió las 5 preguntas (0,008 USD). Detectó que este `progress.md` decía "sin commits" → corregido aquí.
+- Dogfooding 9.3 (`goals/dogfood-cli-help.md`), ejecución `20261028-040428-dogfood-cli-help-90b9`:
+  - Resultado: `completed` en 1 ronda y 41 s, por 0,4468 USD (tope 1,00 USD). Maker `claude-sonnet-5-5` con 0,13 USD y 4 turnos; checker `claude-opus-5-5` con 0,31 USD y 6 turnos.
+  - Base: 1 de 3 criterios fallaba (el test no existía). Ronda 1: 3 de 3, checker `pass_with_minor`, decisión `keep`.
+  - Rama: `factory/20261028-040428-dogfood-cli-help-90b9` (commit `ed18856`, añade `tests/test_cli_help.py`, +16 líneas). `main` sigue en `9d74594`. El worktree hermano se eliminó y queda una entrada pendiente en la bandeja.
+  - Contrato del CLI confirmado con una ejecución real: `--json-schema` devolvió una salida estructurada válida para ambos roles. No hubo `permission_denials` ni bloqueos por confianza en el worktree fuera del repo. `modelUsage` confirma modelos distintos por rol. No se registró en qué clave exacta llegó la salida (campo estructurado o JSON en `result`); el adaptador acepta las dos.
+- Retrospectiva (proyecto 07):
+  - Intervenciones humanas durante la ejecución: 0.
+  - El checker detectó 2 problemas `minor`, ambos válidos:
+    - la lista de subcomandos está escrita a mano y no se contrasta con `build_parser`;
+    - la comprobación `"  nombre" in texto` es una subcadena laxa.
+  - El checker no pasó por alto ningún problema mayor visible: el test es pequeño y correcto.
+  - Límite observado: `pass_with_minor` aprueba la ronda, así que los `minor` no generan una segunda ronda. Corregirlos queda a criterio humano al revisar la rama. Si se quieren corregir automáticamente, sube `consecutive_passes` o trata `minor` como bloqueante en un objetivo concreto.
+  - Techo de calidad del loop: lo marca el criterio del checker, más que la capacidad del maker. Con criterios deterministas más finos (por ejemplo, contrastar con los subparsers) el maker habría tenido que hacerlo así.
+  - Coste vs. valor: 0,45 USD y unos 40 s por un test pequeño. Para tareas triviales sale más caro que hacerlo a mano. Rinde en tareas medianas con criterios claros.
+- Pendiente para el humano:
+  - revisar y decidir la rama del dogfooding (`factory inbox ack <run-id>` al terminar);
+  - hacer commit de `progress.md`, `tasks.md` y `goals/dogfood-cli-help.md`, que no están commiteados;
+  - decidir la prueba live 9.2, que no está aprobada.

@@ -67,8 +67,8 @@
 - [x] 3.6 Poblar `feature_list.json` con las features de la fase 2: una por cada grupo del 4 al 8, cada una con sus comandos de verificación (`pytest tests/<archivo>`). Verificar que `factory features validate` pasa.
 - [x] 3.7 Añadir `factory doctor` a `scripts/check.sh`, ahora que existen todos los artefactos. Verificar que `./scripts/check.sh` termina en 0, que poner a mano una feature en `passing` sin evidencia lo hace fallar identificando la feature, y que vuelve a verde al revertirlo.
 - [x] 3.8 Escribir `README.md`: qué es factory-yate, las fases, el inicio rápido y la atribución al curso walkinglabs/learn-harness-engineering (MIT). Verificar que los comandos del inicio rápido se ejecutan tal como están escritos.
-- [ ] 3.9 **Con aprobación explícita del usuario**, hacer el commit inicial en `main` con todo el harness. Es un prerrequisito para los worktrees de la fase 2. Verificar que `git log --oneline` muestra el commit y `git status` está limpio.
-- [ ] 3.10 Hacer la prueba de arranque en frío:
+- [x] 3.9 **Con aprobación explícita del usuario**, hacer el commit inicial en `main` con todo el harness. Es un prerrequisito para los worktrees de la fase 2. Verificar que `git log --oneline` muestra el commit y `git status` está limpio.
+- [x] 3.10 Hacer la prueba de arranque en frío:
   - clonar el repo en un directorio temporal y ejecutar `./init.sh`, que debe terminar en 0;
   - una sesión nueva debe responder solo con artefactos del repo qué es el proyecto, cómo arrancar, cómo verificar, cuál es la siguiente feature y qué riesgos hay.
 
@@ -185,7 +185,7 @@
   - si el resultado JSON expone las herramientas denegadas, para registrarlas en `events.jsonl` cuando sea posible;
 
   además, comprueba en el worktree hermano el escenario "Instrucciones de la rama de la ejecución". Verificar que la prueba pasa y registrar la evidencia en `progress.md`.
-- [ ] 9.3 **Con aprobación del usuario para el gasto** (2 USD o menos): hacer dogfooding con un `factory goal run` real sobre un objetivo pequeño de este repo. Revisar la entrada de la bandeja y la rama resultante, y escribir la retrospectiva del proyecto 07 en `progress.md`: intervenciones, problemas que el checker detectó o pasó por alto, coste y límites del loop. Verificar que `main` no cambió sin decisión humana.
+- [x] 9.3 **Con aprobación del usuario para el gasto** (2 USD o menos): hacer dogfooding con un `factory goal run` real sobre un objetivo pequeño de este repo. Revisar la entrada de la bandeja y la rama resultante, y escribir la retrospectiva del proyecto 07 en `progress.md`: intervenciones, problemas que el checker detectó o pasó por alto, coste y límites del loop. Verificar que `main` no cambió sin decisión humana.
 
 ## Workflow follow-up
 
