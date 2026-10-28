@@ -5,7 +5,7 @@
 - Raíz del repositorio: `factory-yate/`, la que contiene `AGENTS.md`.
 - Arranque estándar: `./init.sh`.
 - Verificación estándar: `./scripts/check.sh`.
-- OpenSpec: specs principales en `openspec/specs/` (6 capacidades). El cambio `add-harness-loop-engine` está archivado. Cambio activo: `extend-factory-pipeline` (22/22 tareas, pendiente de archivar).
+- OpenSpec: specs principales en `openspec/specs/` (8 capacidades). Cambios archivados: `2026-10-27-add-harness-loop-engine` y `2026-10-28-extend-factory-pipeline`. No hay cambios activos.
 - Feature activa / siguiente: ver `.venv/bin/factory features list`.
 - Commits: `d7c3d5b` (commit inicial) y `9d74594` (evidencia de las features con hash real).
 - Bloqueos actuales: la prueba live (9.2) no está aprobada. El contrato de `--json-schema` se valida con el dogfooding (9.3).
@@ -133,4 +133,5 @@
 - Riesgos / pendientes:
   - Ningún cambio de esta sesión está commiteado.
   - El `init.sh` que genera `factory init` en proyectos Python instala con pip en el Python global; queda como mejora fuera de alcance (avisado en el README).
-- Mejor próximo paso: `/opsx:archive extend-factory-pipeline`. Después, opcionalmente, `factory goal run goals/en-repos-con-pyproject-toml-factory.md` (real, con coste) y `factory land`.
+- Archivado: `extend-factory-pipeline` en `openspec/changes/archive/2026-10-28-extend-factory-pipeline/`, con specs sincronizadas (goal-loop +4, loop-state +2, run-landing y request-intake nuevas).
+- Mejor próximo paso: opcionalmente, `factory goal run goals/en-repos-con-pyproject-toml-factory.md` (real, con coste) y `factory land`.
