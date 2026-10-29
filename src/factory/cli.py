@@ -91,6 +91,23 @@ def cmd_doctor(args: argparse.Namespace) -> int:
     return EXIT_OK if report.ok else EXIT_FAIL
 
 
+def cmd_complexity(args: argparse.Namespace) -> int:
+    from factory import complexity
+
+    try:
+        informe = complexity.analizar(args.root, args.rutas, base=args.base, umbral=args.max)
+    except complexity.ComplexityError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return EXIT_USAGE
+    if args.json:
+        print(json.dumps(informe.to_dict(), indent=2, ensure_ascii=False))
+    else:
+        for aviso in informe.avisos:
+            print(f"aviso: {aviso}", file=sys.stderr)
+        print(complexity.render(informe))
+    return EXIT_FAIL if informe.superan else EXIT_OK
+
+
 def _goal_path(args: argparse.Namespace) -> Path:
     path = Path(args.goal)
     return path if path.is_absolute() else (Path.cwd() / path).resolve()
@@ -656,6 +673,31 @@ def build_parser() -> argparse.ArgumentParser:
 
     stat = sub.add_parser("status", help="ejecuciones e indicadores de costes silenciosos")
     stat.set_defaults(handler=cmd_status)
+
+    cx = sub.add_parser(
+        "complexity", help="complejidad ciclomática por función (rangos A–F y delta frente a REF)"
+    )
+    cx.add_argument(
+        "rutas",
+        nargs="*",
+        metavar="RUTAS",
+        help="archivos o directorios (por defecto, los *.py versionados)",
+    )
+    cx.add_argument(
+        "--base",
+        default=None,
+        metavar="REF",
+        help="solo los *.py cambiados frente a REF, con su complejidad en REF y el delta",
+    )
+    cx.add_argument(
+        "--max",
+        type=int,
+        default=None,
+        metavar="N",
+        help="termina en 1 si alguna función del alcance supera N",
+    )
+    cx.add_argument("--json", action="store_true", help="salida estructurada (JSON)")
+    cx.set_defaults(handler=cmd_complexity)
 
     doc = sub.add_parser("doctor", help="audita el harness en sus cinco subsistemas")
     doc.add_argument("--json", action="store_true", help="salida estructurada (JSON)")
