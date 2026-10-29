@@ -91,4 +91,4 @@ Maker, checker e intake reciben `--add-dir <ruta absoluta>` por cada cerebro exi
 Comprobado con `claude -p` real (Claude Code, `acceptEdits`): un `Write` nuevo y un `Edit` sobre una nota existente del cerebro quedan en `permission_denials` sin tocar nada, y la lectura sí funciona. El `CLAUDE.md` o `AGENTS.md` de un cerebro **no** se carga en el contexto por estar en `--add-dir`: el agente solo lo ve si lo abre. Las rutas se resuelven (enlaces incluidos) para que `--add-dir` y las denegaciones usen exactamente la misma.
 
 ---
-Diseño en `openspec/changes/add-knowledge-brains/` (pasará a `openspec/specs/` al archivarse).
+Requisitos en `openspec/specs/{main-brain,daily-brain,brain-retrieval}/`; diseño en `openspec/changes/archive/2026-10-28-add-knowledge-brains/`.

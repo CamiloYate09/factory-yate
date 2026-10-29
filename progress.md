@@ -5,7 +5,7 @@
 - Raíz del repositorio: `factory-yate/`, la que contiene `AGENTS.md`.
 - Arranque estándar: `./init.sh`.
 - Verificación estándar: `./scripts/check.sh`.
-- OpenSpec: specs principales en `openspec/specs/` (8 capacidades). Cambios archivados: `2026-10-27-add-harness-loop-engine` y `2026-10-28-extend-factory-pipeline`. Cambio activo: `add-knowledge-brains` (20/20 tareas, commiteado, sin archivar; ver sesión 005).
+- OpenSpec: specs principales en `openspec/specs/` (11 capacidades). Cambios archivados: `2026-10-27-add-harness-loop-engine`, `2026-10-28-extend-factory-pipeline` y `2026-10-28-add-knowledge-brains`. No hay cambios activos.
 - Feature activa / siguiente: ver `.venv/bin/factory features list`.
 - Commits: `d7c3d5b` (commit inicial) y `9d74594` (evidencia de las features con hash real).
 - Bloqueos actuales: la prueba live (9.2) no está aprobada. El contrato de `--json-schema` se valida con el dogfooding (9.3).
@@ -184,4 +184,5 @@
 - Incidencia: durante la sesión apareció `/ba` delante de la primera línea de `factory.toml` (tecleo accidental, no generado por factory), lo que rompía el TOML. Se quitó con el visto bueno del usuario.
 - Riesgos / pendientes:
   - Sigue pendiente la decisión humana sobre `factory land` de la ejecución `20261028-052249-en-repos-con-pyproject-toml-factory-a254` (venv en `init.sh`), y luego quitar del README el aviso sobre pip global.
-- Mejor próximo paso: archivar con `/opsx:archive add-knowledge-brains`.
+- Archivado: `add-knowledge-brains` en `openspec/changes/archive/2026-10-28-add-knowledge-brains/`, con specs sincronizadas (`main-brain`, `daily-brain` y `brain-retrieval`, nuevas; 21 requisitos).
+- Mejor próximo paso: decidir `factory land` de la ejecución del venv en `init.sh` y, opcionalmente, empezar a alimentar el cerebro diario con `factory brain learn`.

@@ -169,7 +169,7 @@ Ver [docs/harness/loops.md](docs/harness/loops.md):
 | `init.sh`, `scripts/check.sh` | rutas estándar de arranque y verificación |
 | `src/factory/` | paquete y CLI `factory` |
 | `.claude/agents/checker.md` | revisor independiente de solo lectura para sesiones interactivas |
-| `openspec/` | specs principales en `openspec/specs/` (8 capacidades); los cambios que construyeron todo esto están en `openspec/changes/archive/` |
+| `openspec/` | specs principales en `openspec/specs/` (11 capacidades); los cambios que construyeron todo esto están en `openspec/changes/archive/` |
 
 ## Reglas clave
 
