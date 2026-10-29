@@ -29,9 +29,9 @@
 
 ## 5. Técnico (`team-coach`)
 
-- [ ] 5.1 Escribir el reglamento del partido en `.claude/skills/equipo/SKILL.md` (D4: convocatoria, fases, partido de revisión, acta, límite de 3 vueltas y árbitro). Verificar con `pytest tests/test_team_tecnico.py`, escenarios "Convocatoria parcial justificada", "El técnico amplía la sugerencia", "Pregunta abierta antes de construir", "Informe de complejidad para métricas", "Revisión de una rama de un loop", "Acta con un hallazgo medio" y "Acta en verde antes de terminar la feature" (contrato del reglamento).
-- [ ] 5.2 Crear `.claude/agents/tecnico.md` (`tipo: tecnico`, sin `dorsal`). Verificar con `pytest tests/test_team_tecnico.py`, escenario "Técnico sin escritura", y con una prueba real en haiku (≤ 0,05 USD) limitada a la fase de convocatoria.
-- [ ] 5.3 Completar `docs/harness/equipo.md`: plantilla, formación, vacantes con perfiles sugeridos, cómo fichar, árbitro y costes.
+- [x] 5.1 Escribir el reglamento del partido en `.claude/skills/equipo/SKILL.md` (D4: convocatoria, fases, partido de revisión, acta, límite de 3 vueltas y árbitro). Verificar con `pytest tests/test_team_tecnico.py`, escenarios "Convocatoria parcial justificada", "El técnico amplía la sugerencia", "Pregunta abierta antes de construir", "Informe de complejidad para métricas", "Revisión de una rama de un loop", "Acta con un hallazgo medio" y "Acta en verde antes de terminar la feature" (contrato del reglamento).
+- [x] 5.2 Crear `.claude/agents/tecnico.md` (`tipo: tecnico`, sin `dorsal`). Verificar con `pytest tests/test_team_tecnico.py`, escenario "Técnico sin escritura", y con una prueba real en haiku (≤ 0,05 USD) limitada a la fase de convocatoria.
+- [x] 5.3 Completar `docs/harness/equipo.md`: plantilla, formación, vacantes con perfiles sugeridos, cómo fichar, árbitro y costes.
 
 ## 6. Constructores (`team-builders`)
 
