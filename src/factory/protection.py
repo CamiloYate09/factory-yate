@@ -1,8 +1,9 @@
 """Rutas protegidas (spec goal-loop): una rama no puede modificar, borrar ni renombrar archivos
 existentes protegidos, aunque sí crear archivos nuevos en esas rutas.
 
-Los archivos críticos del harness (lo que define cómo se juzga una rama) están siempre
-protegidos y ningún objetivo ni configuración puede liberarlos.
+Los archivos críticos del harness (lo que define cómo se juzga una rama, y los sub-agentes y
+skills de Claude Code de `.claude/agents/` y `.claude/skills/`, como el equipo ideal) están
+siempre protegidos y ningún objetivo ni configuración puede liberarlos.
 """
 
 from __future__ import annotations
@@ -14,9 +15,22 @@ from pathlib import Path
 
 from factory.globs import matches
 
-STATIC_CRITICAL = ("feature_list.json", "factory.toml", "prompts/**")
+STATIC_CRITICAL = (
+    "feature_list.json",
+    "factory.toml",
+    "prompts/**",
+    ".claude/agents/**",
+    ".claude/skills/**",
+)
 # Rutas de ejemplo para detectar un `allow_modify` que liberaría algún crítico estático.
-CRITICAL_SAMPLES = ("feature_list.json", "factory.toml", "prompts/maker.md", "prompts/x/y.md")
+CRITICAL_SAMPLES = (
+    "feature_list.json",
+    "factory.toml",
+    "prompts/maker.md",
+    "prompts/x/y.md",
+    ".claude/agents/x.md",
+    ".claude/skills/x/SKILL.md",
+)
 SHELLS = ("bash", "sh", "zsh")
 # Estados de `git diff --name-status` que alteran un archivo existente. Las altas (A) y las
 # copias (C, el original no cambia) no cuentan.
@@ -24,7 +38,12 @@ ALTERING = {"M": "modificado", "D": "borrado", "T": "cambio de tipo", "R": "reno
 
 
 def releases_critical(pattern: str) -> bool:
-    return any(matches(sample, [pattern]) for sample in CRITICAL_SAMPLES)
+    """¿Liberaría `pattern` algún crítico estático? Lo detecta tanto si el patrón cubre una
+    muestra (`**`, `.claude/**`) como si, leído como ruta, cae dentro de un crítico
+    (`.claude/agents/qa.md`, `prompts/checker.md`)."""
+    if any(matches(sample, [pattern]) for sample in CRITICAL_SAMPLES):
+        return True
+    return matches(pattern, list(STATIC_CRITICAL))
 
 
 def script_path(command: str, root: Path) -> str | None:

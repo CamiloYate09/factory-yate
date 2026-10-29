@@ -150,6 +150,43 @@ knowledge:
 
 El maker recibe las notas más relevantes como texto citado (máximo `[brain] inject_max_tokens`, 3.000 por defecto); el checker no recibe nada.
 
+### H. El equipo ideal (opcional)
+
+Un equipo de sub-agentes de Claude Code, como uno de fútbol: un **técnico** (el orquestador) y hasta 11 jugadores especialistas en `.claude/agents/`. El técnico lee el contexto y decide si convoca a todos o solo a algunos. Detalle en [docs/harness/equipo.md](docs/harness/equipo.md).
+
+| Dorsal | Jugador | Qué hace |
+|---|---|---|
+| — | `tecnico` | orquesta: convoca, reparte el trabajo y redacta el acta |
+| 1 | `seguridad` | revisa la seguridad del diff (solo lectura) |
+| 2 | `qa` | plan de pruebas y cobertura (solo lectura) |
+| 3 | `documentador` | actualiza la documentación (solo `*.md`) |
+| 4 | `revisor-pr` | revisa ramas y PR propios o ajenos (solo lectura) |
+| 5 | `metricas` | complejidad ciclomática del cambio (solo lectura) |
+| 6 | `producto` | preguntas y respuestas frente a la petición de producto (solo lectura) |
+| 9 | `ingeniero-software` | implementa el código y los tests |
+
+Los dorsales 7, 8, 10 y 11 están vacantes: fichar es añadir un archivo en `.claude/agents/`.
+
+```bash
+# 1. Jugar un partido desde Claude Code (cuesta dinero)
+/equipo "Añade la función restar con su test"      # en la sesión principal: técnico + convocados
+claude --agent tecnico                             # o una sesión con el técnico al mando
+
+# 2. Ver y validar la plantilla
+factory team list                                  # formación, vacantes, técnico y árbitro
+factory team validate                              # 0 si la plantilla es válida
+
+# 3. Convocatoria sugerida para el cambio actual (el técnico la ajusta y la justifica)
+factory team lineup --base main
+factory team lineup --peticion "Añade la función restar"
+
+# 4. Complejidad ciclomática (la usa el jugador metricas)
+factory complexity src/                            # funciones ordenadas por complejidad
+factory complexity --base main --max 10            # solo lo cambiado; termina en 1 si algo nuevo o empeorado supera 10
+```
+
+El acta del equipo no sustituye al `checker`: sigue siendo el árbitro, independiente y obligatorio antes de dar por terminada una feature.
+
 ## Loops
 
 Ver [docs/harness/loops.md](docs/harness/loops.md):
@@ -169,6 +206,7 @@ Ver [docs/harness/loops.md](docs/harness/loops.md):
 | `init.sh`, `scripts/check.sh` | rutas estándar de arranque y verificación |
 | `src/factory/` | paquete y CLI `factory` |
 | `.claude/agents/checker.md` | revisor independiente de solo lectura para sesiones interactivas |
+| `.claude/agents/`, `.claude/skills/equipo/` | el equipo ideal: técnico, jugadores y reglamento de `/equipo` (paso H); los loops no pueden modificarlos |
 | `openspec/` | specs principales en `openspec/specs/` (11 capacidades); los cambios que construyeron todo esto están en `openspec/changes/archive/` |
 
 ## Reglas clave

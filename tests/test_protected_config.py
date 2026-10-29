@@ -3,7 +3,9 @@
 import pytest
 
 from factory.config import LoopConfig, load_config
+from factory.globs import matches
 from factory.goal import GoalError, parse_goal_text
+from factory.protection import CRITICAL_SAMPLES, STATIC_CRITICAL
 
 BASE = """---
 id: g
@@ -59,3 +61,42 @@ def test_proteccion_efectiva_incluye_scripts_y_se_describe(tmp_path):
     text_out = goal.describe(prot)
     assert "Rutas protegidas (críticas, siempre):" in text_out and "scripts/check.sh" in text_out
     assert "Liberadas por el objetivo: tests/test_calc.py" in text_out
+
+
+# ------------------------------------------------- definiciones del equipo (add-equipo-ideal)
+
+
+@pytest.mark.parametrize("pattern", [".claude/skills/**", ".claude/agents/**", ".claude/**"])
+def test_un_objetivo_intenta_liberar_las_skills(pattern):
+    with pytest.raises(GoalError, match="no puede liberar archivos críticos del harness") as exc:
+        _goal(f'  allow_modify: ["{pattern}"]\n')
+    assert ".claude/agents/**" in str(exc.value) and ".claude/skills/**" in str(exc.value)
+
+
+@pytest.mark.parametrize(
+    "pattern",
+    [
+        ".claude/agents/qa.md",
+        ".claude/skills/equipo/**",
+        ".claude/skills/*/LICENSE",
+        "prompts/checker.md",
+    ],
+)
+def test_un_objetivo_intenta_liberar_un_archivo_concreto_del_equipo(pattern):
+    with pytest.raises(GoalError, match="no puede liberar archivos críticos del harness"):
+        _goal(f'  allow_modify: ["{pattern}"]\n')
+
+
+def test_cada_critico_estatico_tiene_una_muestra():
+    for pattern in STATIC_CRITICAL:
+        assert any(matches(sample, [pattern]) for sample in CRITICAL_SAMPLES), pattern
+
+
+def test_las_definiciones_del_equipo_son_criticas(tmp_path):
+    goal = _goal('  allow_modify: ["tests/test_calc.py"]\n')
+    prot = goal.protection_for(tmp_path, [], None)
+    assert {".claude/agents/**", ".claude/skills/**"} <= set(prot.critical)
+    assert prot.is_protected(".claude/agents/qa.md")
+    assert prot.is_protected(".claude/skills/equipo/SKILL.md")
+    assert not prot.is_protected(".claude/agents-old/x.md")
+    assert ".claude/agents/**, .claude/skills/**" in goal.describe(prot)

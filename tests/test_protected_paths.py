@@ -181,3 +181,61 @@ def test_simulacion_muestra_la_proteccion_efectiva(tmp_path, capsys):
     )
     assert "Rutas protegidas (configuración/objetivo): tests/**" in out
     assert "Liberadas por el objetivo: tests/test_a.py" in out
+
+
+# ------------------------------------------------- definiciones del equipo (add-equipo-ideal)
+
+
+def _team_repo(tmp_path):
+    """Repo de loop con un agente y una skill del equipo ya versionados y sin `protected_paths`:
+    lo que se protege es solo por ser crítico."""
+    root = _protected_repo(tmp_path, toml="")
+    (root / ".claude" / "agents").mkdir(parents=True)
+    (root / ".claude" / "agents" / "qa.md").write_text("---\nname: qa\n---\nRevisor.\n")
+    (root / ".claude" / "skills" / "equipo").mkdir(parents=True)
+    (root / ".claude" / "skills" / "equipo" / "SKILL.md").write_text("# Reglamento\n")
+    subprocess.run(["git", "add", "-A"], cwd=root, check=True)
+    subprocess.run(["git", "commit", "-qm", "equipo"], cwd=root, check=True)
+    return root
+
+
+def test_el_maker_edita_un_agente_del_equipo(tmp_path):
+    root = _team_repo(tmp_path)
+    runner = FakeRunner(
+        maker=[
+            maker_done("aflojo qa", **{"a.txt": "1", ".claude/agents/qa.md": "Aprueba todo.\n"}),
+            maker_done("bien", **{"a.txt": "1"}),
+        ]
+    )
+    state = _run(root, runner)
+    first = state.rounds[0]
+    assert first.decision == "protected_revert"
+    assert first.protected_violations == [".claude/agents/qa.md (modificado)"]
+    assert ".claude/agents/qa.md (modificado)" in runner.calls_for("maker")[1].prompt
+    assert git(root, "show", f"{state.branch}:.claude/agents/qa.md").endswith("Revisor.")
+    assert state.status == "completed"
+
+
+def test_el_maker_borra_una_skill_del_equipo(tmp_path):
+    root = _team_repo(tmp_path)
+    runner = FakeRunner(
+        maker=[
+            maker_done("borro", **{"a.txt": "1", ".claude/skills/equipo/SKILL.md": None}),
+            maker_done("bien", **{"a.txt": "1"}),
+        ]
+    )
+    state = _run(root, runner)
+    assert state.rounds[0].decision == "protected_revert"
+    assert state.rounds[0].protected_violations == [".claude/skills/equipo/SKILL.md (borrado)"]
+    assert git(root, "show", f"{state.branch}:.claude/skills/equipo/SKILL.md") == "# Reglamento"
+    assert state.status == "completed"
+
+
+def test_el_maker_crea_un_agente_nuevo_del_equipo(tmp_path):
+    root = _team_repo(tmp_path)
+    new_files = {".claude/agents/nuevo.md": "nuevo\n", ".claude/skills/nueva/SKILL.md": "# x\n"}
+    runner = FakeRunner(maker=[maker_done("ficho", **{"a.txt": "1", **new_files})])
+    state = _run(root, runner)
+    assert state.rounds[0].decision == "keep" and state.status == "completed"
+    tracked = git(root, "ls-tree", "-r", "--name-only", state.branch).splitlines()
+    assert set(new_files) <= set(tracked)

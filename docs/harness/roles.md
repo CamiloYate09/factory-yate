@@ -73,13 +73,34 @@ Defensas que no dependen de los permisos del CLI:
 
 - El maker trabaja en un **worktree fuera del repo** y en su propia rama. El directorio principal no se toca.
 - Tras cada ronda, el orquestador revierte los cambios en rutas fuera de `scope.allow` o dentro de `scope.deny`.
-- Tras cada ronda, también revierte cualquier modificación, borrado o renombrado de archivos protegidos existentes (tests, scripts de verificación, `factory.toml`, `prompts/`). Ver [loops.md](loops.md#rutas-protegidas).
+- Tras cada ronda, también revierte cualquier modificación, borrado o renombrado de archivos protegidos existentes (tests, scripts de verificación, `factory.toml`, `prompts/`, `.claude/agents/`, `.claude/skills/`). Ver [loops.md](loops.md#rutas-protegidas).
 - Antes y después del checker se compara el estado del árbol. Si cambió, el veredicto se descarta y la ronda falla.
   - Limitación: la huella usa `git status` y `git diff`, así que **no detecta escrituras en archivos ignorados por git**. Por eso el checker también tiene `Edit` y `Write` denegados.
 - Las denegaciones de publicación de ambos roles y la restricción de solo lectura del checker son **obligatorias**: ni `factory.toml` ni `goal.md` pueden quitarlas.
 - Las listas de Bash permitidas funcionan por prefijo y **no son un sandbox**. Para ejecuciones desatendidas largas, usa un contenedor o una VM (ver [loops.md](loops.md)).
 
 Se configuran en `[roles.<rol>]` de `factory.toml`, y se pueden ajustar por objetivo con `roles:` en `goal.md`.
+
+## Árbitro y equipo
+
+En las sesiones interactivas, el [equipo ideal](equipo.md) suma un técnico y jugadores especialistas. Eso no cambia la regla de este documento: quien construye nunca aprueba.
+
+- **El `checker` es el árbitro.** Es independiente, no forma parte de la plantilla y sigue siendo **obligatorio** antes de dar por terminada una feature. Un acta del equipo en verde no lo sustituye.
+- **Los jugadores revisores** (`seguridad`, `qa`, `revisor-pr`, `metricas` y `producto`) siguen las mismas reglas que el checker:
+  - solo lectura;
+  - reciben criterios, diff y resultado de la verificación (en el pre-partido, `producto` y `qa` reciben la petición), nunca el razonamiento de un constructor;
+  - devuelven el mismo formato de veredicto, precedido de `## Jugador: <name> (#<dorsal>)`.
+
+  La diferencia es que son especialistas: cada uno mira el diff desde su faceta.
+- **Los constructores** (`ingeniero-software` y `documentador`) editan, pero **nunca** aprueban su propio trabajo.
+
+| | Herramientas | Quién los invoca | ¿Decide? |
+|---|---|---|---|
+| Árbitro (`checker`) | solo lectura (Read, Grep, Glob) | la sesión principal, antes de dar por terminada una feature | sí: con un `critical` o un `medium` abierto, la feature no está terminada |
+| Revisores del equipo | solo lectura (Read, Grep, Glob) | el técnico, si los convoca | no: su veredicto entra en el acta; un `critical` o un `medium` devuelve el trabajo a construcción |
+| Constructores del equipo | leer y editar, sin `Agent` (`documentador`: solo `*.md`) | el técnico | nunca: los juzgan los revisores y el árbitro |
+
+La verificación determinista (`./scripts/check.sh` y, si hace falta, `factory complexity`) la ejecuta el técnico, nunca un revisor.
 
 ---
 Adaptado de walkinglabs/learn-harness-engineering (MIT), lecciones 09, 11 y 13 (prompts maker/checker).
