@@ -18,9 +18,9 @@
 
 ## 3. Complejidad ciclomática (`complexity-metrics`)
 
-- [ ] 3.1 Implementar `src/factory/complexity.py` (D6). Verificar con `pytest tests/test_complexity.py`, escenarios "Función lineal", "Ramas y operadores lógicos", "Rango de una función lineal", "Método de una clase" y "Función anidada", más casos de `match`, comprensiones, `try/except` y lambdas.
-- [ ] 3.2 Implementar `factory complexity [RUTAS…] [--base REF] [--max N] [--json]`, con un handler que capture `ComplexityError`. Verificar con `pytest tests/test_complexity.py`, escenarios "Directorio indicado", "Archivo con error de sintaxis", "Función empeorada", "Función nueva", "Umbral superado" y "Deuda previa sin empeorar".
-- [ ] 3.3 Crear el jugador `.claude/agents/metricas.md` (#5, revisor). Verificar con `pytest tests/test_team_metricas.py` (contrato D2/D8, secciones obligatorias y regla del escenario "Función empeorada hasta D") y con una prueba real en haiku (≤ 0,05 USD).
+- [x] 3.1 Implementar `src/factory/complexity.py` (D6). Verificar con `pytest tests/test_complexity.py`, escenarios "Función lineal", "Ramas y operadores lógicos", "Rango de una función lineal", "Método de una clase" y "Función anidada", más casos de `match`, comprensiones, `try/except` y lambdas.
+- [x] 3.2 Implementar `factory complexity [RUTAS…] [--base REF] [--max N] [--json]`, con un handler que capture `ComplexityError`. Verificar con `pytest tests/test_complexity.py`, escenarios "Directorio indicado", "Archivo con error de sintaxis", "Función empeorada", "Función nueva", "Umbral superado" y "Deuda previa sin empeorar".
+- [x] 3.3 Crear el jugador `.claude/agents/metricas.md` (#5, revisor). Verificar con `pytest tests/test_team_metricas.py` (contrato D2/D8, secciones obligatorias y regla del escenario "Función empeorada hasta D") y con una prueba real en haiku (≤ 0,05 USD).
 
 ## 4. Seguridad (`team-security`)
 
