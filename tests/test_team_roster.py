@@ -211,6 +211,23 @@ def test_dorsal_repetido_el_primero_conserva_el_puesto(tmp_path, capsys):
     assert [j["name"] for j in data["jugadores"]] == ["revisor-pr"]
 
 
+def test_un_archivo_invalido_no_desplaza_a_uno_valido(tmp_path):
+    write_agent(tmp_path, "a", tipo="revisor", dorsal=4, tools="Read, Edit", convocatoria="x")
+    write_agent(tmp_path, "b", tipo="revisor", dorsal=4, convocatoria="src/**")
+    write_agent(tmp_path, "entrenador", tipo="tecnico", tools="Agent, Write", model="opus")
+    write_tecnico(tmp_path)
+    roster = load_roster(tmp_path)
+    assert [m.name for m in roster.members] == ["b", "tecnico"]
+    assert roster.tecnico is not None and roster.tecnico.name == "tecnico"
+    assert roster.errors == [
+        ".claude/agents/a.md: un revisor es de solo lectura: solo admite Read, Grep y Glob "
+        "(sobra: Edit)",
+        ".claude/agents/a.md: dorsal 4 repetido: ya lo lleva .claude/agents/b.md",
+        ".claude/agents/entrenador.md: el técnico no edita archivos: quita Write de `tools`",
+        ".claude/agents/entrenador.md: más de un técnico: ya lo es .claude/agents/tecnico.md",
+    ]
+
+
 def test_dorsal_fuera_de_rango(tmp_path, capsys):
     write_agent(tmp_path, "suplente", tipo="revisor", dorsal=12, convocatoria="src/**")
     assert _team(tmp_path, "validate") == 1
@@ -257,16 +274,31 @@ def test_name_distinto_del_archivo(tmp_path):
 
 def test_frontmatter_ilegible(tmp_path):
     write_agent(tmp_path, "roto", "---\nname: roto\ntipo: [revisor\n---\n")
-    write_agent(tmp_path, "lista", "---\n- tipo\n- dorsal\n---\n")
+    write_agent(tmp_path, "dos-puntos", "---\nname: x\ndescription: a: b\ndorsal: 2\n---\n")
     write_agent(tmp_path, "abierto", "---\nname: abierto\ntipo: revisor\n")
+    write_agent(tmp_path, "fecha", "---\nname: fecha\ntipo: revisor\nalta: 2026-13-45\n---\n")
     errors = load_roster(tmp_path).errors
-    assert len(errors) == 3
+    assert len(errors) == 4
     assert all("frontmatter ilegible" in e for e in errors)
     assert {e.split(":")[0] for e in errors} == {
         ".claude/agents/roto.md",
-        ".claude/agents/lista.md",
+        ".claude/agents/dos-puntos.md",
         ".claude/agents/abierto.md",
+        ".claude/agents/fecha.md",
     }
+
+
+def test_frontmatter_ilegible_fuera_del_equipo_no_es_error(tmp_path, capsys):
+    # Agente al estilo de Claude Code con `: ` en la descripción (YAML estricto lo rechaza).
+    write_agent(tmp_path, "ajeno", "---\nname: ajeno\ndescription: Úsalo así: <example>\n---\n")
+    write_agent(tmp_path, "LEEME", "---\n\nNotas sueltas sobre los agentes.\n")  # sin cierre
+    write_agent(tmp_path, "vacio", "---\n---\n")
+    write_agent(tmp_path, "lista", "---\n- tipo\n- dorsal\n---\n")
+    assert load_roster(tmp_path).errors == []
+    assert _team(tmp_path, "validate") == 0
+    root = make_harness(tmp_path)
+    assert main(["--root", str(root), "doctor"]) == 0
+    assert "[PASS] [CRITICAL] La plantilla del equipo" in capsys.readouterr().out
 
 
 def test_frontmatter_ilegible_no_lanza_en_lecturas():
@@ -275,6 +307,19 @@ def test_frontmatter_ilegible_no_lanza_en_lecturas():
         "name": "x",
         "tipo": "revisor",
     }
+
+
+def test_name_que_no_es_cadena(tmp_path):
+    text = "---\nname: 5\ntools: Read\ntipo: revisor\ndorsal: 2\nconvocatoria: x\n---\n"
+    write_agent(tmp_path, "c", text)
+    [error] = load_roster(tmp_path).errors
+    assert error.startswith(".claude/agents/c.md: `name` debe ser una cadena")
+
+
+def test_jugador_sin_convocatoria(tmp_path):
+    write_agent(tmp_path, "qa", tipo="revisor", dorsal=2)
+    [error] = load_roster(tmp_path).errors
+    assert error.startswith(".claude/agents/qa.md: falta `convocatoria`")
 
 
 # ------------------------------------------------------------------------ Permisos según el tipo

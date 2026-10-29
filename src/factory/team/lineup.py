@@ -66,6 +66,10 @@ def _git(root: Path, *args: str) -> str:
         return git(root, *args)
     except OSError as exc:
         raise TeamError(f"no se puede ejecutar git ({exc}); indica las rutas con --paths") from exc
+    except UnicodeDecodeError as exc:
+        raise TeamError(
+            "git devolvió rutas que no son UTF-8: indica las rutas cambiadas con --paths"
+        ) from exc
 
 
 def _nul_list(output: str) -> list[str]:
@@ -76,21 +80,28 @@ def changed_paths(root: Path, base: str = "HEAD") -> list[str]:
     """`git diff --name-only <base>` más los archivos no versionados, sin repetir y ordenados."""
     if not base or base.startswith("-"):
         raise TeamError(f"referencia git no válida: {base!r}")
+    not_a_repo = f"{root} no es un repositorio git: indica las rutas cambiadas con --paths"
     try:
-        _git(root, "rev-parse", "--is-inside-work-tree")
+        inside = _git(root, "rev-parse", "--is-inside-work-tree")
     except GitError as exc:
-        raise TeamError(
-            f"{root} no es un repositorio git: indica las rutas cambiadas con --paths"
-        ) from exc
+        raise TeamError(not_a_repo) from exc
+    if inside != "true":  # p. ej. un repo bare o el propio directorio .git
+        raise TeamError(not_a_repo)
     try:
         _git(root, "rev-parse", "--verify", "--quiet", f"{base}^{{commit}}")
     except GitError as exc:
+        if base == "HEAD":
+            raise TeamError(
+                "el repositorio aún no tiene commits: haz el primer commit o indica las rutas "
+                "cambiadas con --paths"
+            ) from exc
         raise TeamError(
             f"referencia git no válida: «{base}» (¿existe la rama o el commit? usa --base REF "
             "o --paths)"
         ) from exc
     try:
-        diff = _git(root, "diff", "--name-only", "-z", "--relative", base, "--")
+        # --no-renames: un renombrado aporta el origen y el destino a la convocatoria.
+        diff = _git(root, "diff", "--name-only", "--no-renames", "-z", "--relative", base, "--")
         others = _git(root, "ls-files", "-z", "--others", "--exclude-standard")
     except GitError as exc:
         raise TeamError(str(exc)) from exc

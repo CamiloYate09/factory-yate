@@ -80,9 +80,27 @@ def test_rutas_por_defecto_frente_a_head(tmp_path, capsys):
 
 def test_rutas_indicadas_con_paths_sin_git(tmp_path, capsys):
     write_d2(tmp_path)  # sin repo git: --paths evita git
-    data = _lineup_json(tmp_path, capsys, "--paths", "./src/x.py", "src/x.py", "--base", "main")
+    args = ("--paths", "./src/x.py", "src/x.py", "--base", "main", "--json")
+    assert _lineup(tmp_path, *args) == 0
+    captured = capsys.readouterr()
+    assert "con --paths se ignora --base" in captured.err
+    data = json.loads(captured.out)
     assert data["base"] is None
     assert data["rutas"] == ["src/x.py"]
+    assert "qa" in _names(data["convocados"])
+
+
+def test_renombrado_aporta_origen_y_destino(tmp_path, capsys):
+    root = _repo_con_equipo(tmp_path)
+    (root / "tests").mkdir()
+    (root / "tests" / "test_x.py").write_text("def test_x():\n    assert True\n")
+    _commit_all(root, "test en main")
+    _git(root, "checkout", "-q", "-b", "feat")
+    (root / "antiguo").mkdir()
+    _git(root, "mv", "tests/test_x.py", "antiguo/test_x.py")
+    _commit_all(root, "mueve el test")
+    data = _lineup_json(root, capsys, "--base", "main")
+    assert data["rutas"] == ["antiguo/test_x.py", "tests/test_x.py"]
     assert "qa" in _names(data["convocados"])
 
 
@@ -92,12 +110,27 @@ def test_base_invalida(tmp_path, capsys):
     assert "referencia git no válida" in capsys.readouterr().err
     assert _lineup(root, "--base=--output=x") == 2  # sin inyección de opciones en git
     assert not (root / "x").exists()
+    assert _lineup(root, "--base", "") == 2  # una variable vacía no se convierte en HEAD
+    assert "referencia git no válida" in capsys.readouterr().err
 
 
 def test_sin_git_ni_paths(tmp_path, capsys):
     write_d2(tmp_path)
     assert _lineup(tmp_path) == 2
     assert "no es un repositorio git" in capsys.readouterr().err
+
+
+def test_root_en_el_directorio_git(tmp_path, capsys):
+    root = _repo_con_equipo(tmp_path)
+    assert _lineup(root / ".git") == 2
+    assert "no es un repositorio git" in capsys.readouterr().err
+
+
+def test_repo_sin_commits(tmp_path, capsys):
+    root = init_git_repo(tmp_path / "repo", commit=False)
+    write_d2(root)
+    assert _lineup(root) == 2
+    assert "aún no tiene commits" in capsys.readouterr().err
 
 
 def test_peticion_desde_archivo(tmp_path, capsys):

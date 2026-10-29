@@ -507,9 +507,11 @@ def cmd_team(args: argparse.Namespace) -> int:
         try:
             peticion = team_lineup.load_peticion(args.peticion, args.peticion_file)
             if args.paths is not None:
+                if args.base is not None:
+                    print("aviso: con --paths se ignora --base", file=sys.stderr)
                 base, rutas = None, team_lineup.normalize_paths(args.paths)
             else:
-                base = args.base or "HEAD"
+                base = "HEAD" if args.base is None else args.base
                 rutas = team_lineup.changed_paths(config.root, base)
         except TeamError as exc:
             print(f"error: {exc}", file=sys.stderr)

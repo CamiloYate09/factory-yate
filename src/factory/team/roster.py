@@ -1,13 +1,14 @@
 """Plantilla del equipo: lectura y validación del frontmatter de `.claude/agents/*.md` (D1, D8).
 
 Un agente es miembro del equipo si su frontmatter declara `tipo` o `dorsal`; el resto (como el
-`checker`, que actúa de árbitro) queda fuera y no se valida. La validación nunca lanza
-excepciones: devuelve una línea `"<archivo>: <motivo>"` por error.
+`checker`, que actúa de árbitro) queda fuera y no se valida, aunque su YAML sea ilegible. La
+validación nunca lanza excepciones: devuelve una línea `"<archivo>: <motivo>"` por error.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import re
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
@@ -38,6 +39,7 @@ LINEAS = (
 SOLO_LECTURA = ("Read", "Grep", "Glob")
 EDICION = ("Edit", "MultiEdit", "Write", "NotebookEdit")
 DELEGACION = ("Agent", "Task")  # `Task` es el nombre antiguo de la herramienta `Agent`
+TEAM_KEY_RE = re.compile(r"^(tipo|dorsal)\s*:")
 
 
 @dataclass(frozen=True)
@@ -116,22 +118,41 @@ def _yaml_reason(exc: yaml.YAMLError) -> str:
     return str(exc).splitlines()[0] if str(exc) else type(exc).__name__
 
 
-def read_frontmatter(text: str) -> dict | None:
-    """Frontmatter YAML entre la primera pareja de líneas `---`, o None si el archivo no
-    empieza por `---`. Lanza ValueError si está sin cerrar, es ilegible o no es un dict."""
-    lines = text.removeprefix("﻿").splitlines()
+def _frontmatter_lines(text: str) -> tuple[list[str], bool] | None:
+    """Líneas entre la primera pareja de `---` y si el bloque está cerrado, o None si el
+    archivo no empieza por `---`. Sin cierre, el bloque llega hasta el final del archivo."""
+    lines = text.removeprefix("\ufeff").splitlines()
     if not lines or lines[0].rstrip() != "---":
         return None
     end = next((i for i, line in enumerate(lines[1:], 1) if line.rstrip() == "---"), None)
-    if end is None:
+    return (lines[1:end], True) if end is not None else (lines[1:], False)
+
+
+def read_frontmatter(text: str) -> dict | None:
+    """Frontmatter YAML entre la primera pareja de líneas `---`, o None si el archivo no
+    empieza por `---`. Lanza ValueError si está sin cerrar, es ilegible o no es un dict."""
+    block = _frontmatter_lines(text)
+    if block is None:
+        return None
+    lines, closed = block
+    if not closed:
         raise ValueError("frontmatter ilegible: falta la línea `---` de cierre")
     try:
-        meta = yaml.safe_load("\n".join(lines[1:end]))
+        meta = yaml.safe_load("\n".join(lines))
     except yaml.YAMLError as exc:
         raise ValueError(f"frontmatter ilegible: {_yaml_reason(exc)}") from exc
+    except ValueError as exc:  # valores que PyYAML no puede construir (p. ej. fechas imposibles)
+        raise ValueError(f"frontmatter ilegible: {exc}") from exc
     if not isinstance(meta, dict):
         raise ValueError("frontmatter ilegible: no es un diccionario de claves")
     return meta
+
+
+def declares_team_keys(text: str) -> bool:
+    """Si el bloque de frontmatter declara `tipo` o `dorsal` en el primer nivel, sin parsear
+    el YAML: decide si un frontmatter ilegible pertenece a un miembro del equipo."""
+    block = _frontmatter_lines(text)
+    return block is not None and any(TEAM_KEY_RE.match(line) for line in block[0])
 
 
 def as_list(value: object, key: str) -> tuple[str, ...] | None:
@@ -202,8 +223,10 @@ def _check_member(label: str, stem: str, meta: dict) -> tuple[Member | None, int
     válido, para detectar repetidos aunque haya otros errores) y los motivos de error."""
     errors: list[str] = []
     name = meta.get("name")
-    if not isinstance(name, str) or not name.strip():
+    if name is None or name == "":
         errors.append(f"falta `name`: debe ser «{stem}», como el nombre del archivo")
+    elif not isinstance(name, str):
+        errors.append(f"`name` debe ser una cadena: «{stem}», como el nombre del archivo")
     elif name != stem:
         errors.append(f"`name` «{name}» no coincide con el nombre del archivo («{stem}»)")
     tipo = meta.get("tipo")
@@ -216,9 +239,11 @@ def _check_member(label: str, stem: str, meta: dict) -> tuple[Member | None, int
     except ValueError as exc:
         tools = None  # tipo incorrecto: no se pueden comprobar los permisos
         errors.append(str(exc))
+    convocatoria_ok = True
     try:
         convocatoria = as_list(meta.get("convocatoria"), "convocatoria") or ()
     except ValueError as exc:
+        convocatoria_ok = False
         errors.append(str(exc))
     dorsal = None
     if tipo == "tecnico":
@@ -227,6 +252,11 @@ def _check_member(label: str, stem: str, meta: dict) -> tuple[Member | None, int
     else:
         dorsal, dorsal_errors = _dorsal_errors(meta)
         errors += dorsal_errors
+        if convocatoria_ok and not convocatoria:
+            errors.append(
+                "falta `convocatoria`: un jugador declara globs de rutas o los tokens "
+                "siempre y peticion"
+            )
     if tipo in TIPOS and tools is not None:
         errors += _permission_errors(str(tipo), tools)
     if errors or tools is None:
@@ -244,46 +274,64 @@ def _check_member(label: str, stem: str, meta: dict) -> tuple[Member | None, int
     return member, dorsal, []
 
 
+@dataclass
+class _Candidate:
+    """Miembro leído (válido o no), pendiente de las reglas entre archivos."""
+
+    label: str
+    tecnico: bool = False
+    member: Member | None = None
+    dorsal: int | None = None
+    reasons: list[str] = field(default_factory=list)
+
+
+def _holder(group: list[_Candidate]) -> _Candidate:
+    """Quién conserva un dorsal o el puesto de técnico: el primero sin errores propios (un
+    archivo inválido nunca desplaza a uno válido) o, si no lo hay, el primero."""
+    return next((c for c in group if not c.reasons), group[0])
+
+
+def _read_candidate(path: Path, label: str) -> _Candidate | None:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except (OSError, ValueError) as exc:
+        return _Candidate(label, reasons=[f"no se puede leer ({exc})"])
+    try:
+        meta = read_frontmatter(text)
+    except ValueError as exc:
+        # Solo es un error del equipo si el archivo declara `tipo` o `dorsal`.
+        return _Candidate(label, reasons=[str(exc)]) if declares_team_keys(text) else None
+    if meta is None or ("tipo" not in meta and "dorsal" not in meta):
+        return None
+    member, dorsal, reasons = _check_member(label, path.stem, meta)
+    return _Candidate(label, meta.get("tipo") == "tecnico", member, dorsal, reasons)
+
+
 def load_roster(root: Path) -> Roster:
     """Lee `.claude/agents/*.md` en orden y valida la plantilla (D1, D8). Sin directorio o sin
     miembros, la plantilla está vacía y es válida."""
     directory = root / AGENTS_DIR
-    members: list[Member] = []
-    errors: list[str] = []
-    team_files: set[str] = set()
-    dorsales: dict[int, str] = {}
-    tecnico: str | None = None
     try:
         paths = sorted(p for p in directory.glob("*.md") if p.is_file())
     except OSError as exc:
         return Roster([], [f"{AGENTS_DIR.as_posix()}: no se puede leer ({exc})"])
-    for path in paths:
-        label = (AGENTS_DIR / path.name).as_posix()
-        try:
-            meta = read_frontmatter(path.read_text(encoding="utf-8"))
-        except (OSError, ValueError) as exc:
-            errors.append(f"{label}: {exc}")
-            team_files.add(label)
-            continue
-        if meta is None or ("tipo" not in meta and "dorsal" not in meta):
-            continue
-        team_files.add(label)
-        member, dorsal, reasons = _check_member(label, path.stem, meta)
-        if dorsal is not None:
-            if dorsal in dorsales:
-                reasons.append(f"dorsal {dorsal} repetido: ya lo lleva {dorsales[dorsal]}")
-            else:
-                dorsales[dorsal] = label
-        if meta.get("tipo") == "tecnico":
-            if tecnico is not None:
-                reasons.append(f"más de un técnico: ya lo es {tecnico}")
-            else:
-                tecnico = label
-        if reasons:
-            errors.extend(f"{label}: {reason}" for reason in reasons)
-            continue
-        if member is not None:
-            members.append(member)
+    candidates = [c for p in paths if (c := _read_candidate(p, (AGENTS_DIR / p.name).as_posix()))]
+    by_dorsal: dict[int, list[_Candidate]] = {}
+    for candidate in candidates:
+        if candidate.dorsal is not None:
+            by_dorsal.setdefault(candidate.dorsal, []).append(candidate)
+    groups = [(group, f"dorsal {d} repetido: ya lo lleva {{}}") for d, group in by_dorsal.items()]
+    groups.append(([c for c in candidates if c.tecnico], "más de un técnico: ya lo es {}"))
+    repeated: list[tuple[_Candidate, str]] = []
+    for group, template in groups:  # se eligen todos los titulares antes de marcar a nadie
+        if len(group) > 1:
+            holder = _holder(group)
+            repeated += [(c, template.format(holder.label)) for c in group if c is not holder]
+    for candidate, reason in repeated:
+        candidate.reasons.append(reason)
+    members = [c.member for c in candidates if c.member is not None and not c.reasons]
+    errors = [f"{c.label}: {reason}" for c in candidates for reason in c.reasons]
+    team_files = {c.label for c in candidates}
     arbitro_file = (AGENTS_DIR / f"{ARBITRO}.md").as_posix()
     arbitro = (
         ARBITRO if (root / arbitro_file).is_file() and arbitro_file not in team_files else None
