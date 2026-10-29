@@ -123,8 +123,12 @@ def test_producto_preguntas_y_trazabilidad():
 def test_revisor_pr_ramas_de_loop_y_land():
     cuerpo = _cuerpo("revisor-pr")
     assert "factory/<run-id>" in cuerpo
-    assert "decision.md" in cuerpo and "rounds/<n>/review.md" in cuerpo
     lineas = cuerpo.splitlines()
+    # Solo criterios y verificación del loop, nunca el razonamiento del maker (spec team-match).
+    assert "goal.md" in cuerpo and "rounds/<n>/checks.md" in cuerpo
+    prohibicion = next(linea for linea in lineas if linea.startswith("**No leas**"))
+    for artefacto in ("decision.md", "loop-state.md", "rounds/<n>/maker.md"):
+        assert artefacto in prohibicion, artefacto
     assert any("factory land" in linea and "decisión humana" in linea for linea in lineas)
     assert "## Resumen para el autor" in cuerpo
     assert "integrar / pedir cambios / descartar" in cuerpo

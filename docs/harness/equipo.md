@@ -13,7 +13,7 @@ No hay registro central: fichar es añadir un archivo y dar de baja es borrarlo.
 | # | Posición | Jugador | Tipo | Modelo | Convocatoria | Qué hace |
 |---|---|---|---|---|---|---|
 | — | técnico | `tecnico` | tecnico | opus | — | decide la convocatoria y dirige el partido; no edita |
-| 1 | portero | `seguridad` | revisor | opus | `**/*.py, **/*.sh, pyproject.toml, factory.toml, prompts/**, .claude/**` | vulnerabilidades del diff, en modo guía |
+| 1 | portero | `seguridad` | revisor | opus | `**/*.py, **/*.sh, pyproject.toml, factory.toml, prompts/**, .claude/**, src/factory/templates/**, goals/**` | vulnerabilidades del diff, en modo guía |
 | 2 | lateral-derecho | `qa` | revisor | sonnet | `src/**, tests/**` | plan de pruebas y auditoría de la cobertura |
 | 3 | lateral-izquierdo | `documentador` | constructor | sonnet | `src/factory/cli.py, src/factory/config.py, factory.toml, docs/**, README.md, AGENTS.md, CLAUDE.md` | actualiza la documentación (solo `*.md`) |
 | 4 | central-derecho | `revisor-pr` | revisor | opus | `siempre` | revisa una rama o PR completos, propios o ajenos |
@@ -134,7 +134,7 @@ El acta, aunque termine en `pass`, **no sustituye** al árbitro. Ver [Roles](rol
 | `claude --agent tecnico "<…>"` | arranca Claude Code con el técnico como agente principal |
 | `factory team list [--json]` | formación por líneas, vacantes, técnico y árbitro |
 | `factory team validate [--json]` | comprueba el frontmatter de la plantilla (también lo hace `factory doctor`) |
-| `factory team lineup [--base REF] [--paths P…] [--peticion TEXTO] [--json]` | convocatoria sugerida, con el motivo de cada jugador |
+| `factory team lineup [--base REF] [--paths P…] [--peticion TEXTO \| --peticion-file F] [--json]` | convocatoria sugerida, con el motivo de cada jugador |
 | `factory complexity [RUTAS…] [--base REF] [--max N] [--json]` | complejidad ciclomática por función (rangos A–F) y delta frente a `REF` |
 
 No lances al técnico como subagente (`subagent_type: tecnico`). Un subagente no puede invocar a otros, así que el técnico solo dirige desde la sesión principal o como agente principal.

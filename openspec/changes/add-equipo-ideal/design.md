@@ -64,7 +64,7 @@ Cada miembro del equipo es `.claude/agents/<name>.md` con tres claves planas adi
 | # | Posición | `name` | `tipo` | `model` | `convocatoria` |
 |---|---|---|---|---|---|
 | — | técnico | `tecnico` | tecnico | opus | — |
-| 1 | portero | `seguridad` | revisor | opus | `**/*.py, **/*.sh, pyproject.toml, factory.toml, prompts/**, .claude/**` |
+| 1 | portero | `seguridad` | revisor | opus | `**/*.py, **/*.sh, pyproject.toml, factory.toml, prompts/**, .claude/**, src/factory/templates/**, goals/**` |
 | 2 | lateral-derecho | `qa` | revisor | sonnet | `src/**, tests/**` |
 | 3 | lateral-izquierdo | `documentador` | constructor | sonnet | `src/factory/cli.py, src/factory/config.py, factory.toml, docs/**, README.md, AGENTS.md, CLAUDE.md` |
 | 4 | central-derecho | `revisor-pr` | revisor | opus | `siempre` |
@@ -139,6 +139,7 @@ Para revisar una rama ya hecha (propia, de otra persona o una `factory/<run-id>`
 - `STATIC_CRITICAL` incluye `.claude/agents/**` y `.claude/skills/**`.
 - `CRITICAL_SAMPLES` añade `.claude/agents/x.md` y `.claude/skills/x/SKILL.md`, de modo que un `scope.allow_modify` que los liberase se detecta y se rechaza.
 - Crear archivos nuevos en esas rutas sigue permitido, como en el resto de rutas protegidas.
+- `releases_critical` rechaza además un patrón que, leído como ruta, cae dentro de un crítico estático (`prompts/checker.md`, `.claude/agents/qa.md`). Antes esos objetivos pasaban la validación y cada ronda que tocaba el archivo se revertía hasta agotar el presupuesto.
 
 ### D8. Frontmatter de referencia
 Todos los agentes del equipo siguen exactamente estos tipos:

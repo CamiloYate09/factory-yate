@@ -26,7 +26,8 @@ D2 = [
         "revisor",
         "opus",
         "Read, Grep, Glob",
-        "**/*.py, **/*.sh, pyproject.toml, factory.toml, prompts/**, .claude/**",
+        "**/*.py, **/*.sh, pyproject.toml, factory.toml, prompts/**, .claude/**, "
+        "src/factory/templates/**, goals/**",
     ),
     ("qa", 2, "revisor", "sonnet", "Read, Grep, Glob", "src/**, tests/**"),
     (

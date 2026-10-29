@@ -345,7 +345,8 @@ def test_salida_json_con_las_claves_acordadas(tmp_path, monkeypatch, capsys):
     monkeypatch.chdir(root)
     code, datos = _json(root, capsys, "m.py", "--max", "10")
     assert code == 1
-    assert set(datos) == {"funciones", "resumen", "avisos", "umbral", "superan"}
+    assert set(datos) == {"ref", "funciones", "resumen", "avisos", "umbral", "superan"}
+    assert datos["ref"] is None
     assert datos["umbral"] == 10
     assert datos["avisos"] == []
     assert datos["resumen"] == {"funciones": 2, "media": 7.0, "maximo": 13}
@@ -466,6 +467,24 @@ def test_base_invalida_es_error_de_uso(tmp_path, capsys):
     code, _, err = _cli(root, capsys, "--base", "no-existe")
     assert code == 2
     assert "referencia git inválida: no-existe" in err
+
+
+@pytest.mark.parametrize("ref", ["--output=x", "-p", ""])
+def test_base_con_forma_de_opcion_es_error_de_uso(tmp_path, capsys, ref):
+    root = _repo(tmp_path, {"m.py": "def f():\n    return 1\n"})
+    code, _, err = _cli(root, capsys, f"--base={ref}")
+    assert code == 2
+    assert "referencia git inválida" in err
+    assert not (root / "x").exists()
+
+
+def test_informe_base_vacio_lleva_la_referencia(tmp_path, monkeypatch, capsys):
+    root = _repo(tmp_path, {"m.py": "def f():\n    return 1\n", "borrar.py": "X = 1\n"})
+    (root / "borrar.py").unlink()
+    monkeypatch.chdir(root)
+    code, datos = _json(root, capsys, "--base", "HEAD")
+    assert code == 0
+    assert datos["ref"] == "HEAD" and datos["funciones"] == []
 
 
 def test_base_sin_git_es_error_de_uso(tmp_path, capsys):

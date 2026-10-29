@@ -26,7 +26,7 @@ Vienen de `AGENTS.md` y no se negocian:
 
 - **WIP=1.** Trabaja solo en la feature activa y dentro de su alcance.
 - **Nunca** edites a mano `status` ni `evidence` de `feature_list.json`.
-- No ejecutes `factory features start` ni `factory features verify`: la feature la inicia y la promueve el técnico, después del acta y del árbitro.
+- No ejecutes `factory features start` ni `factory features verify`: la feature la inician y la promueven la sesión principal o el humano, después del acta y del árbitro.
 - **No debilites, borres ni marques `skip`** tests, ni relajes aserciones para que algo pase. Si un test es incorrecto, no lo toques: documéntalo en `progress.md` y pide revisión en "Dudas para el técnico".
 - No cambies `./scripts/check.sh` ni la configuración de ruff/pytest.
 - No hagas commit salvo que el humano lo pida de forma explícita.

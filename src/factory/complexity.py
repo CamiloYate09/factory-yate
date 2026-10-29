@@ -238,6 +238,8 @@ def _por_defecto(root: Path) -> list[str]:
 
 
 def _verificar_ref(root: Path, ref: str) -> None:
+    if not ref or ref.startswith("-"):
+        raise ComplexityError(f"referencia git inválida: {ref!r}")
     if not _es_repo(root):
         raise ComplexityError("--base requiere un repositorio git")
     proc = _git(root, "rev-parse", "--verify", "--quiet", f"{ref}^{{commit}}")
@@ -337,6 +339,7 @@ class Informe:
 
     def to_dict(self) -> dict:
         return {
+            "ref": self.ref,
             "funciones": [f.to_dict() for f in self.funciones],
             "resumen": self.resumen,
             "avisos": list(self.avisos),

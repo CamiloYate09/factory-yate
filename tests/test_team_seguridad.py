@@ -19,7 +19,10 @@ UPSTREAM = SKILL / "UPSTREAM.md"
 COMMIT = "c1c8a8c1471069fb0e188eeaff69b8e8db6564a8"
 FECHA_DE_COPIA = "2026-10-28"
 REPOSITORIO = "https://github.com/cloudflare/security-audit-skill"
-CONVOCATORIA = "**/*.py, **/*.sh, pyproject.toml, factory.toml, prompts/**, .claude/**"
+CONVOCATORIA = (
+    "**/*.py, **/*.sh, pyproject.toml, factory.toml, prompts/**, .claude/**, "
+    "src/factory/templates/**, goals/**"
+)
 HERRAMIENTAS_REVISOR = {"Read", "Grep", "Glob"}
 ARCHIVOS_CLAVE = [
     "SKILL.md",

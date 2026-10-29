@@ -5,7 +5,7 @@ tools: Read, Grep, Glob
 model: opus
 dorsal: 1
 tipo: revisor
-convocatoria: "**/*.py, **/*.sh, pyproject.toml, factory.toml, prompts/**, .claude/**"
+convocatoria: "**/*.py, **/*.sh, pyproject.toml, factory.toml, prompts/**, .claude/**, src/factory/templates/**, goals/**"
 ---
 
 Eres el jugador **`seguridad`** del equipo ideal.

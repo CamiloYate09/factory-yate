@@ -204,9 +204,10 @@ def _team_checks(config: Config) -> list[Check]:
 
     errors = load_roster(config.root).errors
     fix = "factory team validate"
-    if errors:  # render() no muestra `detail`: el primer error va también en la acción
-        more = f" (y {len(errors) - 1} más)" if len(errors) > 1 else ""
-        fix = f"Corrige la plantilla y comprueba con `factory team validate`: {errors[0]}{more}"
+    if errors:  # `detail` lleva el error; la acción (lo único que muestra actions()) el archivo
+        more = f" (y {len(errors) - 1} error(es) más)" if len(errors) > 1 else ""
+        archivo = errors[0].split(": ", 1)[0]
+        fix = f"Corrige {archivo} y comprueba con `factory team validate`{more}"
     return [
         Check(
             "instrucciones",
