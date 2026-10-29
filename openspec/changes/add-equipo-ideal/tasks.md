@@ -49,7 +49,7 @@
 - [x] 8.2 Documentar el equipo:
   - `AGENTS.md`: comandos `factory team` y `factory complexity`;
   - `CLAUDE.md`: `/equipo` y el árbitro;
-  - `README.md`: paso H;
+  - `README.md`: paso L (el equipo ideal), tras la reorganización A–K del README;
   - `docs/harness/roles.md`: árbitro frente a equipo.
 
   Verificar con `./scripts/check.sh` (doctor sin fallos).
