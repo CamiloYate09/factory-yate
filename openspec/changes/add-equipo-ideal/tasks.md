@@ -40,8 +40,8 @@
 
 ## 7. Revisores (`team-reviewers`)
 
-- [ ] 7.1 Crear `.claude/agents/qa.md` (#2), `producto.md` (#6) y `revisor-pr.md` (#4), todos revisores de solo lectura con el formato D3. Verificar con `pytest tests/test_team_revisores.py`, escenarios "Revisión sin efectos", "Cabecera del jugador" y "Hallazgo sin evidencia" (contrato del prompt).
-- [ ] 7.2 Hacer una prueba real en haiku (≤ 0,05 USD) de uno de los tres revisores, comprobando que `git status --porcelain` no cambia.
+- [x] 7.1 Crear `.claude/agents/qa.md` (#2), `producto.md` (#6) y `revisor-pr.md` (#4), todos revisores de solo lectura con el formato D3. Verificar con `pytest tests/test_team_revisores.py`, escenarios "Revisión sin efectos", "Cabecera del jugador" y "Hallazgo sin evidencia" (contrato del prompt).
+- [x] 7.2 Hacer una prueba real en haiku (≤ 0,05 USD) de uno de los tres revisores, comprobando que `git status --porcelain` no cambia.
 
 ## 8. Integración (`team-integration`)
 
