@@ -125,9 +125,13 @@ def test_revisor_pr_ramas_de_loop_y_land():
     assert "factory/<run-id>" in cuerpo
     lineas = cuerpo.splitlines()
     # Solo criterios y verificación del loop, nunca el razonamiento del maker (spec team-match).
-    assert "goal.md" in cuerpo and "rounds/<n>/checks.md" in cuerpo
-    prohibicion = next(linea for linea in lineas if linea.startswith("**No leas**"))
-    for artefacto in ("decision.md", "loop-state.md", "rounds/<n>/maker.md"):
+    seccion = cuerpo.split("### Ramas de loop", 1)[1].split("\n## ", 1)[0]
+    permitidas = seccion.split("**No leas**", 1)[0]
+    for artefacto in ("goal.md", "rounds/<n>/checks.md", "land/checks.md"):
+        assert artefacto in permitidas, artefacto
+    prohibicion = next(linea for linea in seccion.splitlines() if linea.startswith("**No leas**"))
+    prohibidos = ("decision.md", "loop-state.md", "rounds/<n>/maker.md", "rounds/<n>/review.md")
+    for artefacto in prohibidos:
         assert artefacto in prohibicion, artefacto
     assert any("factory land" in linea and "decisión humana" in linea for linea in lineas)
     assert "## Resumen para el autor" in cuerpo

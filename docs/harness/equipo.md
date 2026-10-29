@@ -113,7 +113,7 @@ Para una rama ya hecha: propia, ajena o una `factory/<run-id>` antes de `factory
 - El diff usa tres puntos, contra la merge-base: `git diff main...<rama>` y `git log main..<rama>`.
 - Cada revisor recibe la lista de archivos cambiados (`git diff --name-only main...<rama>`) y lee cada archivo completo, no solo los hunks.
 - La verificación se ejecuta sobre el código de la rama: en el checkout si es esa rama o, si no, en un worktree temporal fuera del repo.
-- En una rama de un loop, los criterios salen de su `goal.md`; `loop-state.md` y `decision.md` no se pasan a los revisores.
+- En una rama de un loop, los criterios salen de su `goal.md`. Los revisores reciben solo `goal.md`, `rounds/<n>/checks.md` y `land/checks.md`; nunca `decision.md`, `loop-state.md`, `rounds/<n>/maker.md` ni `rounds/<n>/review.md`.
 
 ## Árbitro frente a equipo
 

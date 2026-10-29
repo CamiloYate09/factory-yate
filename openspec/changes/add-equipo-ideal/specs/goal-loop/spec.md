@@ -18,7 +18,7 @@ Además de los archivos críticos del harness ya existentes, `.claude/agents/**`
 - **THEN** la validación del objetivo falla indicando que los archivos críticos del harness no se pueden liberar
 
 ### Requirement: Liberación de un archivo crítico concreto
-La validación de `scope.allow_modify` SHALL rechazar tanto los patrones que cubren un archivo crítico del harness (por ejemplo `.claude/**`) como los que, leídos como ruta, caen dentro de uno (por ejemplo `prompts/checker.md` o `.claude/agents/qa.md`). Así un objetivo no puede pasar la validación y luego revertirse en cada ronda hasta agotar el presupuesto.
+La validación de `scope.allow_modify` SHALL rechazar tanto los patrones que cubren un crítico estático del harness (`feature_list.json`, `factory.toml`, `prompts/**`, `.claude/agents/**` y `.claude/skills/**`; por ejemplo `.claude/**`) como los que, leídos como ruta, caen dentro de uno (por ejemplo `prompts/checker.md` o `.claude/agents/qa.md`). El script del comando de verificación, que solo se marca crítico al ejecutar, queda fuera de esta comprobación.
 
 #### Scenario: Un objetivo intenta liberar un agente concreto del equipo
 - **WHEN** un `goal.md` declara `scope.allow_modify` con `.claude/agents/qa.md`

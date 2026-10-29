@@ -107,6 +107,15 @@ def test_funcion_empeorada_hasta_d():
     assert "D" in ejemplo
 
 
+def test_informe_sin_ref_o_con_ref_y_vacio():
+    """`ref` nulo = falta el informe `--base`; con `ref` y sin funciones no hay hallazgos."""
+    reglas = _cuerpo().split("## Reglas", 1)[1].split("## Checklist", 1)[0]
+    regla = next(linea for linea in reglas.splitlines() if "`ref`" in linea)
+    assert "nulo" in regla and "como si faltara el informe" in regla
+    assert "sin funciones" in regla and "no genera hallazgos de complejidad" in regla
+    assert "`ref`" in _cuerpo().split("## Reglas", 1)[0]  # la forma del JSON nombra `ref`
+
+
 def test_formato_empieza_por_la_cabecera_del_jugador():
     cuerpo = _cuerpo()
     formato = cuerpo.split("## Formato de salida", 1)[1]

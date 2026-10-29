@@ -188,7 +188,7 @@ Revisa una rama ya hecha: propia, ajena o una `factory/<run-id>` antes de `facto
   - al terminar, elimínalo con `git worktree remove <dir-temporal>`.
 
   Si no puedes verificar el código de la rama, anótalo en el acta como riesgo.
-- **Ramas `factory/<run-id>`:** los criterios salen de `.factory/runs/<run-id>/goal.md`. No pases a los revisores `loop-state.md`, `decision.md` ni los artefactos de las rondas: contienen el razonamiento del maker.
+- **Ramas `factory/<run-id>`:** los criterios salen de `.factory/runs/<run-id>/goal.md`. A los revisores pásales solo `goal.md`, `rounds/<n>/checks.md` y, si existe, `land/checks.md`, con su ruta absoluta en el checkout principal (`.factory/` no se versiona y no está en un worktree temporal). Nunca les pases `decision.md`, `loop-state.md` ni `rounds/<n>/maker.md`, que contienen el razonamiento del maker, ni `rounds/<n>/review.md`, el veredicto del checker del loop.
 
 ## Coste
 

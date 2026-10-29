@@ -473,6 +473,23 @@ def test_plantilla_rota_en_el_doctor(tmp_path, capsys):
     assert check["subsystem"] == "instrucciones" and check["severity"] == "critical"
     assert check["passed"] is False
     assert check["detail"].startswith(".claude/agents/qa.md: un revisor es de solo lectura")
+    assert check["fix"] == "Corrige .claude/agents/qa.md y comprueba con `factory team validate`"
+
+
+def test_doctor_muestra_el_primer_error_una_vez_y_cuenta_el_resto(tmp_path, capsys):
+    root = make_harness(tmp_path / "repo")
+    write_agent(
+        root, "qa", tipo="revisor", dorsal=2, tools="Read, Grep, Glob, Edit", convocatoria="x"
+    )
+    write_agent(root, "otro", tipo="revisor", dorsal=12, tools="Read", convocatoria="x")
+    assert main(["--root", str(root), "doctor", "--json"]) == 1
+    check = next(
+        c for c in json.loads(capsys.readouterr().out)["checks"] if c["id"] == "team-roster"
+    )
+    assert check["fix"].startswith("Corrige .claude/agents/")
+    assert check["fix"].endswith("(y 1 error(es) más)")
+    assert main(["--root", str(root), "doctor"]) != 0
+    assert capsys.readouterr().out.count(check["detail"]) == 1
 
 
 def test_doctor_pasa_sin_agentes_y_con_la_plantilla_d2(tmp_path, capsys):
