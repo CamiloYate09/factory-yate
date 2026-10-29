@@ -19,3 +19,6 @@ dist/
 
 # Solo trabajamos con Markdown: los PDF de origen nunca entran en el repositorio.
 *.pdf
+
+# Worktrees de los subagentes de Claude Code (trabajo en paralelo)
+.claude/worktrees/

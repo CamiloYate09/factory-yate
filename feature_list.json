@@ -327,6 +327,104 @@
         }
       ],
       "notes": "OpenSpec add-knowledge-brains, grupo 5"
+    },
+    {
+      "id": "team-roster",
+      "priority": 16,
+      "area": "team",
+      "title": "Plantilla y convocatoria del equipo",
+      "user_visible_behavior": "`factory team list|validate|lineup` muestra la formación 4-3-3 con vacantes, valida el frontmatter de los agentes del equipo y sugiere la convocatoria con su motivo; `factory doctor` incluye `team-roster`.",
+      "status": "not_started",
+      "verification": [
+        "python -m pytest -q tests/test_team_roster.py tests/test_team_lineup.py tests/test_doctor.py tests/test_scaffold_integration.py"
+      ],
+      "manual_checks": [],
+      "evidence": [],
+      "notes": "OpenSpec add-equipo-ideal, grupo 2"
+    },
+    {
+      "id": "complexity-metrics",
+      "priority": 17,
+      "area": "team",
+      "title": "Complejidad ciclomática y jugador de métricas",
+      "user_visible_behavior": "`factory complexity [rutas] [--base REF] [--max N] [--json]` mide la complejidad ciclomática por función con rangos A–F y delta frente a una referencia; el jugador `metricas` (#5) interpreta el informe.",
+      "status": "not_started",
+      "verification": [
+        "python -m pytest -q tests/test_complexity.py tests/test_team_metricas.py"
+      ],
+      "manual_checks": [],
+      "evidence": [],
+      "notes": "OpenSpec add-equipo-ideal, grupo 3"
+    },
+    {
+      "id": "team-security",
+      "priority": 18,
+      "area": "team",
+      "title": "Jugador de seguridad (portero)",
+      "user_visible_behavior": "El jugador `seguridad` (#1) revisa diffs en modo guía con la skill `security-audit` copiada literal de cloudflare/security-audit-skill (MIT), con hallazgos probados desde el código y pistas `needs_validation`.",
+      "status": "not_started",
+      "verification": [
+        "python -m pytest -q tests/test_team_seguridad.py"
+      ],
+      "manual_checks": [],
+      "evidence": [],
+      "notes": "OpenSpec add-equipo-ideal, grupo 4"
+    },
+    {
+      "id": "team-coach",
+      "priority": 19,
+      "area": "team",
+      "title": "Técnico y reglamento del partido",
+      "user_visible_behavior": "`/equipo` y `claude --agent tecnico` publican la convocatoria justificada, dirigen el partido por fases y cierran con un acta; `docs/harness/equipo.md` documenta la plantilla, las vacantes y cómo fichar.",
+      "status": "not_started",
+      "verification": [
+        "python -m pytest -q tests/test_team_tecnico.py"
+      ],
+      "manual_checks": [],
+      "evidence": [],
+      "notes": "OpenSpec add-equipo-ideal, grupo 5"
+    },
+    {
+      "id": "team-builders",
+      "priority": 20,
+      "area": "team",
+      "title": "Constructores: ingeniero de software y documentador",
+      "user_visible_behavior": "`ingeniero-software` (#9) implementa siguiendo AGENTS.md y `documentador` (#3) actualiza solo documentación `*.md`.",
+      "status": "not_started",
+      "verification": [
+        "python -m pytest -q tests/test_team_constructores.py"
+      ],
+      "manual_checks": [],
+      "evidence": [],
+      "notes": "OpenSpec add-equipo-ideal, grupo 6"
+    },
+    {
+      "id": "team-reviewers",
+      "priority": 21,
+      "area": "team",
+      "title": "Revisores: QA, producto y revisor de PR",
+      "user_visible_behavior": "`qa` (#2), `producto` (#6) y `revisor-pr` (#4) revisan en solo lectura con el formato común del equipo: plan de pruebas y cobertura, preguntas y respuestas frente a la petición, y revisión de ramas propias o ajenas.",
+      "status": "not_started",
+      "verification": [
+        "python -m pytest -q tests/test_team_revisores.py"
+      ],
+      "manual_checks": [],
+      "evidence": [],
+      "notes": "OpenSpec add-equipo-ideal, grupo 7"
+    },
+    {
+      "id": "team-integration",
+      "priority": 22,
+      "area": "team",
+      "title": "Integración y protección del equipo",
+      "user_visible_behavior": "`.claude/agents/**` y `.claude/skills/**` son archivos críticos que ningún loop puede modificar; AGENTS.md, CLAUDE.md, README y roles.md documentan el equipo y el árbitro.",
+      "status": "not_started",
+      "verification": [
+        "python -m pytest -q tests/test_protected_config.py tests/test_protected_paths.py tests/test_doctor.py"
+      ],
+      "manual_checks": [],
+      "evidence": [],
+      "notes": "OpenSpec add-equipo-ideal, grupo 8"
     }
   ]
 }
