@@ -5,7 +5,7 @@
 - Raíz del repositorio: `factory-yate/`, la que contiene `AGENTS.md`.
 - Arranque estándar: `./init.sh`.
 - Verificación estándar: `./scripts/check.sh`.
-- OpenSpec: specs principales en `openspec/specs/` (8 capacidades). Cambios archivados: `2026-10-27-add-harness-loop-engine` y `2026-10-28-extend-factory-pipeline`. No hay cambios activos.
+- OpenSpec: specs principales en `openspec/specs/` (8 capacidades). Cambios archivados: `2026-10-27-add-harness-loop-engine` y `2026-10-28-extend-factory-pipeline`. Cambio activo: `add-knowledge-brains` (20/20 tareas, commiteado, sin archivar; ver sesión 005).
 - Feature activa / siguiente: ver `.venv/bin/factory features list`.
 - Commits: `d7c3d5b` (commit inicial) y `9d74594` (evidencia de las features con hash real).
 - Bloqueos actuales: la prueba live (9.2) no está aprobada. El contrato de `--json-schema` se valida con el dogfooding (9.3).
@@ -135,3 +135,53 @@
   - El `init.sh` que genera `factory init` en proyectos Python instala con pip en el Python global; queda como mejora fuera de alcance (avisado en el README).
 - Archivado: `extend-factory-pipeline` en `openspec/changes/archive/2026-10-28-extend-factory-pipeline/`, con specs sincronizadas (goal-loop +4, loop-state +2, run-landing y request-intake nuevas).
 - Mejor próximo paso: opcionalmente, `factory goal run goals/en-repos-con-pyproject-toml-factory.md` (real, con coste) y `factory land`.
+
+### Sesión 005 — 2026-10-28
+
+- Objetivo: aplicar `add-knowledge-brains`: cerebro principal (copia de los libros, fuera de git) y cerebro diario (versionado), con búsqueda e inyección acotada en los loops. Indicación del usuario: solo archivos `.md`; los `.pdf` se descartan en `.gitignore`.
+- Completado:
+  - `factory brain import|status|search|learn|reindex|commit|pending|accept|reject`.
+  - Importación filtrada (`.md` + índices), atómica y validada; `/brain-principal/` y `*.pdf` en `.gitignore`; check crítico de `doctor` si el principal llega a git.
+  - Cerebro diario con catálogo e índices propios; ruta prohibida en todo objetivo; `factory brain commit` solo de `brain-diario/`.
+  - Capturas deterministas al terminar cada ejecución, pendientes de revisión, con salvaguarda de 8-gramas contra texto de libros.
+  - Búsqueda por palabras clave (sin dependencias) e inyección citada en el prompt de usuario del maker (una selección por ejecución, presupuesto `inject_max_tokens`, evento `knowledge`); el intake recibe notas del diario y las rutas de los catálogos; el checker no recibe nada.
+  - Acceso de lectura: `--add-dir` por cerebro, denegaciones `Edit/Write(//<ruta>/**)` añadidas en cada invocación y huella de integridad al inicio y al final con aviso en `decision.md` y la bandeja.
+  - Documentación: `docs/harness/cerebros.md`, `loops.md` (`knowledge`) y paso G del README.
+- Ajustes de diseño tras medir con el vault real (registrados en `design.md`, D3 y D4):
+  - **Cobertura en la puntuación.** Para "rate limiting", 5 de las 8 mejores notas solo contenían "rate" ("Rate of Change", "Learning Rate Scheduling"). Ahora la puntuación se multiplica por la fracción de términos encontrados.
+  - **Fusión intercalada.** Con `["rate limiting", "api gateway"]`, ordenar solo por puntuación daba las 8 plazas a "api gateway". Ahora se intercala la mejor nota de cada consulta.
+- Verificación ejecutada:
+  - `./scripts/check.sh` → código 0 (330 tests, ruff y doctor sin fallos).
+  - `openspec validate add-knowledge-brains --strict` → válido.
+  - `factory features verify` → `passing` en `main-brain`, `daily-brain`, `brain-captures` y `brain-retrieval`.
+- Tarea 6.2 (sin coste de API), vault real `/Users/camiloyateyara/PycharmProjects/redPDF/book/obsidian-vault`:
+  - `factory brain import` → 11.245 notas, 82 libros, ~13,0 M tokens, en ~3 s. Copiados 11.330 `.md` (notas + guías) y 4 índices; ningún PDF.
+  - `git status` → nada de `brain-principal/` (`git check-ignore` lo confirma); `factory doctor` → `brain-principal-untracked` en PASS.
+  - `factory brain search "rate limiting"` → primeros resultados *Defending APIs* · cap. 9 · pp. 259–260 y *Privacy and Security for LLMs* · cap. 5.
+  - Selección simulada para `["rate limiting", "api gateway"]` → 8 notas en 0,42 s, 3 en texto completo (2.659/3.000 tokens) y 5 como referencia, con ambas consultas representadas.
+- Tarea 6.3 (aprobada, ≤ 0,50 USD): dos invocaciones reales vía `ClaudeCodeRunner` (mismos argumentos que el motor), `claude-haiku-5-5`, `acceptEdits`, en directorios temporales del scratchpad (no sobre `brain-principal/`):
+  - `Write` de `brain/probe.txt` → en `permission_denials`, archivo inexistente (0,0061 USD, 4 turnos).
+  - `Edit` de `brain/nota.md` existente → en `permission_denials`, contenido intacto (0,0040 USD, 5 turnos).
+  - En ambas, escribir en el cwd y leer/`Glob` del cerebro funcionó; la sintaxis `Edit(//<ruta absoluta>/**)` es correcta y no hubo que ajustarla.
+  - El `CLAUDE.md` del cerebro (con una palabra de control) **no** se cargó en el contexto vía `--add-dir`: la palabra no apareció y el agente lo confirmó.
+  - Coste total: **0,0101 USD**.
+  - Ajuste derivado: `Config._abs` ahora resuelve también las rutas absolutas, para que `--add-dir` y las denegaciones coincidan si la ruta tiene enlaces (`/tmp` → `/private/tmp`). Test `test_ruta_absoluta_con_enlace_se_resuelve`.
+- Revisión independiente (subagente `checker`), primera pasada: `fail`, con 4 `medium` y 6 `low`. Todos corregidos con tests:
+  - un catálogo roto ya no deja una ejecución huérfana ni tumba el intake (queda como aviso);
+  - el presupuesto mide el texto que de verdad se inyecta;
+  - la fusión agrupa por consulta (el diario ya no recibe plazas de más);
+  - la salvaguarda de capturas cubre también el `abstract` de las notas solo citadas;
+  - la huella ignora archivos ocultos (`.DS_Store`, `.obsidian/`) y avisa si aparece un cerebro;
+  - las denegaciones se emiten aunque el cerebro aún no exista;
+  - la integridad se comprueba después de la promoción;
+  - las cabeceras de cita se reducen a una línea;
+  - se quitó el gancho de test del motor.
+  - D4 y `cerebros.md` actualizados. `./scripts/check.sh` → código 0 (339 tests).
+- Segunda pasada del `checker`: `pass_with_minor`, con los 10 hallazgos cerrados y 3 `low` nuevos, también corregidos:
+  - un `chapter_title` no textual en el catálogo ya no rompe el loop ni el intake;
+  - un fallo de la huella inicial ya no produce un falso aviso de integridad;
+  - D5 y D7 describen lo implementado.
+- Incidencia: durante la sesión apareció `/ba` delante de la primera línea de `factory.toml` (tecleo accidental, no generado por factory), lo que rompía el TOML. Se quitó con el visto bueno del usuario.
+- Riesgos / pendientes:
+  - Sigue pendiente la decisión humana sobre `factory land` de la ejecución `20261028-052249-en-repos-con-pyproject-toml-factory-a254` (venv en `init.sh`), y luego quitar del README el aviso sobre pip global.
+- Mejor próximo paso: archivar con `/opsx:archive add-knowledge-brains`.

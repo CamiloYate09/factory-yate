@@ -15,7 +15,8 @@ import yaml
 
 from factory.agents.base import AgentRequest, AgentRunner
 from factory.artifacts import header
-from factory.config import Config
+from factory.brain import inject
+from factory.config import Config, brain_denials
 from factory.engine import load_prompt
 from factory.goal import GoalError, parse_goal_text
 from factory.inbox import Inbox, InboxEntry, InboxError
@@ -69,6 +70,8 @@ def render_draft(req: Request, decision: IntakeDecision, goal_id: str) -> str:
     scope_meta = {k: scope[k] for k in ("allow", "deny", "protected") if scope.get(k)}
     if scope_meta:
         meta["scope"] = scope_meta
+    if decision.knowledge_queries:
+        meta["knowledge"] = {"queries": decision.knowledge_queries}
     front = yaml.safe_dump(meta, allow_unicode=True, sort_keys=False).strip()
     body = [
         "## Contexto",
@@ -100,6 +103,24 @@ class IntakeResult:
         self.request, self.decision, self.draft = request, decision, draft
 
 
+def _knowledge_text(config: Config, req: Request, request_md: str) -> str:
+    """Notas del diario relevantes (dato citado) y rutas de los catálogos (spec brain-retrieval)."""
+    try:
+        block = inject.render(inject.select(config, [], [req.title, request_md]), config)
+    except Exception:  # noqa: BLE001 — un catálogo roto no impide triar: sigue sin notas
+        block = ""
+    parts = []
+    if block:
+        parts.append(block)
+    paths = inject.catalog_paths(config)
+    if paths:
+        parts.append(
+            "Catálogos de los cerebros (puedes buscar en ellos con tus herramientas de lectura; "
+            "el principal está en inglés): " + ", ".join(f"`{p}`" for p in paths)
+        )
+    return "".join(part + "\n\n" for part in parts)
+
+
 def triage(
     config: Config,
     runner: AgentRunner,
@@ -123,8 +144,10 @@ def triage(
         "----- INICIO DE LA PETICIÓN -----\n"
         f"{request_md}\n"
         "----- FIN DE LA PETICIÓN -----\n\n"
-        "Responde solo con el JSON de tu decisión."
+        + _knowledge_text(config, req, request_md)
+        + "Responde solo con el JSON de tu decisión."
     )
+    brains = [path for path in (config.principal_path, config.daily_path) if path.is_dir()]
     request = AgentRequest(
         role="intake",
         prompt=prompt,
@@ -133,10 +156,11 @@ def triage(
         model=role.model,
         permission_mode=role.permission_mode,
         allowed_tools=list(role.allowed_tools),
-        denied_tools=list(role.denied_tools),
+        denied_tools=list(role.denied_tools) + brain_denials(brains),
         max_budget_usd=budget_usd,
         timeout_s=config.loop.round_timeout_min * 60,
         json_schema=INTAKE_SCHEMA,
+        add_dirs=brains,
     )
     result = runner.run(request)
     EventLog(directory).agent(0, request, result)

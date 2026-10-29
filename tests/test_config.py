@@ -97,3 +97,24 @@ def test_factory_toml_no_puede_quitar_denegaciones_obligatorias(tmp_path):
     checker = config.roles["checker"]
     assert checker.allowed_tools == ["Read"]
     assert {"Bash", "Edit", "Write", "Bash(git push:*)"} <= set(checker.denied_tools)
+
+
+def test_brain_valores_por_defecto_y_rutas(tmp_path):
+    config = load_config(tmp_path)
+    assert config.brain.inject_max_tokens == 3000 and config.brain.search_limit == 8
+    assert config.principal_path == (tmp_path / "brain-principal").resolve()
+    assert config.daily_path == (tmp_path / "brain-diario").resolve()
+    _write(
+        tmp_path,
+        f'[brain]\nprincipal_dir = "{tmp_path / "fuera" / "libros"}"\ndaily_dir = "notas"\n',
+    )
+    config = load_config(tmp_path)
+    assert config.principal_path == tmp_path / "fuera" / "libros"
+    assert config.daily_path == (tmp_path / "notas").resolve()
+
+
+@pytest.mark.parametrize("key", ["inject_max_tokens", "search_limit"])
+def test_brain_valores_no_positivos(tmp_path, key):
+    _write(tmp_path, f"[brain]\n{key} = 0\n")
+    with pytest.raises(ConfigError, match="mayor que 0"):
+        load_config(tmp_path)

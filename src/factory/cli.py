@@ -16,6 +16,11 @@ from factory import intake as intake_mod
 from factory import tick as ticks
 from factory.agents.base import AgentRunner
 from factory.agents.claude_code import ClaudeCodeRunner
+from factory.brain import BrainError
+from factory.brain import search as brain_search
+from factory.brain.captures import CaptureStore
+from factory.brain.daily import KINDS, DailyBrain, commit_daily
+from factory.brain.importer import import_vault, read_metadata
 from factory.config import Config, ConfigError, load_config
 from factory.engine import EngineError, Limits, LoopEngine, exit_code
 from factory.gitops import PreflightError
@@ -271,6 +276,7 @@ def cmd_status(args: argparse.Namespace) -> int:
     tick_lines = ticks.summarize(ticks.TickStore(config.state_path))
     if tick_lines:
         report.extra = ["\nVigilancia (ticks):", *tick_lines]
+    report.extra += status.brain_lines(config)
     print(status.render(report))
     return EXIT_OK
 
@@ -350,6 +356,124 @@ def cmd_intake(args: argparse.Namespace) -> int:
         rel = result.draft.relative_to(config.root)
         print(f"Revisa el borrador y promuévelo: factory goal promote {rel} --yes")
     return EXIT_OK
+
+
+def cmd_brain(args: argparse.Namespace) -> int:
+    config = load_config(args.root)
+    if args.brain_cmd == "import":
+        result = import_vault(Path(args.source), config.principal_path, config.root)
+        print(
+            f"Cerebro principal importado en {result.dest}: {result.notes} notas, "
+            f"{result.books} libros, ~{result.tokens:,} tokens (solo .md e índices)."
+        )
+        if result.gitignore_added:
+            print("Añadido a .gitignore: los libros no se versionan.")
+        return EXIT_OK
+    if args.brain_cmd == "status":
+        meta = read_metadata(config.principal_path)
+        print(f"Cerebro principal: {config.principal_path}")
+        if meta:
+            print(
+                f"  origen {meta['source']} · importado {meta['date']} · {meta['notes']} notas · "
+                f"{meta['books']} libros · ~{meta['tokens']:,} tokens · catálogo "
+                f"{meta['catalog_sha256'][:12]}"
+            )
+        else:
+            print("  no importado: usa `factory brain import <ruta-del-vault>`")
+        return EXIT_OK
+    if args.brain_cmd == "search":
+        if (
+            args.brain in ("all", "principal")
+            and not (config.principal_path / "_catalog.jsonl").is_file()
+        ):
+            print(
+                "Cerebro principal no disponible: impórtalo con "
+                "`factory brain import <ruta-del-vault>`. Se busca solo en el diario."
+            )
+        hits = brain_search.search(config, args.query, args.brain, args.limit)
+        if args.json:
+            print(
+                json.dumps(
+                    [
+                        {
+                            "brain": h.entry.brain,
+                            "path": h.entry.path,
+                            "abs_path": str(h.entry.abs_path),
+                            "title": h.entry.title,
+                            "citation": h.entry.citation(),
+                            "tokens": h.entry.tokens,
+                            "score": h.score,
+                        }
+                        for h in hits
+                    ],
+                    indent=2,
+                    ensure_ascii=False,
+                )
+            )
+            return EXIT_OK
+        if not hits:
+            print(
+                f"Sin resultados para '{args.query}'. El cerebro principal está en inglés: "
+                "prueba con términos en inglés ('rate limiting' en lugar de 'límite de tasa')."
+            )
+            return EXIT_OK
+        for hit in hits:
+            print(f"[{hit.score:g}] {hit.entry.citation()} — {hit.entry.title}")
+            print(f"      {hit.entry.brain}: {hit.entry.path} (~{hit.entry.tokens} tokens)")
+        return EXIT_OK
+    daily = DailyBrain(config.daily_path)
+    if args.brain_cmd == "learn":
+        text = Path(args.file).read_text(encoding="utf-8") if args.file else args.text
+        if not text or not text.strip():
+            raise BrainError('Falta el aprendizaje: `factory brain learn "…"` o `--file nota.md`.')
+        tags = [t for t in (args.tags or "").split(",") if t.strip()]
+        path = daily.add(text, kind=args.kind, title=args.title, tags=tags)
+        print(f"Aprendizaje guardado: {path.relative_to(config.root)}")
+        print("Recuerda versionarlo con `factory brain commit`.")
+        return EXIT_OK
+    if args.brain_cmd == "commit":
+        commit, fallback = commit_daily(config, args.message)
+        if commit is None:
+            print("El cerebro diario no tiene cambios que commitear.")
+            return EXIT_OK
+        if fallback:
+            print("AVISO: git no tiene identidad configurada; se usó la de reserva de factory.")
+        print(f"Commit {commit[:10]} solo con el cerebro diario (sin push).")
+        return EXIT_OK
+    captures = CaptureStore(config.state_path)
+    if args.brain_cmd == "pending":
+        pending = captures.pending()
+        if not pending:
+            print("No hay capturas pendientes.")
+        for capture in pending:
+            print(f"{capture.id}  [{capture.kind}] {capture.title}  ({capture.source})")
+        return EXIT_OK
+    if args.brain_cmd == "accept":
+        capture = captures.load(captures.path(args.id))
+        path = daily.add(
+            capture.text,
+            kind=capture.kind,
+            title=capture.title,
+            tags=capture.tags,
+            source=capture.source,
+        )
+        captures.remove(capture.id)
+        print(
+            f"Captura aceptada: {path.relative_to(config.root)} "
+            "(versiónala con factory brain commit)"
+        )
+        return EXIT_OK
+    if args.brain_cmd == "reject":
+        target = captures.reject(args.id)
+        print(f"Captura descartada (queda constancia en {target.relative_to(config.root)})")
+        return EXIT_OK
+    if args.brain_cmd == "reindex":
+        errors = daily.reindex()
+        print(f"Cerebro diario reindexado: {len(daily.note_paths()) - len(errors)} nota(s).")
+        for relative, error in errors:
+            print(f"✗ {relative}: {error}")
+        return EXIT_FAIL if errors else EXIT_OK
+    raise AssertionError(args.brain_cmd)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -449,6 +573,38 @@ def build_parser() -> argparse.ArgumentParser:
     intake_p.add_argument("--budget", type=float, default=1.0, help="presupuesto en USD (1.0)")
     intake_p.set_defaults(handler=cmd_intake)
 
+    brain = sub.add_parser("brain", help="cerebros de conocimiento: principal y diario")
+    brain_sub = brain.add_subparsers(dest="brain_cmd", required=True)
+    brain_import = brain_sub.add_parser(
+        "import", help="importa (o refresca) el vault de libros como cerebro principal"
+    )
+    brain_import.add_argument("source", help="carpeta del vault con _catalog.jsonl")
+    brain_sub.add_parser("status", help="estado de los cerebros")
+    search_p = brain_sub.add_parser("search", help="busca en los cerebros y cita las notas")
+    search_p.add_argument("query")
+    search_p.add_argument("--brain", choices=("all", "principal", "diario"), default="all")
+    search_p.add_argument("--limit", type=int, default=None)
+    search_p.add_argument("--json", action="store_true")
+    learn = brain_sub.add_parser("learn", help="añade un aprendizaje al cerebro diario")
+    learn.add_argument("text", nargs="?", default=None, help="texto del aprendizaje")
+    learn.add_argument("--file", default=None, help="archivo con el aprendizaje")
+    learn.add_argument("--kind", choices=KINDS, default="learning")
+    learn.add_argument("--title", default=None)
+    learn.add_argument("--tags", default=None, help="etiquetas separadas por comas")
+    brain_sub.add_parser("reindex", help="reconstruye el catálogo e índices del cerebro diario")
+    brain_sub.add_parser("pending", help="capturas de los loops pendientes de revisión")
+    accept = brain_sub.add_parser("accept", help="convierte una captura en nota del cerebro diario")
+    accept.add_argument("id")
+    reject = brain_sub.add_parser("reject", help="descarta una captura")
+    reject.add_argument("id")
+    commit_p = brain_sub.add_parser(
+        "commit", help="commit solo de los cambios del cerebro diario (sin push)"
+    )
+    commit_p.add_argument(
+        "-m", "--message", default="Cerebro diario: nuevos aprendizajes", help="mensaje del commit"
+    )
+    brain.set_defaults(handler=cmd_brain)
+
     land_p = sub.add_parser(
         "land", help="integra en main una ejecución completed, tras verificar el merge exacto"
     )
@@ -488,6 +644,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         EngineError,
         schedule.ScheduleError,
         RequestError,
+        BrainError,
     ) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return EXIT_USAGE

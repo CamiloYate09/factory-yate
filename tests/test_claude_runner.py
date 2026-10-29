@@ -51,6 +51,15 @@ def test_argv_por_rol(tmp_path):
     assert not any("dangerously" in a or "bypass" in a for a in argv)
 
 
+def test_peticion_del_maker_con_acceso_a_los_cerebros(tmp_path):
+    principal, diario = tmp_path / "brain-principal", tmp_path / "brain-diario"
+    argv = build_argv(_req(tmp_path, add_dirs=[principal, diario]))
+    assert argv.count("--add-dir") == 2  # una bandera por ruta (la opción es variádica)
+    assert argv[argv.index(str(principal)) - 1] == "--add-dir"
+    assert argv[argv.index(str(diario)) - 1] == "--add-dir"
+    assert "--add-dir" not in build_argv(_req(tmp_path))
+
+
 def test_argv_rechaza_bypass(tmp_path):
     with pytest.raises(ValueError, match="prohibido"):
         build_argv(_req(tmp_path, permission_mode="bypassPermissions"))

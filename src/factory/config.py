@@ -79,6 +79,16 @@ class AgentConfig:
 
 
 @dataclass
+class BrainConfig:
+    """Cerebros de conocimiento: principal (libros, fuera de git) y diario (versionado)."""
+
+    principal_dir: str = "brain-principal"
+    daily_dir: str = "brain-diario"
+    inject_max_tokens: int = 3000
+    search_limit: int = 8
+
+
+@dataclass
 class RoleConfig:
     model: str
     prompt: str
@@ -106,6 +116,15 @@ MANDATORY_DENIED = {
     "checker": ["Edit", "Write", "NotebookEdit", "Bash", *PUBLISH_DENIED],
     "intake": ["Edit", "Write", "NotebookEdit", "Bash", *PUBLISH_DENIED],
 }
+
+
+def brain_denials(paths: list[Path]) -> list[str]:
+    """Denegaciones obligatorias de escritura sobre los cerebros (rutas absolutas: `//ruta`)."""
+    rules = []
+    for path in paths:
+        absolute = "//" + path.resolve().as_posix().lstrip("/")
+        rules += [f"Edit({absolute}/**)", f"Write({absolute}/**)"]
+    return rules
 
 
 def enforce_role_policy(name: str, role: RoleConfig) -> RoleConfig:
@@ -164,6 +183,7 @@ class Config:
     tick: TickConfig = field(default_factory=TickConfig)
     alerts: AlertsConfig = field(default_factory=AlertsConfig)
     agent: AgentConfig = field(default_factory=AgentConfig)
+    brain: BrainConfig = field(default_factory=BrainConfig)
     roles: dict[str, RoleConfig] = field(default_factory=default_roles)
     source: Path | None = None
 
@@ -180,6 +200,19 @@ class Config:
     @property
     def state_path(self) -> Path:
         return self.root / self.loop.state_dir
+
+    @property
+    def principal_path(self) -> Path:
+        """Ruta absoluta del cerebro principal, siempre desde la raíz del repo principal."""
+        return self._abs(self.brain.principal_dir)
+
+    @property
+    def daily_path(self) -> Path:
+        return self._abs(self.brain.daily_dir)
+
+    def _abs(self, value: str) -> Path:
+        path = Path(value).expanduser()  # resuelta: --add-dir y las denegaciones usan la misma ruta
+        return (path if path.is_absolute() else self.root / path).resolve()
 
     @property
     def worktrees_path(self) -> Path:
@@ -250,7 +283,7 @@ def load_config(root: Path) -> Config:
         except tomllib.TOMLDecodeError as exc:
             raise ConfigError(f"{CONFIG_FILE} no es TOML válido: {exc}") from exc
         config.source = path
-        known = {"harness", "loop", "tick", "alerts", "agent", "roles"}
+        known = {"harness", "loop", "tick", "alerts", "agent", "roles", "brain"}
         unknown = set(data) - known
         if unknown:
             raise ConfigError(f"Sección desconocida en {CONFIG_FILE}: {', '.join(sorted(unknown))}")
@@ -259,6 +292,7 @@ def load_config(root: Path) -> Config:
         apply_values(config.tick, _section(data, "tick"), "tick")
         apply_values(config.alerts, _section(data, "alerts"), "alerts")
         apply_values(config.agent, _section(data, "agent"), "agent")
+        apply_values(config.brain, _section(data, "brain"), "brain")
         roles = _section(data, "roles")
         for name, values in roles.items():
             if name not in ROLES:

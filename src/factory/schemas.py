@@ -175,6 +175,7 @@ INTAKE_SCHEMA: dict[str, Any] = {
         "left_out": {"type": "array", "items": {"type": "string"}},
         "why": {"type": "string"},
         "question": {"type": "string"},
+        "knowledge_queries": {"type": "array", "items": {"type": "string"}},
         "goal": {
             "type": "object",
             "required": ["objective", "acceptance"],
@@ -214,6 +215,7 @@ class IntakeDecision:
     left_out: list[str] = field(default_factory=list)
     question: str = ""
     goal: dict[str, Any] = field(default_factory=dict)
+    knowledge_queries: list[str] = field(default_factory=list)
 
 
 def _str_list(value: Any) -> bool:
@@ -253,6 +255,11 @@ def parse_intake(data: Any) -> tuple[IntakeDecision | None, list[str]]:
             )
         ):
             errors.append("con ACCEPT hace falta goal.acceptance con al menos un {name, run}")
+    queries = data.get("knowledge_queries", [])
+    if not _str_list(queries):
+        errors.append("knowledge_queries debe ser una lista de texto")
+    elif data.get("decision") == "ACCEPT" and not [q for q in queries if q.strip()]:
+        errors.append("con ACCEPT hace falta knowledge_queries (consultas en inglés)")
     if data.get("decision") == "NEEDS-INFO" and not _text(data.get("question")):
         errors.append("con NEEDS-INFO hace falta question")
     if errors:
@@ -268,6 +275,7 @@ def parse_intake(data: Any) -> tuple[IntakeDecision | None, list[str]]:
             left_out=list(data.get("left_out", [])),
             question=str(data.get("question", "")).strip(),
             goal=goal if isinstance(goal, dict) else {},
+            knowledge_queries=[q.strip() for q in data.get("knowledge_queries", []) if q.strip()],
         ),
         [],
     )

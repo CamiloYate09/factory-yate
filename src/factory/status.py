@@ -157,3 +157,23 @@ def render(report: StatusReport) -> str:
             out.append(f"         {ind.detail}")
     out.extend(report.extra)
     return "\n".join(out)
+
+
+def brain_lines(config: Config) -> list[str]:
+    """Avisos de los cerebros para `factory status` (cambios sin commitear del diario)."""
+    from factory.brain.captures import CaptureStore
+    from factory.brain.daily import uncommitted
+
+    lines = []
+    pending = CaptureStore(config.state_path).pending()
+    if pending:
+        lines.append(
+            f"  {len(pending)} captura(s) pendiente(s) de revisión → factory brain pending"
+        )
+    changes = uncommitted(config)
+    if changes:
+        lines.append(
+            f"  [AVISO] Cerebro diario con {len(changes)} cambio(s) sin commitear → "
+            "factory brain commit"
+        )
+    return ["\nCerebros:", *lines] if lines else []

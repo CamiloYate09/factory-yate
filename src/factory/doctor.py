@@ -6,6 +6,7 @@ y sea ejecutable.
 
 from __future__ import annotations
 
+import hashlib
 import os
 import re
 import shlex
@@ -14,7 +15,9 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from factory import features
+from factory.brain.importer import leftovers, read_metadata
 from factory.config import Config
+from factory.util import git
 
 SUBSYSTEMS = ("instrucciones", "estado", "verificacion", "alcance", "ciclo_de_vida")
 CRITICAL = "critical"
@@ -311,11 +314,66 @@ def _lifecycle_checks(config: Config) -> list[Check]:
     ]
 
 
+def _brain_checks(config: Config) -> list[Check]:
+    """Cerebro principal: nunca versionado (crítica); importado, válido y sin restos (si existe)."""
+    principal = config.principal_path
+    checks = []
+    try:
+        relative = principal.relative_to(config.root.resolve())
+    except ValueError:
+        relative = None
+    if relative is not None and (config.root / ".git").exists():
+        tracked = git(config.root, "ls-files", "--", relative.as_posix(), check=False).splitlines()
+        checks.append(
+            Check(
+                "estado",
+                "brain-principal-untracked",
+                f"El cerebro principal ({relative.as_posix()}/) no está versionado",
+                CRITICAL,
+                not tracked,
+                f"Saca del índice los libros con `git rm -r --cached {relative.as_posix()}` y "
+                f"asegúrate de que `/{relative.as_posix()}/` está en .gitignore.",
+                ", ".join(tracked[:5]),
+            )
+        )
+    if principal.is_dir():
+        meta = read_metadata(principal)
+        catalog = principal / "_catalog.jsonl"
+        valid = (
+            bool(meta)
+            and catalog.is_file()
+            and (hashlib.sha256(catalog.read_bytes()).hexdigest() == meta.get("catalog_sha256"))
+        )
+        checks.append(
+            Check(
+                "estado",
+                "brain-principal-valid",
+                "El cerebro principal tiene su registro de importación y su catálogo coincide",
+                RECOMMENDED,
+                valid,
+                "Vuelve a importar el vault con `factory brain import <ruta-del-vault>`.",
+            )
+        )
+        rest = leftovers(principal)
+        checks.append(
+            Check(
+                "estado",
+                "brain-principal-leftovers",
+                "No quedan restos de importaciones interrumpidas",
+                RECOMMENDED,
+                not rest,
+                "Borra los restos: " + ", ".join(p.name for p in rest),
+            )
+        )
+    return checks
+
+
 def audit(config: Config) -> Report:
     state_checks, data = _state_checks(config)
     checks = (
         _instruction_checks(config)
         + state_checks
+        + _brain_checks(config)
         + _verification_checks(config)
         + _scope_checks(data)
         + _lifecycle_checks(config)

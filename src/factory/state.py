@@ -92,6 +92,8 @@ class RunState:
     parent_run_id: str = ""  # ejecución de la que parte un retrabajo
     start_commit: str = ""  # punta de la que parte la rama (= base salvo en retrabajo)
     landed_commit: str = ""  # commit de main tras `factory land`
+    human_answer: str = ""  # retrabajo: respuesta humana recibida
+    parent_question: str = ""  # retrabajo: pregunta que hizo la ejecución padre
 
     @property
     def is_final(self) -> bool:

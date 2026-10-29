@@ -36,9 +36,11 @@ Rellena `goal`. Será un **borrador** que un humano revisará antes de ejecutar 
 - `scope.allow`: las rutas mínimas que hay que tocar. `scope.protected`: lo que no debe modificarse.
 - `body`: contexto y pasos sugeridos para el maker, en pocas líneas.
 
+Además, rellena `knowledge_queries` con **2 a 4 consultas cortas en inglés** para buscar en la biblioteca técnica, que está en inglés (por ejemplo `["rate limiting", "api gateway"]`). Se usan para darle al maker material de referencia relevante.
+
 ## Respuesta
 
-Responde **solo** con el objeto JSON del esquema indicado. Campos: `decision`, `risk`, `surfaces`, `rescoped`, `scope`, `left_out`, `why`, `question` y `goal`.
+Responde **solo** con el objeto JSON del esquema indicado. Campos: `decision`, `risk`, `surfaces`, `rescoped`, `scope`, `left_out`, `why`, `question`, `knowledge_queries` y `goal`.
 
 ---
 Prompt original de factory-yate (licencia del proyecto).

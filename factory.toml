@@ -48,3 +48,12 @@ permission_mode = "acceptEdits"
 model = "opus"
 prompt = "prompts/checker.md"
 permission_mode = "dontAsk"
+
+# Cerebros de conocimiento (docs/harness/cerebros.md).
+# principal: copia local de la biblioteca de libros (factory brain import), FUERA de git.
+# diario: aprendizajes del día a día (factory brain learn / capturas), versionado.
+[brain]
+principal_dir = "brain-principal"
+daily_dir = "brain-diario"
+inject_max_tokens = 3000
+search_limit = 8

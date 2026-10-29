@@ -47,6 +47,9 @@ def build_argv(request: AgentRequest, command: str = "claude") -> list[str]:
         argv += ["--disallowedTools", ",".join(request.denied_tools)]
     if request.max_budget_usd is not None:
         argv += ["--max-budget-usd", f"{max(request.max_budget_usd, 0.01):.2f}"]
+    if request.add_dirs:
+        for path in request.add_dirs:  # una bandera por ruta: la opción es variádica
+            argv += ["--add-dir", str(path)]
     if request.json_schema is not None:
         argv += ["--json-schema", json.dumps(request.json_schema, separators=(",", ":"))]
     assert not any(flag in argv for flag in FORBIDDEN_FLAGS)

@@ -13,3 +13,9 @@ dist/
 
 # Configuración personal del IDE
 .idea/
+
+# Cerebro principal: copia local de libros (solo .md). Nunca se versiona (factory doctor lo comprueba).
+/brain-principal/
+
+# Solo trabajamos con Markdown: los PDF de origen nunca entran en el repositorio.
+*.pdf

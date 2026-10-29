@@ -115,6 +115,41 @@ factory goal run goals/<id>.md --dry-run                      # y sigue con el p
 
 El intake usa `claude` (cuesta dinero), solo lee el repo y nunca ejecuta comandos. Un borrador no se puede ejecutar hasta que lo promueves.
 
+### G. Cerebros de conocimiento (opcional)
+
+Dos bibliotecas en Markdown que los loops consultan en solo lectura. Detalle en [docs/harness/cerebros.md](docs/harness/cerebros.md).
+
+> ⚠️ **Los libros no se versionan.** El cerebro principal (`brain-principal/`) contiene libros de terceros: `import` lo añade a `.gitignore` y `factory doctor` falla si algo suyo llega a git. En un equipo nuevo hay que **volver a importarlo** desde tu copia local del vault. Solo se copian archivos `.md` y sus índices; los PDF se descartan (`*.pdf` está en `.gitignore`).
+
+```bash
+# 1. Cerebro principal: copia filtrada del vault de libros (repite el comando para refrescarlo)
+factory brain import /ruta/redPDF/book/obsidian-vault
+factory brain status                                  # notas, libros, tokens y fecha de importación
+
+# 2. Buscar (el principal está en inglés: busca en inglés)
+factory brain search "rate limiting"
+factory brain search "token bucket" --brain principal --limit 5
+
+# 3. Cerebro diario: lo que aprendes tú (sí se versiona, en brain-diario/)
+factory brain learn "En macOS no existe timeout; usar el de la herramienta" --kind gotcha --tags macos
+
+# 4. Revisar lo que proponen los loops al terminar
+factory brain pending                                 # capturas pendientes (también en factory status)
+factory brain accept <id>                             # o: factory brain reject <id>
+
+# 5. Commitear SOLO el cerebro diario (sin push)
+factory brain commit -m "aprendizajes de hoy"
+```
+
+Para que un objetivo reciba conocimiento, declara consultas en inglés en su `goal.md` (el intake las propone solo):
+
+```yaml
+knowledge:
+  queries: ["rate limiting", "api gateway"]
+```
+
+El maker recibe las notas más relevantes como texto citado (máximo `[brain] inject_max_tokens`, 3.000 por defecto); el checker no recibe nada.
+
 ## Loops
 
 Ver [docs/harness/loops.md](docs/harness/loops.md):

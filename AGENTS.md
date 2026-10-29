@@ -66,6 +66,7 @@ Léelos solo cuando la tarea lo requiera:
 - [Intake](docs/harness/intake.md): triaje de peticiones, borradores y `factory goal promote`.
 - [Revisión](docs/harness/revision.md): leer resultados, `factory goal rework` y `factory land`.
 - [Vigilancia](docs/harness/vigilancia.md): `factory tick`, guardas y programación.
+- [Cerebros](docs/harness/cerebros.md): cerebro principal (libros, fuera de git) y diario; `factory brain …`.
 - [Cambios OpenSpec](openspec/changes/): requisitos y tareas del cambio en curso.
 
 ## Estructura

@@ -51,6 +51,7 @@ Revisa cada `ConfigError` de `src/factory/config.py` y añade un test por mensaj
 | `scope.deny` | no | globs prohibidos. `feature_list.json` se añade siempre |
 | `stop` | no | `max_rounds`, `max_budget_usd`, `no_progress_rounds`, `consecutive_passes`, `round_timeout_min` |
 | `roles` | no | overrides por rol: `model`, `permission_mode`, `allowed_tools`, `denied_tools` |
+| `knowledge` | no | `queries`: consultas **en inglés** para el cerebro principal; `enabled: false` desactiva la inyección. Ver [Cerebros](cerebros.md#recuperación-e-inyección) |
 
 ### Rutas protegidas
 
@@ -148,7 +149,8 @@ Las listas de herramientas de Claude Code funcionan por **prefijo** y no son un 
 - un checker de solo lectura con guarda de árbol;
 - comandos de publicación denegados;
 - nunca `bypassPermissions`;
-- presupuesto por invocación y por ejecución.
+- presupuesto por invocación y por ejecución;
+- cerebros de conocimiento en solo lectura (`--add-dir` con denegaciones de `Edit`/`Write` obligatorias y una huella que avisa si cambian).
 
 Reducen el riesgo, pero no aíslan el sistema. Para ejecuciones largas o desatendidas, usa un **contenedor o una VM** sin credenciales de publicación, con el repo montado y sin acceso a secretos.
 

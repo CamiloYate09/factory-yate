@@ -22,6 +22,7 @@ ACCEPT = {
     "left_out": [],
     "why": "Encaja y es pequeño.",
     "question": "",
+    "knowledge_queries": ["subtraction function", "unit testing"],
     "goal": {
         "objective": "Restar dos números con calc.restar",
         "acceptance": [{"name": "tests", "run": "python -m pytest -q tests/test_calc.py"}],
@@ -143,3 +144,17 @@ def test_peticion_aceptada(tmp_path, monkeypatch, capsys):
     assert main(["--root", str(root), "goal", "validate", str(draft)]) == 0
     assert "BORRADOR" in capsys.readouterr().out
     assert isinstance(Path(req.draft), Path)
+
+
+def test_borrador_del_intake_incluye_consultas_en_ingles(tmp_path, monkeypatch):
+    root, _ = _setup(tmp_path, monkeypatch, ACCEPT)
+    assert _intake(root, "Añade restar") == 0
+    meta = yaml.safe_load((root / _only_request(root).draft).read_text().split("---")[1])
+    assert meta["knowledge"] == {"queries": ["subtraction function", "unit testing"]}
+
+
+def test_accept_sin_consultas_es_invalido(tmp_path, monkeypatch):
+    sin = {k: v for k, v in ACCEPT.items() if k != "knowledge_queries"}
+    root, _ = _setup(tmp_path, monkeypatch, sin)
+    assert _intake(root, "Añade restar") == 1
+    assert "knowledge_queries" in _only_request(root).error

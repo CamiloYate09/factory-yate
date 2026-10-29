@@ -1,6 +1,6 @@
 {
   "project": "factory-yate",
-  "last_updated": "2026-10-28",
+  "last_updated": "2026-10-29",
   "rules": {
     "single_active_feature": true,
     "passing_requires_evidence": true,
@@ -243,6 +243,90 @@
         }
       ],
       "notes": "OpenSpec extend-factory-pipeline, grupo 6"
+    },
+    {
+      "id": "main-brain",
+      "priority": 12,
+      "area": "brain",
+      "title": "Cerebro principal (biblioteca de libros)",
+      "user_visible_behavior": "`factory brain import <vault>` copia solo las notas .md y sus índices a brain-principal/, fuera de git, con refresco atómico y validación del catálogo.",
+      "status": "passing",
+      "verification": [
+        "python -m pytest -q tests/test_brain_import.py tests/test_doctor.py"
+      ],
+      "manual_checks": [],
+      "evidence": [
+        {
+          "command": "python -m pytest -q tests/test_brain_import.py tests/test_doctor.py",
+          "exit_code": 0,
+          "date": "2026-10-29T02:55:19+00:00",
+          "commit": "65820544bcae824093fb70166165c2c4b02a927b"
+        }
+      ],
+      "notes": "OpenSpec add-knowledge-brains, grupo 2"
+    },
+    {
+      "id": "daily-brain",
+      "priority": 13,
+      "area": "brain",
+      "title": "Cerebro diario",
+      "user_visible_behavior": "`factory brain learn` añade notas por fecha compatibles con cualquier LLM; ningún loop puede escribir en brain-diario/ y `factory brain commit` hace commit solo de esa carpeta.",
+      "status": "passing",
+      "verification": [
+        "python -m pytest -q tests/test_brain_daily.py tests/test_land.py"
+      ],
+      "manual_checks": [],
+      "evidence": [
+        {
+          "command": "python -m pytest -q tests/test_brain_daily.py tests/test_land.py",
+          "exit_code": 0,
+          "date": "2026-10-29T02:55:27+00:00",
+          "commit": "65820544bcae824093fb70166165c2c4b02a927b"
+        }
+      ],
+      "notes": "OpenSpec add-knowledge-brains, grupo 3"
+    },
+    {
+      "id": "brain-captures",
+      "priority": 14,
+      "area": "brain",
+      "title": "Capturas desde los loops",
+      "user_visible_behavior": "Al terminar una ejecución se proponen capturas pendientes (sin texto de libros) que se aceptan o rechazan con `factory brain accept|reject`.",
+      "status": "passing",
+      "verification": [
+        "python -m pytest -q tests/test_brain_captures.py"
+      ],
+      "manual_checks": [],
+      "evidence": [
+        {
+          "command": "python -m pytest -q tests/test_brain_captures.py",
+          "exit_code": 0,
+          "date": "2026-10-29T02:55:32+00:00",
+          "commit": "65820544bcae824093fb70166165c2c4b02a927b"
+        }
+      ],
+      "notes": "OpenSpec add-knowledge-brains, grupo 4"
+    },
+    {
+      "id": "brain-retrieval",
+      "priority": 15,
+      "area": "brain",
+      "title": "Búsqueda e inyección de conocimiento",
+      "user_visible_behavior": "`factory brain search` cita libro y capítulo; el maker y el intake reciben conocimiento citado dentro de un presupuesto de tokens y el checker no recibe nada.",
+      "status": "passing",
+      "verification": [
+        "python -m pytest -q tests/test_brain_search.py tests/test_brain_inject.py tests/test_claude_runner.py tests/test_intake.py"
+      ],
+      "manual_checks": [],
+      "evidence": [
+        {
+          "command": "python -m pytest -q tests/test_brain_search.py tests/test_brain_inject.py tests/test_claude_runner.py tests/test_intake.py",
+          "exit_code": 0,
+          "date": "2026-10-29T02:55:41+00:00",
+          "commit": "65820544bcae824093fb70166165c2c4b02a927b"
+        }
+      ],
+      "notes": "OpenSpec add-knowledge-brains, grupo 5"
     }
   ]
 }

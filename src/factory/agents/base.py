@@ -22,6 +22,7 @@ class AgentRequest:
     max_budget_usd: float | None = None
     timeout_s: float | None = None
     json_schema: dict[str, Any] | None = None
+    add_dirs: list[Path] = field(default_factory=list)  # lectura extra (cerebros)
 
 
 @dataclass

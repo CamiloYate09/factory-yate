@@ -77,6 +77,8 @@ class Goal:
     request: str = ""
     risk: str = ""
     surfaces: list[str] = field(default_factory=list)
+    knowledge_queries: list[str] = field(default_factory=list)  # en inglés, para el principal
+    knowledge_enabled: bool = True
 
     @property
     def is_draft(self) -> bool:
@@ -134,9 +136,10 @@ class Goal:
         return "\n".join(lines)
 
 
-def out_of_scope(paths: list[str], goal: Goal) -> list[str]:
-    """Archivos fuera del alcance: no permitidos o explícitamente prohibidos."""
-    return [p for p in paths if matches(p, goal.deny) or not matches(p, goal.allow)]
+def out_of_scope(paths: list[str], goal: Goal, extra_deny: list[str] | None = None) -> list[str]:
+    """Archivos fuera del alcance: no permitidos o prohibidos (por el objetivo o por factory)."""
+    deny = goal.deny + list(extra_deny or [])
+    return [p for p in paths if matches(p, deny) or not matches(p, goal.allow)]
 
 
 def _str_list(value: object, where: str) -> list[str]:
@@ -245,6 +248,7 @@ def parse_goal_text(text: str, defaults: LoopConfig, path: Path | None = None) -
         "request",
         "risk",
         "surfaces",
+        "knowledge",
     }
     unknown = set(meta) - known
     if unknown:
@@ -289,6 +293,14 @@ def parse_goal_text(text: str, defaults: LoopConfig, path: Path | None = None) -
     if not isinstance(request, str):
         raise GoalError("`request` debe ser el id de una petición")
 
+    knowledge = meta.get("knowledge") or {}
+    if not isinstance(knowledge, dict) or set(knowledge) - {"queries", "enabled"}:
+        raise GoalError("`knowledge` admite solo `queries` (lista de texto) y `enabled` (booleano)")
+    knowledge_queries = _str_list(knowledge.get("queries"), "knowledge.queries")
+    knowledge_enabled = knowledge.get("enabled", True)
+    if not isinstance(knowledge_enabled, bool):
+        raise GoalError("knowledge.enabled debe ser true o false")
+
     stop, applied = _stop(meta.get("stop"), defaults)
     return Goal(
         id=goal_id,
@@ -310,6 +322,8 @@ def parse_goal_text(text: str, defaults: LoopConfig, path: Path | None = None) -
         request=request,
         risk=risk,
         surfaces=surfaces,
+        knowledge_queries=knowledge_queries,
+        knowledge_enabled=knowledge_enabled,
     )
 
 

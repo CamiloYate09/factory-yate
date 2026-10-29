@@ -90,3 +90,34 @@ def test_wip_y_passing_sin_evidencia(tmp_path, capsys):
     out = capsys.readouterr().out
     assert "[FAIL] [CRITICAL] Como máximo una feature en in_progress" in out
     assert "f-3" in out
+
+
+def test_cerebro_principal_versionado_por_error(tmp_path, capsys):
+    import subprocess
+
+    from conftest import init_git_repo
+
+    root = make_harness(tmp_path / "repo")
+    init_git_repo(root, commit=False)
+    (root / "brain-principal" / "libro").mkdir(parents=True)
+    (root / "brain-principal" / "libro" / "nota.md").write_text("# nota\n")
+    subprocess.run(["git", "add", "-A"], cwd=root, check=True)
+    assert _doctor(root) == 1
+    out = capsys.readouterr().out
+    assert "[FAIL] [CRITICAL] El cerebro principal (brain-principal/) no está versionado" in out
+    assert "git rm -r --cached brain-principal" in out
+
+
+def test_cerebro_principal_importado_y_valido(tmp_path, capsys):
+    from conftest import init_git_repo, make_vault
+
+    from factory.brain.importer import import_vault
+
+    root = make_harness(tmp_path / "repo")
+    init_git_repo(root, commit=False)
+    import_vault(make_vault(tmp_path / "vault"), root / "brain-principal", root)
+    assert _doctor(root, "--json") == 0
+    data = json.loads(capsys.readouterr().out)
+    ids = {c["id"]: c["passed"] for c in data["checks"]}
+    assert ids["brain-principal-untracked"] and ids["brain-principal-valid"]
+    assert ids["brain-principal-leftovers"]
