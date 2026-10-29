@@ -24,8 +24,8 @@
 
 ## 4. Seguridad (`team-security`)
 
-- [ ] 4.1 Copiar literal `skills/security-audit/` de `cloudflare/security-audit-skill` @ `c1c8a8c` en `.claude/skills/security-audit/`, junto con su `LICENSE` y un `UPSTREAM.md` (repositorio, commit, fecha y política de resincronización). Verificar con `pytest tests/test_team_seguridad.py`: los archivos coinciden byte a byte con la lista esperada y la licencia está presente.
-- [ ] 4.2 Crear el jugador `.claude/agents/seguridad.md` (#1, revisor) con D5. Verificar con `pytest tests/test_team_seguridad.py`, escenarios "Sin artefactos de auditoría", "Inyección de comandos probada desde el código" y "Sospecha sin traza completa" (contrato del prompt), y con una prueba real en haiku (≤ 0,05 USD) sobre un diff con `shell=True`.
+- [x] 4.1 Copiar literal `skills/security-audit/` de `cloudflare/security-audit-skill` @ `c1c8a8c` en `.claude/skills/security-audit/`, junto con su `LICENSE` y un `UPSTREAM.md` (repositorio, commit, fecha y política de resincronización). Verificar con `pytest tests/test_team_seguridad.py`: los archivos coinciden byte a byte con la lista esperada y la licencia está presente.
+- [x] 4.2 Crear el jugador `.claude/agents/seguridad.md` (#1, revisor) con D5. Verificar con `pytest tests/test_team_seguridad.py`, escenarios "Sin artefactos de auditoría", "Inyección de comandos probada desde el código" y "Sospecha sin traza completa" (contrato del prompt), y con una prueba real en haiku (≤ 0,05 USD) sobre un diff con `shell=True`.
 
 ## 5. Técnico (`team-coach`)
 
