@@ -476,6 +476,53 @@ def cmd_brain(args: argparse.Namespace) -> int:
     raise AssertionError(args.brain_cmd)
 
 
+def cmd_team(args: argparse.Namespace) -> int:
+    from factory.team import TeamError
+    from factory.team import lineup as team_lineup
+    from factory.team import roster as team_roster
+
+    config = load_config(args.root)
+    plantilla = team_roster.load_roster(config.root)
+    if args.team_cmd == "validate":
+        if args.json:
+            data = {"ok": plantilla.ok, "errores": plantilla.errors}
+            print(json.dumps(data, indent=2, ensure_ascii=False))
+        else:
+            for error in plantilla.errors:
+                print(f"✗ {error}")
+            if plantilla.errors:
+                print(f"Plantilla con {len(plantilla.errors)} error(es).")
+            else:
+                print(f"Plantilla válida: {len(plantilla.members)} miembro(s) del equipo.")
+        return EXIT_OK if plantilla.ok else EXIT_FAIL
+    for error in plantilla.errors:  # list y lineup siguen con los miembros válidos
+        print(f"aviso: plantilla: {error}", file=sys.stderr)
+    if args.team_cmd == "list":
+        if args.json:
+            print(json.dumps(plantilla.to_dict(), indent=2, ensure_ascii=False))
+        else:
+            print(team_roster.render(plantilla))
+        return EXIT_OK
+    if args.team_cmd == "lineup":
+        try:
+            peticion = team_lineup.load_peticion(args.peticion, args.peticion_file)
+            if args.paths is not None:
+                base, rutas = None, team_lineup.normalize_paths(args.paths)
+            else:
+                base = args.base or "HEAD"
+                rutas = team_lineup.changed_paths(config.root, base)
+        except TeamError as exc:
+            print(f"error: {exc}", file=sys.stderr)
+            return EXIT_USAGE
+        result = team_lineup.convocar(plantilla, rutas, peticion is not None, base)
+        if args.json:
+            print(json.dumps(result.to_dict(), indent=2, ensure_ascii=False))
+        else:
+            print(team_lineup.render(result))
+        return EXIT_OK
+    raise AssertionError(args.team_cmd)
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="factory",
@@ -604,6 +651,35 @@ def build_parser() -> argparse.ArgumentParser:
         "-m", "--message", default="Cerebro diario: nuevos aprendizajes", help="mensaje del commit"
     )
     brain.set_defaults(handler=cmd_brain)
+
+    team = sub.add_parser("team", help="el equipo ideal: plantilla, validación y convocatoria")
+    team_sub = team.add_subparsers(dest="team_cmd", required=True)
+    team_list = team_sub.add_parser(
+        "list", help="formación 4-3-3 con el técnico, el árbitro y las vacantes"
+    )
+    team_list.add_argument("--json", action="store_true", help="salida estructurada (JSON)")
+    team_validate = team_sub.add_parser(
+        "validate", help="valida el frontmatter de los agentes del equipo (.claude/agents/)"
+    )
+    team_validate.add_argument("--json", action="store_true", help="salida estructurada (JSON)")
+    team_lineup = team_sub.add_parser(
+        "lineup", help="sugiere la convocatoria a partir de los cambios y de la petición"
+    )
+    team_lineup.add_argument(
+        "--base", default=None, metavar="REF", help="referencia git del diff (HEAD)"
+    )
+    team_lineup.add_argument(
+        "--paths", nargs="+", default=None, metavar="RUTA", help="rutas cambiadas (sin git)"
+    )
+    team_peticion = team_lineup.add_mutually_exclusive_group()
+    team_peticion.add_argument(
+        "--peticion", default=None, metavar="TEXTO", help="texto de la petición de producto"
+    )
+    team_peticion.add_argument(
+        "--peticion-file", default=None, metavar="ARCHIVO", help="archivo con la petición"
+    )
+    team_lineup.add_argument("--json", action="store_true", help="salida estructurada (JSON)")
+    team.set_defaults(handler=cmd_team)
 
     land_p = sub.add_parser(
         "land", help="integra en main una ejecución completed, tras verificar el merge exacto"

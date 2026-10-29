@@ -11,10 +11,10 @@
 
 ## 2. Plantilla y convocatoria (`team-roster`)
 
-- [ ] 2.1 Implementar `src/factory/team/` (`TeamError`, lectura del frontmatter de `.claude/agents/*.md` y validación D1/D8). Verificar con `pytest tests/test_team_roster.py`, escenarios "Jugador declarado", "Agente ajeno al equipo", "Posición del dorsal 2", "Plantilla válida", "Sin equipo", "Dorsal repetido", "Dorsal fuera de rango", "Revisor con permisos de escritura" y "Técnico que edita".
-- [ ] 2.2 Implementar `factory team list [--json]` y `factory team validate [--json]`, con un handler que capture `TeamError` e importe dentro de la función. Verificar con `pytest tests/test_team_roster.py`, escenario "Plantilla incompleta".
-- [ ] 2.3 Implementar la convocatoria (`factory team lineup [--base] [--paths] [--peticion | --peticion-file] [--json]`), reutilizando `factory.globs.matches`. Verificar con `pytest tests/test_team_lineup.py`, escenarios "Rutas desde git" (repo git temporal), "Cambio solo en documentación", "Petición de producto sin cambios" y "Nada que jugar".
-- [ ] 2.4 Añadir a `doctor` la comprobación crítica `team-roster` (subsistema `instrucciones`). Verificar con `pytest tests/test_team_roster.py tests/test_doctor.py tests/test_scaffold_integration.py`, escenario "Plantilla rota en el doctor".
+- [x] 2.1 Implementar `src/factory/team/` (`TeamError`, lectura del frontmatter de `.claude/agents/*.md` y validación D1/D8). Verificar con `pytest tests/test_team_roster.py`, escenarios "Jugador declarado", "Agente ajeno al equipo", "Posición del dorsal 2", "Plantilla válida", "Sin equipo", "Dorsal repetido", "Dorsal fuera de rango", "Revisor con permisos de escritura" y "Técnico que edita".
+- [x] 2.2 Implementar `factory team list [--json]` y `factory team validate [--json]`, con un handler que capture `TeamError` e importe dentro de la función. Verificar con `pytest tests/test_team_roster.py`, escenario "Plantilla incompleta".
+- [x] 2.3 Implementar la convocatoria (`factory team lineup [--base] [--paths] [--peticion | --peticion-file] [--json]`), reutilizando `factory.globs.matches`. Verificar con `pytest tests/test_team_lineup.py`, escenarios "Rutas desde git" (repo git temporal), "Cambio solo en documentación", "Petición de producto sin cambios" y "Nada que jugar".
+- [x] 2.4 Añadir a `doctor` la comprobación crítica `team-roster` (subsistema `instrucciones`). Verificar con `pytest tests/test_team_roster.py tests/test_doctor.py tests/test_scaffold_integration.py`, escenario "Plantilla rota en el doctor".
 
 ## 3. Complejidad ciclomática (`complexity-metrics`)
 

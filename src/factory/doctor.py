@@ -196,6 +196,28 @@ def _instruction_checks(config: Config) -> list[Check]:
     return checks
 
 
+def _team_checks(config: Config) -> list[Check]:
+    """Plantilla del equipo (`.claude/agents/`): válida, o sin miembros del equipo (crítica)."""
+    from factory.team.roster import load_roster
+
+    errors = load_roster(config.root).errors
+    fix = "factory team validate"
+    if errors:  # render() no muestra `detail`: el primer error va también en la acción
+        more = f" (y {len(errors) - 1} más)" if len(errors) > 1 else ""
+        fix = f"Corrige la plantilla y comprueba con `factory team validate`: {errors[0]}{more}"
+    return [
+        Check(
+            "instrucciones",
+            "team-roster",
+            "La plantilla del equipo (.claude/agents/) es válida",
+            CRITICAL,
+            not errors,
+            fix=fix,
+            detail=errors[0] if errors else "",
+        )
+    ]
+
+
 def _state_checks(config: Config) -> tuple[list[Check], dict | None]:
     path = config.path(config.harness.feature_list)
     data, problems = None, []
@@ -372,6 +394,7 @@ def audit(config: Config) -> Report:
     state_checks, data = _state_checks(config)
     checks = (
         _instruction_checks(config)
+        + _team_checks(config)
         + state_checks
         + _brain_checks(config)
         + _verification_checks(config)
