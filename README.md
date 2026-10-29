@@ -62,7 +62,7 @@ factory init --target . --commands "make lint,make test"
 Después:
 
 1. Completa los marcadores `TODO(factory)` que lista la salida: la descripción en `AGENTS.md`, la feature de ejemplo en `feature_list.json` y la línea de instalación de `init.sh`.
-   - **Ojo en proyectos Python:** la línea detectada es `python3 -m pip install -e .`, que instala en el Python **global**. Cámbiala por un entorno virtual, por ejemplo `python3 -m venv .venv && .venv/bin/pip install -e .`.
+   - **En proyectos Python** (`pyproject.toml`), `init.sh` ya crea un `.venv` propio (con `uv` si está instalado; si no, con `python3 -m venv`) e instala ahí el proyecto con `pip install -e .`. La verificación corre dentro de ese entorno y nunca toca el Python global.
 2. `./init.sh` debe terminar en 0.
 3. `factory --root . doctor` no debe mostrar críticas fallidas.
 4. `git add -A && git commit -m "Harness de factory"`. Los loops necesitan al menos un commit en `main`.

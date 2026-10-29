@@ -183,6 +183,6 @@
   - D5 y D7 describen lo implementado.
 - Incidencia: durante la sesión apareció `/ba` delante de la primera línea de `factory.toml` (tecleo accidental, no generado por factory), lo que rompía el TOML. Se quitó con el visto bueno del usuario.
 - Riesgos / pendientes:
-  - Sigue pendiente la decisión humana sobre `factory land` de la ejecución `20261028-052249-en-repos-con-pyproject-toml-factory-a254` (venv en `init.sh`), y luego quitar del README el aviso sobre pip global.
 - Archivado: `add-knowledge-brains` en `openspec/changes/archive/2026-10-28-add-knowledge-brains/`, con specs sincronizadas (`main-brain`, `daily-brain` y `brain-retrieval`, nuevas; 21 requisitos).
-- Mejor próximo paso: decidir `factory land` de la ejecución del venv en `init.sh` y, opcionalmente, empezar a alimentar el cerebro diario con `factory brain learn`.
+- Integrada con `factory land` (a petición del usuario) la ejecución `20261028-052249-en-repos-con-pyproject-toml-factory-a254` (objetivo `en-repos-con-pyproject-toml-factory`, 2 rondas, 2,14 USD): merge `1fa6e05` sobre `31423c1`, verificado antes de mover `main`, sin push. El `init.sh` de `factory init` en proyectos Python crea e instala en un `.venv` propio; se quitó del README el aviso sobre pip global. La rama `factory/20261028-052249-…-a254` se conserva.
+- Mejor próximo paso: empezar a alimentar el cerebro diario con `factory brain learn` y lanzar un objetivo real con `knowledge.queries`.
