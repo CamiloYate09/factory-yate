@@ -94,6 +94,34 @@ def test_agent_file_claude(tmp_path):
     assert 'entry_file = "CLAUDE.md"' in (tmp_path / "factory.toml").read_text()
 
 
+def test_init_sh_pyproject_usa_venv(tmp_path):
+    (tmp_path / "pyproject.toml").write_text("[project]\nname = 'x'\n")
+    assert _init(tmp_path) == 0
+    text = (tmp_path / "init.sh").read_text()
+    assert ".venv" in text and "VIRTUAL_ENV" in text
+    assert "python3 -m pip install -e ." not in text
+    assert "-m pip install -e ." in text
+    assert "if [ ! -d .venv ]" in text
+    assert ".venv/.gitignore" in text
+    assert 'uv pip install --python "$VIRTUAL_ENV/bin/python" -e .' in text
+    assert text.index("export PATH") < text.index("exec ./scripts/check.sh")
+    assert subprocess.run(["bash", "-n", "init.sh"], cwd=tmp_path).returncode == 0
+
+
+def test_init_sh_venv_no_afecta_makefile_ni_package_json(tmp_path):
+    make = tmp_path / "make"
+    make.mkdir()
+    (make / "Makefile").write_text("setup:\n\techo\ncheck:\n\techo\n")
+    js = tmp_path / "js"
+    js.mkdir()
+    (js / "package.json").write_text('{"scripts": {"test": "x"}}')
+    assert _init(make) == 0 and _init(js) == 0
+    make_sh = (make / "init.sh").read_text()
+    js_sh = (js / "init.sh").read_text()
+    assert ".venv" not in make_sh and "make setup" in make_sh
+    assert ".venv" not in js_sh and "npm install" in js_sh
+
+
 def test_destino_inexistente(tmp_path, capsys):
     assert _init(tmp_path / "no-existe") == 2
     assert "No existe el directorio destino" in capsys.readouterr().err
