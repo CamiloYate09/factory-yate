@@ -45,8 +45,8 @@
 
 ## 8. Integración (`team-integration`)
 
-- [ ] 8.1 Añadir `.claude/agents/**` y `.claude/skills/**` a `STATIC_CRITICAL`, y sus muestras a `CRITICAL_SAMPLES` (D7). Verificar con `pytest tests/test_protected_config.py tests/test_protected_paths.py`, escenarios "El maker edita un agente del equipo" y "Un objetivo intenta liberar las skills".
-- [ ] 8.2 Documentar el equipo:
+- [x] 8.1 Añadir `.claude/agents/**` y `.claude/skills/**` a `STATIC_CRITICAL`, y sus muestras a `CRITICAL_SAMPLES` (D7). Verificar con `pytest tests/test_protected_config.py tests/test_protected_paths.py`, escenarios "El maker edita un agente del equipo" y "Un objetivo intenta liberar las skills".
+- [x] 8.2 Documentar el equipo:
   - `AGENTS.md`: comandos `factory team` y `factory complexity`;
   - `CLAUDE.md`: `/equipo` y el árbitro;
   - `README.md`: paso H;

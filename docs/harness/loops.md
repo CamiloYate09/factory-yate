@@ -57,7 +57,7 @@ Revisa cada `ConfigError` de `src/factory/config.py` y añade un test por mensaj
 
 Tras cada ronda, si un archivo **que ya existía en la base** y es protegido aparece modificado, borrado o renombrado, la ronda se revierte y se marca `protected_revert`. Crear archivos nuevos en esas rutas sí está permitido; así el maker puede añadir tests pero no debilitar los existentes.
 
-- **Siempre protegidos:** `feature_list.json`, `factory.toml`, `prompts/**`, el script de `verify_command` y los scripts relativos de `acceptance` (por ejemplo `./scripts/check.sh` o `bash tools/x.sh`). Nadie puede liberarlos: una rama nunca cambia las reglas con las que se la juzga.
+- **Siempre protegidos:** `feature_list.json`, `factory.toml`, `prompts/**`, `.claude/agents/**` y `.claude/skills/**` (los sub-agentes y skills de Claude Code, como las definiciones del equipo), el script de `verify_command` y los scripts relativos de `acceptance` (por ejemplo `./scripts/check.sh` o `bash tools/x.sh`). Nadie puede liberarlos: una rama nunca cambia las reglas con las que se la juzga.
 - **Configurables:** `[loop] protected_paths` en `factory.toml` (en este repo, `tests/**`) y `scope.protected` en `goal.md`.
 - **Liberación explícita:** `scope.allow_modify` en un objetivo que de verdad debe cambiar un archivo protegido no crítico, por ejemplo un test cuyo comportamiento cambia. `goal validate` y `goal run --dry-run` muestran la protección efectiva.
 

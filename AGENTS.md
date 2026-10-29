@@ -15,6 +15,8 @@ El objetivo de una sesión no es producir más código, sino dejar el repositori
 - Verificación completa (lint, formato, tests y auditoría del harness): `./scripts/check.sh`
 - Auditoría del harness: `.venv/bin/factory doctor`
 - Features: `.venv/bin/factory features list | start <id> | verify <id>`
+- Equipo ideal (plantilla y convocatoria sugerida): `.venv/bin/factory team list | validate | lineup`
+- Complejidad ciclomática por función: `.venv/bin/factory complexity [rutas] [--base REF] [--max N]`
 
 ## Inicio de sesión
 
