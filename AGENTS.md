@@ -67,8 +67,7 @@ Léelos solo cuando la tarea lo requiera:
 - [Revisión](docs/harness/revision.md): leer resultados, `factory goal rework` y `factory land`.
 - [Vigilancia](docs/harness/vigilancia.md): `factory tick`, guardas y programación.
 - [Cerebros](docs/harness/cerebros.md): cerebro principal (libros, fuera de git) y diario; `factory brain …`.
-- [Equipo](docs/harness/equipo.md): el equipo ideal de sub-agentes (técnico, jugadores y árbitro); `/equipo` y `factory team …`.
-- [Cambios OpenSpec](openspec/changes/): requisitos y tareas del cambio en curso.
+- [Equipo](docs/harness/equipo.md): el equipo ideal de sub-agentes (técnico, jugadores y árbitro); `/equipo` y `factory team …`.- [Cambios OpenSpec](openspec/changes/): requisitos y tareas del cambio en curso.
 
 ## Estructura
 
