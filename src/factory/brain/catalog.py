@@ -8,7 +8,7 @@ from pathlib import Path
 
 PRINCIPAL = "principal"
 DIARIO = "diario"
-_CACHE: dict[tuple[str, int, int], list] = {}
+_CACHE: dict[tuple[str, str, int, int], list] = {}
 
 
 @dataclass
@@ -63,12 +63,18 @@ def book_titles(directory: Path) -> dict[str, str]:
     return {}
 
 
-def load(directory: Path, brain: str) -> list[Entry]:
+def load(directory: Path, brain: str, base: Path | None = None) -> list[Entry]:
+    """Entradas de `directory/_catalog.jsonl`; las rutas absolutas cuelgan de `base`.
+
+    `base` distinto de `directory` sirve para el mapa de la biblioteca: su catálogo vive en
+    `brain-mapa/`, pero cada nota estaría en `brain-principal/<path>` si se importara.
+    """
+    base = base or directory
     catalog = directory / "_catalog.jsonl"
     if not catalog.is_file():
         return []
     stat = catalog.stat()
-    key = (str(catalog), stat.st_mtime_ns, stat.st_size)
+    key = (str(catalog), str(base), stat.st_mtime_ns, stat.st_size)
     if key in _CACHE:
         return _CACHE[key]
     titles = book_titles(directory) if brain == PRINCIPAL else {}
@@ -81,7 +87,7 @@ def load(directory: Path, brain: str) -> list[Entry]:
             Entry(
                 brain=brain,
                 path=raw["path"],
-                abs_path=directory / raw["path"],
+                abs_path=base / raw["path"],
                 title=str(raw.get("title") or raw["path"]),
                 keywords=list(raw.get("keywords") or []),
                 abstract=str(raw.get("abstract") or ""),

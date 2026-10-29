@@ -5,15 +5,17 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 
-INDEX_FILES = ("_catalog.jsonl", "_books.json", "llms.txt")
+INDEX_FILES = ("_catalog.jsonl", "_books.json", "llms.txt", "_map.json", ".gitignore")
 
 
 def _tracked(directory: Path, path: Path) -> bool:
     """Notas `.md` e índices; nunca archivos ocultos (`.DS_Store`, `.obsidian/`, registro)."""
     relative = path.relative_to(directory)
+    if relative.as_posix() in INDEX_FILES:  # incluido el .gitignore propio del mapa
+        return True
     if any(part.startswith(".") for part in relative.parts):
         return False
-    return relative.suffix == ".md" or relative.as_posix() in INDEX_FILES
+    return relative.suffix == ".md"
 
 
 def fingerprint(directory: Path) -> str:

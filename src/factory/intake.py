@@ -147,7 +147,11 @@ def triage(
         + _knowledge_text(config, req, request_md)
         + "Responde solo con el JSON de tu decisión."
     )
-    brains = [path for path in (config.principal_path, config.daily_path) if path.is_dir()]
+    brains = [
+        path
+        for path in (config.principal_path, config.daily_path, config.map_path)
+        if path.is_dir()
+    ]
     request = AgentRequest(
         role="intake",
         prompt=prompt,

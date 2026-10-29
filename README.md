@@ -119,12 +119,17 @@ El intake usa `claude` (cuesta dinero), solo lee el repo y nunca ejecuta comando
 
 Dos bibliotecas en Markdown que los loops consultan en solo lectura. Detalle en [docs/harness/cerebros.md](docs/harness/cerebros.md).
 
-> ⚠️ **Los libros no se versionan.** El cerebro principal (`brain-principal/`) contiene libros de terceros: `import` lo añade a `.gitignore` y `factory doctor` falla si algo suyo llega a git. En un equipo nuevo hay que **volver a importarlo** desde tu copia local del vault. Solo se copian archivos `.md` y sus índices; los PDF se descartan (`*.pdf` está en `.gitignore`).
+**Qué trae el repo al clonarlo:**
+- el **mapa de la biblioteca** (`brain-mapa/`): libros, capítulos, secciones, páginas y keywords, sin texto. `factory brain search` funciona desde el primer momento y devuelve citas.
+- el **cerebro diario** (`brain-diario/`): fichas escritas con tus palabras.
+
+> ⚠️ **Los libros no se versionan.** El texto completo (`brain-principal/`) es de terceros: `import` lo añade a `.gitignore` y `factory doctor` falla si algo suyo llega a git, o si el mapa contiene texto. Lleva tu copia del vault a cada equipo tuyo y **impórtala** allí. Solo se copian archivos `.md` y sus índices; los PDF se descartan (`*.pdf` está en `.gitignore`).
 
 ```bash
-# 1. Cerebro principal: copia filtrada del vault de libros (repite el comando para refrescarlo)
+# 1. (Opcional, en tus equipos) Texto completo: copia filtrada de tu vault de libros.
+#    Regenera también el mapa; repítelo para refrescarlo.
 factory brain import /ruta/redPDF/book/obsidian-vault
-factory brain status                                  # notas, libros, tokens y fecha de importación
+factory brain status                                  # principal (si está), mapa y fecha de importación
 
 # 2. Buscar (el principal está en inglés: busca en inglés)
 factory brain search "rate limiting"
@@ -137,7 +142,7 @@ factory brain learn "En macOS no existe timeout; usar el de la herramienta" --ki
 factory brain pending                                 # capturas pendientes (también en factory status)
 factory brain accept <id>                             # o: factory brain reject <id>
 
-# 5. Commitear SOLO el cerebro diario (sin push)
+# 5. Commitear SOLO el cerebro diario y el mapa (sin push)
 factory brain commit -m "aprendizajes de hoy"
 ```
 
@@ -148,7 +153,7 @@ knowledge:
   queries: ["rate limiting", "api gateway"]
 ```
 
-El maker recibe las notas más relevantes como texto citado (máximo `[brain] inject_max_tokens`, 3.000 por defecto); el checker no recibe nada.
+El maker recibe las notas más relevantes como texto citado (máximo `[brain] inject_max_tokens`, 3.000 por defecto); el checker no recibe nada. En un equipo sin el texto de los libros, el maker solo recibe las citas del mapa.
 
 ## Loops
 

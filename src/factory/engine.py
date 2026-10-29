@@ -18,6 +18,7 @@ from factory import artifacts, features
 from factory.agents.base import AgentRequest, AgentResult, AgentRunner
 from factory.brain import inject
 from factory.brain.captures import CaptureStore, Injected, propose
+from factory.brain.daily import versioned_relatives
 from factory.brain.integrity import fingerprint
 from factory.config import Config, RoleConfig, brain_denials
 from factory.gitops import Worktree, create_worktree, diffstat, preflight, remove_worktree
@@ -187,7 +188,11 @@ class LoopEngine:
         return state
 
     def _brains(self) -> dict[str, Path]:
-        return {"principal": self.config.principal_path, "diario": self.config.daily_path}
+        return {
+            "principal": self.config.principal_path,
+            "diario": self.config.daily_path,
+            "mapa": self.config.map_path,
+        }
 
     def _prepare_knowledge(self, state: RunState) -> None:
         """Selección una vez por ejecución (diseño D4) y huella inicial de los cerebros.
@@ -226,20 +231,18 @@ class LoopEngine:
             if after is not None and after != before:
                 state.blockers.append(
                     f"AVISO de integridad: el cerebro {name} ({path}) cambió durante la ejecución. "
-                    + (
-                        "Reimpórtalo con `factory brain import`."
-                        if name == "principal"
-                        else "Revisa `git status` del cerebro diario."
-                    )
+                    + {
+                        "principal": "Reimpórtalo con `factory brain import`.",
+                        "mapa": "Regenéralo con `factory brain import` y revisa `git status`.",
+                    }.get(name, "Revisa `git status` del cerebro diario.")
                 )
 
     def _forced_deny(self) -> list[str]:
-        """Rutas que ningún objetivo puede tocar: el cerebro diario (spec daily-brain)."""
-        try:
-            relative = self.config.daily_path.relative_to(self.config.root.resolve())
-        except ValueError:
-            return []  # fuera del repo: no está en el worktree
-        return [f"{relative.as_posix()}/**"]
+        """Rutas que ningún objetivo puede tocar: el cerebro diario y el mapa de la biblioteca.
+
+        Specs daily-brain y library-map. Las que viven fuera del repo no están en el worktree.
+        """
+        return [f"{relative}/**" for relative in versioned_relatives(self.config)]
 
     def _initial_feedback(self) -> str:
         """En un retrabajo, la respuesta humana y el contexto de la ejecución padre."""

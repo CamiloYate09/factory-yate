@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 
 from factory.brain.captures import Injected
 from factory.brain.catalog import DIARIO, PRINCIPAL, note_body
-from factory.brain.search import Hit, search
+from factory.brain.search import Hit, principal_from_map, search
 from factory.brain.text import estimate_tokens
 from factory.config import Config
 from factory.goal import Goal
@@ -149,8 +149,14 @@ def render(selection: Selection, config: Config) -> str:
         lines += [f"### [{number}] {_header(hit)}", _quote(body), ""]
     for hit in selection.refs:
         number += 1
+        available = hit.entry.brain != PRINCIPAL or hit.entry.abs_path.is_file()
+        note = (
+            "solo referencia"
+            if available
+            else "solo referencia; texto no disponible en este equipo"
+        )
         lines += [
-            f"### [{number}] {_header(hit)} (solo referencia)",
+            f"### [{number}] {_header(hit)} ({note})",
             _quote(hit.entry.abstract or hit.entry.title),
             "",
         ]
@@ -163,8 +169,10 @@ def _header(hit: Hit) -> str:
 
 
 def catalog_paths(config: Config) -> list[str]:
+    """Catálogos consultables: el del principal (o el del mapa si no hay principal) y el diario."""
+    principal = config.map_path if principal_from_map(config) else config.principal_path
     return [
         str(path / "_catalog.jsonl")
-        for path in (config.principal_path, config.daily_path)
+        for path in (principal, config.daily_path)
         if (path / "_catalog.jsonl").is_file()
     ]

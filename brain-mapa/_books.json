@@ -1,0 +1,1337 @@
+[
+  {
+    "slug": "advancedcyberthreatintelligenceandhunting",
+    "title": "Advanced Cyber Threat Intelligence and Hunting",
+    "authors": [
+      "Gianluca Tiepolo",
+      "Dan Sorensen"
+    ],
+    "domains": [
+      "security"
+    ],
+    "pages": 658,
+    "chapters": 18,
+    "notes": 218,
+    "words": 235684,
+    "tokens": 402855
+  },
+  {
+    "slug": "adversarialaiattacksmitigationsanddefensestrategies",
+    "title": "Adversarial AI Attacks, Mitigations, and Defense Strategies",
+    "authors": [
+      "John Sotiropoulos"
+    ],
+    "domains": [
+      "security",
+      "ai-ml"
+    ],
+    "pages": 602,
+    "chapters": 19,
+    "notes": 217,
+    "words": 163141,
+    "tokens": 273703
+  },
+  {
+    "slug": "agenticaiforoffensivecybersecurity",
+    "title": "Agentic AI for Offensive Cybersecurity",
+    "authors": [
+      "Orhan Yildirim"
+    ],
+    "domains": [
+      "security",
+      "ai-ml"
+    ],
+    "pages": 412,
+    "chapters": 9,
+    "notes": 94,
+    "words": 89965,
+    "tokens": 153587
+  },
+  {
+    "slug": "aiengineering",
+    "title": "AI Engineering",
+    "authors": [
+      "Chip Huyen"
+    ],
+    "domains": [
+      "ai-ml"
+    ],
+    "pages": 535,
+    "chapters": 10,
+    "notes": 145,
+    "words": 167335,
+    "tokens": 257410
+  },
+  {
+    "slug": "architectingdataandmachinelearningplatforms",
+    "title": "Architecting Data and Machine Learning Platforms",
+    "authors": [
+      "Marco Tranquillin",
+      "Valliappa Lakshmanan",
+      "Firat Tekiner"
+    ],
+    "domains": [
+      "ai-ml",
+      "architecture",
+      "data"
+    ],
+    "pages": 361,
+    "chapters": 12,
+    "notes": 103,
+    "words": 112458,
+    "tokens": 172765
+  },
+  {
+    "slug": "architecturepatternswithpython",
+    "title": "Architecture Patterns with Python",
+    "authors": [
+      "Harry Percival",
+      "Bob Gregory"
+    ],
+    "domains": [
+      "architecture"
+    ],
+    "pages": 304,
+    "chapters": 18,
+    "notes": 160,
+    "words": 67812,
+    "tokens": 109385
+  },
+  {
+    "slug": "attackingandexploitingmodernwebapplications",
+    "title": "Attacking and Exploiting Modern Web Applications",
+    "authors": [
+      "Simone Onofri",
+      "Donato Onofri"
+    ],
+    "domains": [
+      "security"
+    ],
+    "pages": 338,
+    "chapters": 8,
+    "notes": 109,
+    "words": 82521,
+    "tokens": 132656
+  },
+  {
+    "slug": "blueteamhandbook-incidentresponse",
+    "title": "Blue Team Handbook: Incident Response",
+    "authors": [
+      "Don Murdoch"
+    ],
+    "domains": [
+      "security"
+    ],
+    "pages": 359,
+    "chapters": 13,
+    "notes": 152,
+    "words": 92716,
+    "tokens": 158640
+  },
+  {
+    "slug": "buildingacyberriskmanagementprogram",
+    "title": "Building a Cyber Risk Management Program",
+    "authors": [
+      "Brian Allen",
+      "Brandon Bapst",
+      "Terry Allan Hicks"
+    ],
+    "domains": [
+      "security"
+    ],
+    "pages": 223,
+    "chapters": 10,
+    "notes": 93,
+    "words": 71849,
+    "tokens": 119149
+  },
+  {
+    "slug": "buildinganevent-drivendatamesh",
+    "title": "Building an Event-Driven Data Mesh",
+    "authors": [
+      "Adam Bellemare"
+    ],
+    "domains": [
+      "architecture",
+      "data"
+    ],
+    "pages": 262,
+    "chapters": 11,
+    "notes": 105,
+    "words": 82182,
+    "tokens": 126004
+  },
+  {
+    "slug": "buildingevolutionaryarchitectures2e",
+    "title": "Building Evolutionary Architectures",
+    "authors": [
+      "Neal Ford",
+      "Rebecca Parsons",
+      "Patrick Kua",
+      "Pramod Sadalage"
+    ],
+    "domains": [
+      "architecture"
+    ],
+    "pages": 265,
+    "chapters": 9,
+    "notes": 81,
+    "words": 67282,
+    "tokens": 111801
+  },
+  {
+    "slug": "buildingmicroservices2e",
+    "title": "Building Microservices",
+    "authors": [
+      "Sam Newman"
+    ],
+    "domains": [
+      "architecture"
+    ],
+    "pages": 615,
+    "chapters": 16,
+    "notes": 272,
+    "words": 214218,
+    "tokens": 315579
+  },
+  {
+    "slug": "buildingmulti-tenantsaasarchitectures",
+    "title": "Building Multi-Tenant SaaS Architectures",
+    "authors": [
+      "Tod Golding"
+    ],
+    "domains": [
+      "architecture",
+      "cloud"
+    ],
+    "pages": 487,
+    "chapters": 17,
+    "notes": 192,
+    "words": 168484,
+    "tokens": 254902
+  },
+  {
+    "slug": "cloudapplicationarchitecturepatterns",
+    "title": "Cloud Application Architecture Patterns",
+    "authors": [
+      "Kyle Brown",
+      "Bobby Woolf",
+      "Joseph Yoder"
+    ],
+    "domains": [
+      "architecture",
+      "cloud"
+    ],
+    "pages": 650,
+    "chapters": 10,
+    "notes": 136,
+    "words": 206304,
+    "tokens": 324462
+  },
+  {
+    "slug": "cloudnativesecuritycookbook",
+    "title": "Cloud Native Security Cookbook",
+    "authors": [
+      "Josh Armitage"
+    ],
+    "domains": [
+      "security",
+      "cloud"
+    ],
+    "pages": 516,
+    "chapters": 11,
+    "notes": 116,
+    "words": 87546,
+    "tokens": 185362
+  },
+  {
+    "slug": "communicationpatterns",
+    "title": "Communication Patterns",
+    "authors": [
+      "Jacqui Read"
+    ],
+    "domains": [
+      "architecture"
+    ],
+    "pages": 306,
+    "chapters": 16,
+    "notes": 102,
+    "words": 75592,
+    "tokens": 114457
+  },
+  {
+    "slug": "continuousapimanagement2e",
+    "title": "Continuous API Management",
+    "authors": [
+      "Mehdi Medjaoui",
+      "Erik Wilde",
+      "Ronnie Mitra",
+      "Mike Amundsen"
+    ],
+    "domains": [
+      "api",
+      "devops"
+    ],
+    "pages": 360,
+    "chapters": 12,
+    "notes": 143,
+    "words": 136496,
+    "tokens": 205191
+  },
+  {
+    "slug": "cybersecurity-attackanddefensestrategies-thirdedition",
+    "title": "Cybersecurity - Attack and Defense Strategies",
+    "authors": [
+      "Yuri Diogenes",
+      "Dr. Erdal Ozkaya"
+    ],
+    "domains": [
+      "security"
+    ],
+    "pages": 571,
+    "chapters": 17,
+    "notes": 239,
+    "words": 150186,
+    "tokens": 234721
+  },
+  {
+    "slug": "cybersecurityattacksredteamstrategies",
+    "title": "Cybersecurity Attacks - Red Team Strategies",
+    "authors": [
+      "Johann Rehberger"
+    ],
+    "domains": [
+      "security"
+    ],
+    "pages": 526,
+    "chapters": 12,
+    "notes": 170,
+    "words": 110230,
+    "tokens": 170889
+  },
+  {
+    "slug": "cybersecurityblueteamstrategies",
+    "title": "Cybersecurity Blue Team Strategies",
+    "authors": [
+      "Kunal Sehgal",
+      "Nikolaos Thymianis"
+    ],
+    "domains": [
+      "security"
+    ],
+    "pages": 208,
+    "chapters": 12,
+    "notes": 105,
+    "words": 69118,
+    "tokens": 109374
+  },
+  {
+    "slug": "cybersecuritykillchain-tacticsandstrategies",
+    "title": "Cyber Security Kill Chain - Tactics and Strategies",
+    "authors": [
+      "Gourav Nagar",
+      "Shreyas Kumar"
+    ],
+    "domains": [
+      "security"
+    ],
+    "pages": 314,
+    "chapters": 12,
+    "notes": 132,
+    "words": 102550,
+    "tokens": 182164
+  },
+  {
+    "slug": "cybersecuritymanagersguide",
+    "title": "The Cybersecurity Manager’s Guide",
+    "authors": [
+      "Todd Barnum"
+    ],
+    "domains": [
+      "security"
+    ],
+    "pages": 179,
+    "chapters": 12,
+    "notes": 109,
+    "words": 59118,
+    "tokens": 86356
+  },
+  {
+    "slug": "cybersecurityopswithbash",
+    "title": "Cybersecurity Ops with bash",
+    "authors": [
+      "Paul Troncone",
+      "Carl Albing",
+      "PhD"
+    ],
+    "domains": [
+      "security",
+      "devops"
+    ],
+    "pages": 306,
+    "chapters": 23,
+    "notes": 157,
+    "words": 66465,
+    "tokens": 99396
+  },
+  {
+    "slug": "datamesh",
+    "title": "Data Mesh",
+    "authors": [
+      "Zhamak Dehghani"
+    ],
+    "domains": [
+      "architecture",
+      "data"
+    ],
+    "pages": 387,
+    "chapters": 16,
+    "notes": 123,
+    "words": 105799,
+    "tokens": 170651
+  },
+  {
+    "slug": "decipheringdataarchitectures",
+    "title": "Deciphering Data Architectures",
+    "authors": [
+      "James Serra"
+    ],
+    "domains": [
+      "architecture",
+      "data"
+    ],
+    "pages": 278,
+    "chapters": 16,
+    "notes": 123,
+    "words": 80082,
+    "tokens": 123164
+  },
+  {
+    "slug": "defendingapis",
+    "title": "Defending APIs",
+    "authors": [
+      "Colin Domoney"
+    ],
+    "domains": [
+      "api"
+    ],
+    "pages": 384,
+    "chapters": 13,
+    "notes": 133,
+    "words": 91483,
+    "tokens": 146938
+  },
+  {
+    "slug": "defensivesecurityhandbook2ndedition",
+    "title": "Defensive Security Handbook",
+    "authors": [
+      "Amanda Berlin",
+      "Lee Brotherston",
+      "William F. Reyor III"
+    ],
+    "domains": [
+      "security"
+    ],
+    "pages": 363,
+    "chapters": 24,
+    "notes": 154,
+    "words": 105283,
+    "tokens": 167064
+  },
+  {
+    "slug": "designingdistributedsystems2e",
+    "title": "Designing Distributed Systems",
+    "authors": [
+      "Brendan Burns"
+    ],
+    "domains": [
+      "architecture"
+    ],
+    "pages": 220,
+    "chapters": 16,
+    "notes": 116,
+    "words": 61543,
+    "tokens": 94342
+  },
+  {
+    "slug": "developersplaybookforlargelanguagemodelsecurity",
+    "title": "The Developer’s Playbook for Large Language Model Security",
+    "authors": [
+      "Steve Wilson"
+    ],
+    "domains": [
+      "security",
+      "ai-ml"
+    ],
+    "pages": 200,
+    "chapters": 12,
+    "notes": 82,
+    "words": 60111,
+    "tokens": 98641
+  },
+  {
+    "slug": "developingappswithgpt-4andchatgpt",
+    "title": "Developing Apps with GPT-4 and ChatGPT",
+    "authors": [
+      "Olivier Caelen",
+      "Marie-Alice Blete"
+    ],
+    "domains": [
+      "ai-ml"
+    ],
+    "pages": 273,
+    "chapters": 7,
+    "notes": 90,
+    "words": 73430,
+    "tokens": 116207
+  },
+  {
+    "slug": "digitalforensicscookbook",
+    "title": "Digital Forensics Cookbook",
+    "authors": [
+      "Cody Bounds"
+    ],
+    "domains": [
+      "security"
+    ],
+    "pages": 592,
+    "chapters": 13,
+    "notes": 149,
+    "words": 131311,
+    "tokens": 210399
+  },
+  {
+    "slug": "facilitatingsoftwarearchitecture",
+    "title": "Facilitating Software Architecture",
+    "authors": [
+      "Andrew Harmel-Law"
+    ],
+    "domains": [
+      "architecture"
+    ],
+    "pages": 513,
+    "chapters": 17,
+    "notes": 168,
+    "words": 183263,
+    "tokens": 275438
+  },
+  {
+    "slug": "flowarchitectures",
+    "title": "Flow Architectures",
+    "authors": [
+      "James Urquhart"
+    ],
+    "domains": [
+      "architecture"
+    ],
+    "pages": 255,
+    "chapters": 7,
+    "notes": 88,
+    "words": 87140,
+    "tokens": 135244
+  },
+  {
+    "slug": "foundationsofscalablesystems",
+    "title": "Foundations of Scalable Systems",
+    "authors": [
+      "Ian Gorton"
+    ],
+    "domains": [
+      "architecture"
+    ],
+    "pages": 339,
+    "chapters": 16,
+    "notes": 115,
+    "words": 97400,
+    "tokens": 154814
+  },
+  {
+    "slug": "fundamentalsofenterprisearchitecture",
+    "title": "Fundamentals of Enterprise Architecture",
+    "authors": [
+      "Tanusree McCabe"
+    ],
+    "domains": [
+      "architecture"
+    ],
+    "pages": 265,
+    "chapters": 14,
+    "notes": 86,
+    "words": 70068,
+    "tokens": 114413
+  },
+  {
+    "slug": "fundamentalsofsoftwarearchitecture2e",
+    "title": "Fundamentals of Software Architecture",
+    "authors": [
+      "Mark Richards",
+      "Neal Ford"
+    ],
+    "domains": [
+      "architecture"
+    ],
+    "pages": 546,
+    "chapters": 27,
+    "notes": 251,
+    "words": 135919,
+    "tokens": 222587
+  },
+  {
+    "slug": "generativeaionaws",
+    "title": "Generative AI on AWS",
+    "authors": [
+      "Chris Fregly",
+      "Antje Barth",
+      "Shelbee Eigenbrode"
+    ],
+    "domains": [
+      "ai-ml",
+      "cloud"
+    ],
+    "pages": 312,
+    "chapters": 12,
+    "notes": 97,
+    "words": 64909,
+    "tokens": 107839
+  },
+  {
+    "slug": "generativedeeplearning-secondedition-v4",
+    "title": "Generative Deep Learning",
+    "authors": [
+      "David Foster"
+    ],
+    "domains": [
+      "ai-ml"
+    ],
+    "pages": 456,
+    "chapters": 14,
+    "notes": 167,
+    "words": 104509,
+    "tokens": 159788
+  },
+  {
+    "slug": "hands-ongenerativeaiwithtransformersanddiffusionmodels",
+    "title": "Hands-On Generative AI with Transformers and Diffusion Models",
+    "authors": [
+      "Omar Sanseviero",
+      "Pedro Cuenca",
+      "Apolinário Passos",
+      "Jonathan Whitaker"
+    ],
+    "domains": [
+      "ai-ml"
+    ],
+    "pages": 419,
+    "chapters": 13,
+    "notes": 167,
+    "words": 106993,
+    "tokens": 169748
+  },
+  {
+    "slug": "hands-onlargelanguagemodels",
+    "title": "Hands-On Large Language Models",
+    "authors": [
+      "Jay Alammar",
+      "Maarten Grootendorst"
+    ],
+    "domains": [
+      "ai-ml"
+    ],
+    "pages": 428,
+    "chapters": 12,
+    "notes": 113,
+    "words": 88758,
+    "tokens": 143062
+  },
+  {
+    "slug": "hands-onmachinelearningwithscikit-learnkerasandtensorflow",
+    "title": "Hands-On Machine Learning with Scikit-Learn, Keras, and TensorFlow",
+    "authors": [
+      "Aurélien Géron"
+    ],
+    "domains": [
+      "ai-ml",
+      "architecture"
+    ],
+    "pages": 864,
+    "chapters": 23,
+    "notes": 320,
+    "words": 265985,
+    "tokens": 406108
+  },
+  {
+    "slug": "handsonredteamtactics",
+    "title": "Hands-On Red Team Tactics",
+    "authors": [
+      "Himanshu Sharma",
+      "Harpreet Singh"
+    ],
+    "domains": [
+      "security"
+    ],
+    "pages": 469,
+    "chapters": 13,
+    "notes": 93,
+    "words": 49762,
+    "tokens": 75154
+  },
+  {
+    "slug": "headfirstsoftwarearchitecture",
+    "title": "Head First Software Architecture",
+    "authors": [
+      "Raju Gandhi",
+      "Mark Richards",
+      "Neal Ford"
+    ],
+    "domains": [
+      "architecture"
+    ],
+    "pages": 486,
+    "chapters": 13,
+    "notes": 197,
+    "words": 74332,
+    "tokens": 116902
+  },
+  {
+    "slug": "identitysecurityforsoftwaredevelopment",
+    "title": "Identity Security for Software Development",
+    "authors": [
+      "John Walsh",
+      "Uzi Ailon",
+      "Matt Barker"
+    ],
+    "domains": [
+      "security"
+    ],
+    "pages": 208,
+    "chapters": 9,
+    "notes": 83,
+    "words": 53666,
+    "tokens": 90435
+  },
+  {
+    "slug": "incidentresponsetechniquesforransomwareattacks",
+    "title": "Incident Response Techniques for Ransomware Attacks",
+    "authors": [
+      "Oleg Skulkin"
+    ],
+    "domains": [
+      "security"
+    ],
+    "pages": 228,
+    "chapters": 12,
+    "notes": 83,
+    "words": 40255,
+    "tokens": 64109
+  },
+  {
+    "slug": "insidecyberwarfare3rdedition",
+    "title": "Inside Cyber Warfare",
+    "authors": [
+      "Jeffrey Caruso"
+    ],
+    "domains": [
+      "security"
+    ],
+    "pages": 161,
+    "chapters": 7,
+    "notes": 68,
+    "words": 43316,
+    "tokens": 66026
+  },
+  {
+    "slug": "intelligentcontinuoussecurity",
+    "title": "Intelligent Continuous Security",
+    "authors": [
+      "Marc Hornbeek"
+    ],
+    "domains": [
+      "security",
+      "devops"
+    ],
+    "pages": 317,
+    "chapters": 11,
+    "notes": 125,
+    "words": 84703,
+    "tokens": 154922
+  },
+  {
+    "slug": "kalilinuxcookbook-thirdedition",
+    "title": "Kali Linux Cookbook Third Edition",
+    "authors": [
+      "Corey P. Schultz"
+    ],
+    "domains": [
+      "security",
+      "devops"
+    ],
+    "pages": 568,
+    "chapters": 12,
+    "notes": 145,
+    "words": 74546,
+    "tokens": 113293
+  },
+  {
+    "slug": "kubernetessecurityandobservability",
+    "title": "Kubernetes Security and Observability",
+    "authors": [
+      "Brendan Creane",
+      "Amit Gupta"
+    ],
+    "domains": [
+      "security",
+      "cloud",
+      "devops"
+    ],
+    "pages": 195,
+    "chapters": 11,
+    "notes": 86,
+    "words": 53278,
+    "tokens": 84869
+  },
+  {
+    "slug": "learningcloudsecurity",
+    "title": "Learning Cloud Security",
+    "authors": [
+      "Ric Messier"
+    ],
+    "domains": [
+      "security",
+      "cloud"
+    ],
+    "pages": 353,
+    "chapters": 11,
+    "notes": 126,
+    "words": 113272,
+    "tokens": 175446
+  },
+  {
+    "slug": "learningdomain-drivendesign1e",
+    "title": "Learning Domain-Driven Design",
+    "authors": [
+      "Vlad Khononov"
+    ],
+    "domains": [
+      "architecture"
+    ],
+    "pages": 342,
+    "chapters": 18,
+    "notes": 165,
+    "words": 78369,
+    "tokens": 127358
+  },
+  {
+    "slug": "learninglangchain",
+    "title": "Learning LangChain",
+    "authors": [
+      "Mayo Oshin",
+      "Nuno Campos"
+    ],
+    "domains": [
+      "ai-ml"
+    ],
+    "pages": 297,
+    "chapters": 11,
+    "notes": 81,
+    "words": 61222,
+    "tokens": 107521
+  },
+  {
+    "slug": "learningserverlesssecurity",
+    "title": "Learning Serverless Security",
+    "authors": [
+      "Joshua Arvin Lat"
+    ],
+    "domains": [
+      "security",
+      "cloud"
+    ],
+    "pages": 534,
+    "chapters": 13,
+    "notes": 159,
+    "words": 121113,
+    "tokens": 211469
+  },
+  {
+    "slug": "learningsystemsthinking",
+    "title": "Learning Systems Thinking",
+    "authors": [
+      "Diana Montalion"
+    ],
+    "domains": [
+      "architecture"
+    ],
+    "pages": 282,
+    "chapters": 12,
+    "notes": 108,
+    "words": 81955,
+    "tokens": 129237
+  },
+  {
+    "slug": "linuxshellscriptingforhackers",
+    "title": "Linux Shell Scripting for Hackers",
+    "authors": [
+      "Valentine G. Nachi",
+      "Donald A. Tevault"
+    ],
+    "domains": [
+      "security",
+      "devops"
+    ],
+    "pages": 501,
+    "chapters": 12,
+    "notes": 153,
+    "words": 109880,
+    "tokens": 165814
+  },
+  {
+    "slug": "low-codeai-v4",
+    "title": "Low-Code AI",
+    "authors": [
+      "Gwendolyn Stripling",
+      "Michael Abel"
+    ],
+    "domains": [
+      "ai-ml"
+    ],
+    "pages": 328,
+    "chapters": 9,
+    "notes": 84,
+    "words": 79210,
+    "tokens": 121985
+  },
+  {
+    "slug": "machinelearninginterviews",
+    "title": "Machine Learning Interviews",
+    "authors": [
+      "Susan Shu Chang"
+    ],
+    "domains": [
+      "ai-ml"
+    ],
+    "pages": 310,
+    "chapters": 9,
+    "notes": 112,
+    "words": 92558,
+    "tokens": 138993
+  },
+  {
+    "slug": "machinelearningwithpythoncookbook-secondedition-v5",
+    "title": "Machine Learning with Python Cookbook",
+    "authors": [
+      "Kyle Gallatin",
+      "Chris Albon"
+    ],
+    "domains": [
+      "ai-ml"
+    ],
+    "pages": 416,
+    "chapters": 23,
+    "notes": 262,
+    "words": 82015,
+    "tokens": 139871
+  },
+  {
+    "slug": "masteringapiarchitecture",
+    "title": "Mastering API Architecture",
+    "authors": [
+      "James Gough",
+      "Daniel Bryant",
+      "Matthew Auburn"
+    ],
+    "domains": [
+      "architecture",
+      "api"
+    ],
+    "pages": 289,
+    "chapters": 10,
+    "notes": 127,
+    "words": 80064,
+    "tokens": 127198
+  },
+  {
+    "slug": "masteringmicrosoft365defender",
+    "title": "Mastering Microsoft 365 Defender",
+    "authors": [
+      "Ru Campbell",
+      "Viktor Hedberg"
+    ],
+    "domains": [
+      "cloud"
+    ],
+    "pages": 572,
+    "chapters": 23,
+    "notes": 162,
+    "words": 123577,
+    "tokens": 196442
+  },
+  {
+    "slug": "masteringmicrosoftdefenderforoffice365",
+    "title": "Mastering Microsoft Defender for Office 365",
+    "authors": [
+      "Samuel Soto"
+    ],
+    "domains": [
+      "cloud"
+    ],
+    "pages": 426,
+    "chapters": 12,
+    "notes": 131,
+    "words": 110657,
+    "tokens": 184087
+  },
+  {
+    "slug": "microsoftdefenderforendpointindepth-second-edition",
+    "title": "Microsoft Defender for Endpoint in Depth",
+    "authors": [
+      "Paul Snow",
+      "Ru Campbell",
+      "Ian Hoyle",
+      "Joe Anich",
+      "Justen Graves"
+    ],
+    "domains": [
+      "general"
+    ],
+    "pages": 611,
+    "chapters": 13,
+    "notes": 184,
+    "words": 149300,
+    "tokens": 244189
+  },
+  {
+    "slug": "microsoftdefenderforidentityindepth",
+    "title": "Microsoft Defender for Identity in Depth",
+    "authors": [
+      "Pierre Thoor"
+    ],
+    "domains": [
+      "security"
+    ],
+    "pages": 380,
+    "chapters": 10,
+    "notes": 101,
+    "words": 96143,
+    "tokens": 163271
+  },
+  {
+    "slug": "monolithtomicroservices",
+    "title": "Monolith to Microservices",
+    "authors": [
+      "Sam Newman"
+    ],
+    "domains": [
+      "architecture"
+    ],
+    "pages": 272,
+    "chapters": 8,
+    "notes": 102,
+    "words": 77412,
+    "tokens": 113806
+  },
+  {
+    "slug": "naturallanguageprocessingwithtransformersrevisededition",
+    "title": "Natural Language Processing with Transformers",
+    "authors": [
+      "Lewis Tunstall",
+      "Leandro von Werra",
+      "Thomas Wolf"
+    ],
+    "domains": [
+      "ai-ml"
+    ],
+    "pages": 409,
+    "chapters": 11,
+    "notes": 119,
+    "words": 110350,
+    "tokens": 177684
+  },
+  {
+    "slug": "practicalcloudsecurity2ndedition",
+    "title": "Practical Cloud Security",
+    "authors": [
+      "Chris Dotson"
+    ],
+    "domains": [
+      "security",
+      "cloud"
+    ],
+    "pages": 231,
+    "chapters": 8,
+    "notes": 117,
+    "words": 76476,
+    "tokens": 116282
+  },
+  {
+    "slug": "practicalthreatintelligenceanddata-driventhreathunting",
+    "title": "Practical Threat Intelligence and Data-Driven Threat Hunting",
+    "authors": [
+      "Valentina Palacín"
+    ],
+    "domains": [
+      "security",
+      "data"
+    ],
+    "pages": 398,
+    "chapters": 15,
+    "notes": 105,
+    "words": 79440,
+    "tokens": 120650
+  },
+  {
+    "slug": "privacyandsecurityforlargelanguagemodels",
+    "title": "Privacy and Security for Large Language Models",
+    "authors": [
+      "Baihan Lin"
+    ],
+    "domains": [
+      "security",
+      "ai-ml"
+    ],
+    "pages": 318,
+    "chapters": 9,
+    "notes": 86,
+    "words": 82285,
+    "tokens": 147700
+  },
+  {
+    "slug": "promptengineeringforgenerativeai",
+    "title": "Prompt Engineering for Generative AI",
+    "authors": [
+      "James Phoenix",
+      "Mike Taylor"
+    ],
+    "domains": [
+      "ai-ml"
+    ],
+    "pages": 423,
+    "chapters": 10,
+    "notes": 161,
+    "words": 99260,
+    "tokens": 162862
+  },
+  {
+    "slug": "promptengineeringforllms",
+    "title": "Prompt Engineering for LLMs",
+    "authors": [
+      "John Berryman",
+      "Albert Ziegler"
+    ],
+    "domains": [
+      "ai-ml"
+    ],
+    "pages": 282,
+    "chapters": 11,
+    "notes": 79,
+    "words": 85978,
+    "tokens": 129742
+  },
+  {
+    "slug": "securityandmicroservicearchitectureonaws",
+    "title": "Security and Microservice Architecture on AWS",
+    "authors": [
+      "Gaurav Raje"
+    ],
+    "domains": [
+      "security",
+      "architecture",
+      "cloud"
+    ],
+    "pages": 397,
+    "chapters": 13,
+    "notes": 119,
+    "words": 102003,
+    "tokens": 157212
+  },
+  {
+    "slug": "securityarchitectureforhybridcloud",
+    "title": "Security Architecture for Hybrid Cloud",
+    "authors": [
+      "Mark Buckwell",
+      "Stefaan Van daele",
+      "Carsten Horst"
+    ],
+    "domains": [
+      "security",
+      "architecture",
+      "cloud"
+    ],
+    "pages": 477,
+    "chapters": 15,
+    "notes": 176,
+    "words": 125175,
+    "tokens": 209258
+  },
+  {
+    "slug": "securityascode",
+    "title": "Security as Code",
+    "authors": [
+      "BK Sarthak Das",
+      "Virginia Chu"
+    ],
+    "domains": [
+      "security",
+      "devops"
+    ],
+    "pages": 122,
+    "chapters": 7,
+    "notes": 51,
+    "words": 29502,
+    "tokens": 48372
+  },
+  {
+    "slug": "softwarearchitectelevator",
+    "title": "The Software Architect Elevator",
+    "authors": [
+      "Gregor Hohpe"
+    ],
+    "domains": [
+      "architecture"
+    ],
+    "pages": 367,
+    "chapters": 41,
+    "notes": 349,
+    "words": 97363,
+    "tokens": 148104
+  },
+  {
+    "slug": "softwarearchitecture-thehardparts",
+    "title": "Software Architecture: The Hard Parts",
+    "authors": [
+      "Neal Ford",
+      "Mark Richards",
+      "Pramod Sadalage",
+      "Zhamak Dehghani"
+    ],
+    "domains": [
+      "architecture"
+    ],
+    "pages": 462,
+    "chapters": 18,
+    "notes": 115,
+    "words": 107637,
+    "tokens": 178090
+  },
+  {
+    "slug": "softwarearchitecturemetrics",
+    "title": "Software Architecture Metrics",
+    "authors": [
+      "Christian Ciceri",
+      "Dave Farley",
+      "Neal Ford",
+      "Andrew Harmel-Law",
+      "Michael Keeling",
+      "Carola Lilienthal",
+      "João Rosa",
+      "Alexander von Zitzewitz",
+      "Rene Weiss",
+      "Eoin Christian Ciceri",
+      "Eoin Woods"
+    ],
+    "domains": [
+      "architecture"
+    ],
+    "pages": 218,
+    "chapters": 10,
+    "notes": 89,
+    "words": 60496,
+    "tokens": 93616
+  },
+  {
+    "slug": "softwaresupplychainsecurity",
+    "title": "Software Supply Chain Security",
+    "authors": [
+      "Cassie Crossley"
+    ],
+    "domains": [
+      "security",
+      "devops"
+    ],
+    "pages": 243,
+    "chapters": 12,
+    "notes": 96,
+    "words": 61473,
+    "tokens": 105603
+  },
+  {
+    "slug": "trainingdataformachinelearning",
+    "title": "Training Data for Machine Learning",
+    "authors": [
+      "Anthony Sarkis"
+    ],
+    "domains": [
+      "ai-ml",
+      "data"
+    ],
+    "pages": 332,
+    "chapters": 9,
+    "notes": 127,
+    "words": 99179,
+    "tokens": 150712
+  },
+  {
+    "slug": "ultimatekalilinuxbook-secondedition",
+    "title": "The Ultimate Kali Linux Book",
+    "authors": [
+      "Glen D. Singh"
+    ],
+    "domains": [
+      "security",
+      "devops"
+    ],
+    "pages": 742,
+    "chapters": 17,
+    "notes": 173,
+    "words": 133264,
+    "tokens": 208663
+  },
+  {
+    "slug": "webapplicationsecurity2ndedition",
+    "title": "Web Application Security",
+    "authors": [
+      "Andrew Hoffman"
+    ],
+    "domains": [
+      "security"
+    ],
+    "pages": 444,
+    "chapters": 37,
+    "notes": 242,
+    "words": 123622,
+    "tokens": 194768
+  },
+  {
+    "slug": "zedattackproxycookbook",
+    "title": "Zed Attack Proxy Cookbook",
+    "authors": [
+      "Ryan Soper",
+      "Ahmed Almoailu"
+    ],
+    "domains": [
+      "security"
+    ],
+    "pages": 284,
+    "chapters": 11,
+    "notes": 71,
+    "words": 49365,
+    "tokens": 73674
+  },
+  {
+    "slug": "zerotrustnetworks2ndedition",
+    "title": "Zero Trust Networks",
+    "authors": [
+      "Razi Rais",
+      "Christina Morillo",
+      "Evan Gilman",
+      "Doug Barth"
+    ],
+    "domains": [
+      "security"
+    ],
+    "pages": 335,
+    "chapters": 13,
+    "notes": 141,
+    "words": 101740,
+    "tokens": 163959
+  }
+]

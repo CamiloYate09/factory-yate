@@ -1,0 +1,28 @@
+{
+  "source_catalog_sha256": "73e4b35ded0254b8b9745d06de10ce6297beecc7ace000f8235068621f7d81c4",
+  "notes": 11245,
+  "books": 82,
+  "note_fields": [
+    "path",
+    "book_id",
+    "type",
+    "title",
+    "chapter",
+    "chapter_title",
+    "section_path",
+    "pages",
+    "tokens",
+    "keywords"
+  ],
+  "book_fields": [
+    "slug",
+    "title",
+    "authors",
+    "domains",
+    "pages",
+    "chapters",
+    "notes",
+    "words",
+    "tokens"
+  ]
+}

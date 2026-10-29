@@ -176,3 +176,37 @@ def test_land_sugiere_brain_commit(tmp_path, capsys):
     capsys.readouterr()
     assert main(["--root", str(root), "land", state.run_id]) == 1
     assert "factory brain commit" in capsys.readouterr().err
+
+
+def test_mapa_regenerado_por_una_importacion(tmp_path, vault, capsys):
+    from factory.util import git
+
+    root = _repo_with_daily(tmp_path)
+    assert main(["--root", str(root), "brain", "import", str(vault)]) == 0
+    git(root, "add", ".gitignore")  # la importación añade /brain-principal/ a .gitignore
+    git(root, "commit", "-qm", "ignorar el principal")
+    capsys.readouterr()
+    assert main(["--root", str(root), "status"]) == 0
+    assert "[AVISO] Mapa de la biblioteca con" in capsys.readouterr().out
+    assert main(["--root", str(root), "brain", "commit", "-m", "mapa"]) == 0
+    files = git(root, "show", "--name-only", "--format=", "HEAD").splitlines()
+    assert "brain-mapa/_catalog.jsonl" in files
+    assert all(f.startswith("brain-mapa/") for f in files)  # nada del cerebro principal
+    assert not git(root, "ls-files", "--", "brain-principal")
+
+
+def test_commit_del_diario_y_el_mapa_juntos(tmp_path, vault, capsys):
+    from factory.util import git
+
+    root = _repo_with_daily(tmp_path)
+    main(["--root", str(root), "brain", "import", str(vault)])
+    git(root, "add", ".gitignore")
+    git(root, "commit", "-qm", "ignorar el principal")
+    main(["--root", str(root), "brain", "learn", "Una ficha propia"])
+    (root / "app.py").write_text("x = 3\n")
+    assert main(["--root", str(root), "brain", "commit", "-m", "cerebros"]) == 0
+    files = git(root, "show", "--name-only", "--format=", "HEAD").splitlines()
+    assert any(f.startswith("brain-diario/") for f in files)
+    assert any(f.startswith("brain-mapa/") for f in files)
+    assert all(f.startswith(("brain-diario/", "brain-mapa/")) for f in files)
+    assert git(root, "status", "--porcelain") == "M app.py"

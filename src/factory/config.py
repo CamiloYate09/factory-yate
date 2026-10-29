@@ -84,6 +84,7 @@ class BrainConfig:
 
     principal_dir: str = "brain-principal"
     daily_dir: str = "brain-diario"
+    map_dir: str = "brain-mapa"  # mapa de la biblioteca: metadatos versionados, sin texto
     inject_max_tokens: int = 3000
     search_limit: int = 8
 
@@ -210,6 +211,10 @@ class Config:
     def daily_path(self) -> Path:
         return self._abs(self.brain.daily_dir)
 
+    @property
+    def map_path(self) -> Path:
+        return self._abs(self.brain.map_dir)
+
     def _abs(self, value: str) -> Path:
         path = Path(value).expanduser()  # resuelta: --add-dir y las denegaciones usan la misma ruta
         return (path if path.is_absolute() else self.root / path).resolve()
@@ -301,4 +306,23 @@ def load_config(root: Path) -> Config:
                 raise ConfigError(f"[roles.{name}] debe ser una tabla")
             apply_values(config.roles[name], values, f"roles.{name}")
     config.roles = {name: enforce_role_policy(name, role) for name, role in config.roles.items()}
+    _check_brain_paths(config)
     return config
+
+
+def _check_brain_paths(config: Config) -> None:
+    """Los tres cerebros en rutas distintas, sin anidarse ni ser la raíz del repo."""
+    paths = {
+        "principal_dir": config.principal_path,
+        "daily_dir": config.daily_path,
+        "map_dir": config.map_path,
+    }
+    root = config.root.resolve()
+    for key, path in paths.items():
+        if path == root or path in root.parents:
+            raise ConfigError(f"[brain].{key} no puede ser la raíz del repo ni contenerla")
+    items = list(paths.items())
+    for i, (key_a, a) in enumerate(items):
+        for key_b, b in items[i + 1 :]:
+            if a == b or a in b.parents or b in a.parents:
+                raise ConfigError(f"[brain].{key_a} y [brain].{key_b} no pueden solaparse")

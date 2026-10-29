@@ -52,8 +52,10 @@ permission_mode = "dontAsk"
 # Cerebros de conocimiento (docs/harness/cerebros.md).
 # principal: copia local de la biblioteca de libros (factory brain import), FUERA de git.
 # diario: aprendizajes del día a día (factory brain learn / capturas), versionado.
+# mapa: índice de la biblioteca sin texto (lo regenera factory brain import), versionado.
 [brain]
 principal_dir = "brain-principal"
 daily_dir = "brain-diario"
+map_dir = "brain-mapa"
 inject_max_tokens = 3000
 search_limit = 8

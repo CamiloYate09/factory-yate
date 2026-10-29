@@ -15,7 +15,9 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 
 from factory import features
+from factory.brain.daily import map_ignored, repo_relative
 from factory.brain.importer import leftovers, read_metadata
+from factory.brain.libmap import problems as map_problems
 from factory.config import Config
 from factory.util import git
 
@@ -315,7 +317,10 @@ def _lifecycle_checks(config: Config) -> list[Check]:
 
 
 def _brain_checks(config: Config) -> list[Check]:
-    """Cerebro principal: nunca versionado (crítica); importado, válido y sin restos (si existe)."""
+    """Cerebro principal: nunca versionado (crítica); importado, válido y sin restos (si existe).
+
+    Mapa de la biblioteca: solo campos de la lista blanca (crítica).
+    """
     principal = config.principal_path
     checks = []
     try:
@@ -365,6 +370,34 @@ def _brain_checks(config: Config) -> list[Check]:
                 "Borra los restos: " + ", ".join(p.name for p in rest),
             )
         )
+    if config.map_path.is_dir():  # spec library-map: el mapa versionado nunca lleva texto
+        ignored = map_ignored(config)
+        checks.append(
+            Check(
+                "estado",
+                "brain-map-versionable",
+                "El mapa de la biblioteca no está en .gitignore (viaja con cada clon)",
+                RECOMMENDED,
+                not ignored,
+                f"Quita `{ignored}` de .gitignore; el mapa no tiene texto de los libros.",
+            )
+        )
+        found = map_problems(config.map_path)
+        map_relative = repo_relative(config, config.map_path)
+        checks.append(
+            Check(
+                "estado",
+                "brain-map-sin-texto",
+                "El mapa de la biblioteca solo contiene metadatos de la lista blanca (sin texto)",
+                CRITICAL,
+                not found,
+                "Borra los archivos señalados o recupera el mapa con "
+                f"`git restore {map_relative or config.map_path}/` "
+                "(o regenéralo con `factory brain import <ruta-del-vault>`); no lo edites a mano. "
+                "Si ya se commiteó texto, sácalo también del historial.",
+                "; ".join(found[:5]),
+            )
+        )
     return checks
 
 
@@ -390,6 +423,8 @@ def render(report: Report) -> str:
             label = "PASS" if check.passed else ("FAIL" if check.severity == CRITICAL else "WARN")
             out.append(f"  [{label}] [{check.severity.upper()}] {check.description}")
             if not check.passed:
+                if check.detail:
+                    out.append(f"         ✗ {check.detail}")
                 out.append(f"         → {check.fix}")
     failed_critical = sum(1 for c in report.checks if c.severity == CRITICAL and not c.passed)
     failed_rec = sum(1 for c in report.checks if c.severity == RECOMMENDED and not c.passed)

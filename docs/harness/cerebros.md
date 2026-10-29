@@ -1,14 +1,16 @@
 # Cerebros de conocimiento
 
-factory usa dos "cerebros" en Markdown, compatibles con cualquier LLM. Cualquiera de los dos se puede abrir en Obsidian o leer con `cat` y `grep`.
+factory usa dos "cerebros" en Markdown, compatibles con cualquier LLM, más un **mapa** de la biblioteca. Todo se puede abrir en Obsidian o leer con `cat` y `grep`.
 
-| | Cerebro principal | Cerebro diario |
-|---|---|---|
-| Qué es | tu biblioteca técnica (libros convertidos a notas atómicas) | lo que aprendes en el día a día |
-| Ruta (`[brain]` en `factory.toml`) | `principal_dir = "brain-principal"` | `daily_dir = "brain-diario"` |
-| Git | **nunca** se versiona (libros de terceros) | se versiona (es conocimiento tuyo) |
-| Quién escribe | solo `factory brain import` | `factory brain learn` y las capturas que aceptes |
-| Los loops | solo lectura | solo lectura (ruta prohibida en todo objetivo) |
+| | Cerebro principal | Mapa de la biblioteca | Cerebro diario |
+|---|---|---|---|
+| Qué es | tu biblioteca técnica: los libros convertidos a notas atómicas | el índice de esa biblioteca: libros, capítulos, secciones, páginas y keywords, **sin texto** | lo que aprendes en el día a día, con tus palabras |
+| Ruta (`[brain]` en `factory.toml`) | `principal_dir = "brain-principal"` | `map_dir = "brain-mapa"` | `daily_dir = "brain-diario"` |
+| Git | **nunca** se versiona (libros de terceros) | se versiona: viaja con cada clon | se versiona: viaja con cada clon |
+| Quién escribe | solo `factory brain import` | solo `factory brain import` | `factory brain learn` y las capturas que aceptes |
+| Los loops | solo lectura | solo lectura (ruta prohibida en todo objetivo) | solo lectura (ruta prohibida en todo objetivo) |
+
+**Qué trae un clon del repo.** Trae el mapa (una búsqueda devuelve citas del tipo *Defending APIs* · cap. 9 · pp. 259–260) y tus fichas del cerebro diario. El texto de los libros solo está en los equipos donde importas tu copia: muévela tú entre tus computadores y ejecuta `factory brain import <ruta>` en cada uno.
 
 Solo se trabaja con archivos **`.md`** y con los índices que los describen (`_catalog.jsonl`, `_books.json`, `llms.txt`). Los PDF nunca se importan y `.gitignore` los descarta (`*.pdf`).
 
@@ -26,6 +28,18 @@ Solo se trabaja con archivos **`.md`** y con los índices que los describen (`_c
 - **Fuera de git.** Si el destino está dentro del repo, `import` lo añade a `.gitignore`. `factory doctor` falla (crítica) si algún archivo del cerebro principal llega al índice de git.
 - **Integridad.** factory guarda una huella del cerebro y la compara al terminar cada ejecución de loop. Si un agente lo modificara, la ejecución lo avisa en `decision.md` y en la bandeja.
 
+## Mapa de la biblioteca
+
+Cada `factory brain import` regenera `brain-mapa/` desde el catálogo importado:
+
+- `_catalog.jsonl`: una línea por nota con `path, book_id, type, title, chapter, chapter_title, section_path, pages, tokens, keywords`;
+- `_books.json`: `slug, title, authors, domains, pages, chapters, notes, words, tokens`;
+- `_map.json` (huella del catálogo de origen), `llms.txt`, `AGENTS.md` y un `.gitignore` propio, escritos por factory. El `.gitignore` hace que `.DS_Store` u `.obsidian/` nunca se versionen.
+
+- **Sin texto de los libros.** Cada línea se construye desde una lista blanca de campos con formatos estrictos (keywords e identificadores sin espacios), así que nunca entra un `abstract`, un subtítulo, un cuerpo de nota ni las guías del vault. Un título de más de 20 palabras se recorta. `factory doctor` falla (crítica) si el texto de algún archivo del mapa no es exactamente el que generaría factory: un campo de más, un valor fuera de formato, una clave repetida, una guía editada o un archivo de más o de menos. Los títulos de hasta 20 palabras se aceptan como encabezados. Comprobado con el vault real: no aparece ninguno de sus 10.822 resúmenes, ni ninguno de los 45.011 fragmentos de 8 palabras de una muestra de 1.500 notas.
+- **Determinista.** Reimportar el mismo vault no cambia ni un byte. Si cambió, `import` lo indica y `factory status` avisa hasta que hagas `factory brain commit`.
+- **Uso.** Si `brain-principal/` no está importado, la búsqueda, la inyección y el intake usan el mapa. Las notas salen solo como cita y ruta ("texto no disponible en este equipo"). Si el principal está importado, el mapa se ignora y no hay resultados duplicados. Sin `abstract`, la puntuación pierde ese peso, pero los resultados principales coinciden.
+
 ## Cerebro diario
 
 ```bash
@@ -38,7 +52,8 @@ Solo se trabaja con archivos **`.md`** y con los índices que los describen (`_c
 - **Formato.** Cada aprendizaje es `brain-diario/AAAA/MM/AAAA-MM-DD-<slug>.md`. Su frontmatter lleva `id`, `type` (`learning`, `decision`, `gotcha` o `pattern`), `title`, `date`, `tags`, `keywords`, `abstract`, `source` (`manual`, `run:<id>` o `intake:<id>`) y `tokens`, con el mismo formato que el principal.
 - **Índices.** factory regenera `_catalog.jsonl`, `AGENTS.md` y `llms.txt` en cada alta. `reindex` los reconstruye tras editar notas a mano e informa de las que tienen el frontmatter roto.
 - **Protegido de los loops.** `brain-diario/**` es una ruta prohibida en **todo** objetivo: si una ronda crea, modifica o borra algo ahí, se revierte. Ni `factory.toml` ni `goal.md` pueden levantar la prohibición.
-- **Commit explícito.** Nada se commitea solo. `factory brain commit` hace un commit únicamente de `brain-diario/` y deja intactos el resto de cambios. `factory status` avisa de las notas sin commitear, y si `factory land` rechaza un checkout con notas pendientes, sugiere `factory brain commit`.
+- **Fichas propias.** Es la base de conocimiento que compartes: escribe con tus palabras patrones, decisiones y checklists, también lo que saques de un libro, citándolo por capítulo y página en vez de copiar su texto. Viene sembrado con algunos aprendizajes de la construcción de factory (macOS, zsh, `claude -p`, búsqueda).
+- **Commit explícito.** Nada se commitea solo. `factory brain commit` hace un commit únicamente de `brain-diario/` y `brain-mapa/` y deja intactos el resto de cambios. `factory status` avisa de las notas sin commitear, y si `factory land` rechaza un checkout con notas pendientes, sugiere `factory brain commit`.
 
 ## Capturas desde los loops
 
@@ -91,4 +106,4 @@ Maker, checker e intake reciben `--add-dir <ruta absoluta>` por cada cerebro exi
 Comprobado con `claude -p` real (Claude Code, `acceptEdits`): un `Write` nuevo y un `Edit` sobre una nota existente del cerebro quedan en `permission_denials` sin tocar nada, y la lectura sí funciona. El `CLAUDE.md` o `AGENTS.md` de un cerebro **no** se carga en el contexto por estar en `--add-dir`: el agente solo lo ve si lo abre. Las rutas se resuelven (enlaces incluidos) para que `--add-dir` y las denegaciones usen exactamente la misma.
 
 ---
-Requisitos en `openspec/specs/{main-brain,daily-brain,brain-retrieval}/`; diseño en `openspec/changes/archive/2026-10-28-add-knowledge-brains/`.
+Requisitos en `openspec/specs/{main-brain,daily-brain,brain-retrieval}/` y en el cambio `openspec/changes/add-library-map/` (mapa); diseño en `openspec/changes/archive/2026-10-28-add-knowledge-brains/`.

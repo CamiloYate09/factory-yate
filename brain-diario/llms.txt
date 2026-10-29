@@ -1,0 +1,18 @@
+# Cerebro diario
+
+> Aprendizajes del día a día en notas Markdown con frontmatter. Lee AGENTS.md; usa _catalog.jsonl para localizar notas.
+
+## learning
+
+- [Denegaciones absolutas con --add-dir en claude -p](2026/10/2026-10-29-denegaciones-absolutas-con-add-dir-en-claude-p.md) — 2026-10-29: Con claude -p, las denegaciones con ruta absoluta Edit(//ruta/**) y Write(//ruta/**) bloquean la escritura en un directorio añadido con --add-dir (quedan en permission_denials), y la lectura sigue permitida.
+
+## gotcha
+
+- [En macOS /tmp apunta a /private/tmp](2026/10/2026-10-29-en-macos-tmp-apunta-a-private-tmp.md) — 2026-10-29: En macOS /tmp es un enlace simbólico a /private/tmp.
+- [macOS no tiene timeout](2026/10/2026-10-29-macos-no-tiene-timeout.md) — 2026-10-29: macOS no trae el comando timeout de GNU: un script que lo use termina con código 127.
+- [zsh interpreta :t tras una variable](2026/10/2026-10-29-zsh-interpreta-t-tras-una-variable.md) — 2026-10-29: En zsh, $VAR:t es un modificador (tail) y rompe comandos como git show $RUN:ruta.
+
+## pattern
+
+- [Fusionar consultas intercalando](2026/10/2026-10-29-fusionar-consultas-intercalando.md) — 2026-10-29: Al fusionar resultados de varias consultas, intercálalos (la mejor de cada consulta, luego la segunda…) en lugar de ordenar todo por puntuación: una consulta con títulos más coincidentes ('api gateway') se llevaba todas las plazas y dejaba fuera a 'rate limiting'.
+- [Puntuar por cobertura de términos](2026/10/2026-10-29-puntuar-por-cobertura-de-terminos.md) — 2026-10-29: En una búsqueda por palabras clave ponderada, multiplica la puntuación por la cobertura (fracción de términos de la consulta presentes en el documento).

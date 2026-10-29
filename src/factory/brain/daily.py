@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 from dataclasses import asdict, dataclass, field
 from datetime import date as date_cls
 from pathlib import Path
@@ -197,42 +198,86 @@ class DailyBrain:
         return "\n".join(lines).rstrip() + "\n"
 
 
-def daily_relative(config) -> str | None:
-    """Ruta del cerebro diario relativa a la raíz del repo, o None si vive fuera del repo."""
+def repo_relative(config, path: Path) -> str | None:
+    """Ruta relativa a la raíz del repo, o None si vive fuera (no se versiona desde factory)."""
     try:
-        return config.daily_path.relative_to(config.root.resolve()).as_posix()
+        return path.relative_to(config.root.resolve()).as_posix()
     except ValueError:
         return None
+
+
+def versioned_relatives(config) -> list[str]:
+    """Rutas versionadas de los cerebros dentro del repo: el diario y el mapa de la biblioteca."""
+    found = (repo_relative(config, p) for p in (config.daily_path, config.map_path))
+    return [relative for relative in found if relative]
+
+
+def map_ignored(config) -> str | None:
+    """Ruta relativa del mapa si git la ignora (entonces no viajaría con el repo)."""
+    relative = repo_relative(config, config.map_path)
+    if relative is None or not (config.root / ".git").exists():
+        return None
+    probe = subprocess.run(
+        ["git", "check-ignore", "-q", f"{relative}/_catalog.jsonl"],
+        cwd=config.root,
+        capture_output=True,
+    )
+    return relative if probe.returncode == 0 else None
 
 
 def uncommitted(config) -> list[str]:
     from factory.util import git
 
-    relative = daily_relative(config)
-    if relative is None or not (config.root / ".git").exists():
+    relatives = versioned_relatives(config)
+    if not relatives or not (config.root / ".git").exists():
         return []
-    lines = git(config.root, "status", "--porcelain", "--", relative, check=False).splitlines()
+    lines = git(config.root, "status", "--porcelain", "--", *relatives, check=False).splitlines()
     return [line[3:] for line in lines if line.strip()]
 
 
 def commit_daily(config, message: str) -> tuple[str | None, bool]:
-    """Commit SOLO del cerebro diario. Devuelve (hash o None, si usó la identidad de reserva).
+    """Commit SOLO del cerebro diario y del mapa. Devuelve (hash o None, identidad de reserva).
 
     Nunca hace push y no toca ningún otro cambio del checkout (pathspec explícito).
     """
     from factory.gitops import FALLBACK_IDENTITY
     from factory.util import git
 
-    relative = daily_relative(config)
-    if relative is None:
-        raise BrainError("El cerebro diario está fuera del repo: no se versiona desde factory.")
-    git(config.root, "add", "-A", "--", relative)
-    staged = git(config.root, "diff", "--cached", "--name-only", "--", relative)
+    relatives = versioned_relatives(config)
+    if not relatives:
+        raise BrainError("Los cerebros versionables están fuera del repo: no se versionan aquí.")
+    # solo rutas que existen o que git ya conoce, y nunca una ignorada (git add fallaría)
+    ignored = map_ignored(config)
+    relatives = [
+        r
+        for r in relatives
+        if r != ignored
+        and ((config.root / r).exists() or git(config.root, "ls-files", "--", r, check=False))
+    ]
+    if not relatives:
+        return None, False
+    map_rel = repo_relative(config, config.map_path)
+    if map_rel in relatives:  # spec library-map: un mapa con texto nunca entra en git
+        from factory.brain.libmap import problems
+
+        found = problems(config.map_path)
+        if found:
+            raise BrainError(
+                "El mapa de la biblioteca no es el que genera factory; no se commitea nada: "
+                + "; ".join(found[:5])
+                + ". Recupéralo con `git restore` o regenéralo con `factory brain import`."
+            )
+    git(config.root, "add", "-A", "--", *relatives)
+    staged = git(config.root, "diff", "--cached", "--name-only", "--", *relatives)
+    # el commit lleva solo las rutas con algo preparado: un pathspec sin archivos hace fallar
+    relatives = [
+        r for r in relatives if git(config.root, "diff", "--cached", "--name-only", "--", r)
+    ]
     if not staged:
         return None, False
     has_identity = bool(git(config.root, "config", "user.name", check=False)) and bool(
         git(config.root, "config", "user.email", check=False)
     )
     identity = () if has_identity else FALLBACK_IDENTITY
-    git(config.root, *identity, "commit", "-q", "-m", message, "--", relative)
+    git(config.root, *identity, "commit", "-q", "-m", message, "--", *relatives)
     return git(config.root, "rev-parse", "HEAD"), not has_identity

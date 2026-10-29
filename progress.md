@@ -5,7 +5,7 @@
 - Raíz del repositorio: `factory-yate/`, la que contiene `AGENTS.md`.
 - Arranque estándar: `./init.sh`.
 - Verificación estándar: `./scripts/check.sh`.
-- OpenSpec: specs principales en `openspec/specs/` (11 capacidades). Cambios archivados: `2026-10-27-add-harness-loop-engine`, `2026-10-28-extend-factory-pipeline` y `2026-10-28-add-knowledge-brains`. No hay cambios activos.
+- OpenSpec: specs principales en `openspec/specs/` (11 capacidades). Cambios archivados: `2026-10-27-add-harness-loop-engine`, `2026-10-28-extend-factory-pipeline` y `2026-10-28-add-knowledge-brains`. Cambios activos: `add-library-map` (8/8 tareas, sin commitear; sesión 006) y `add-equipo-ideal` (de otra sesión, en worktrees aparte).
 - Feature activa / siguiente: ver `.venv/bin/factory features list`.
 - Commits: `d7c3d5b` (commit inicial) y `9d74594` (evidencia de las features con hash real).
 - Bloqueos actuales: la prueba live (9.2) no está aprobada. El contrato de `--json-schema` se valida con el dogfooding (9.3).
@@ -186,3 +186,52 @@
 - Archivado: `add-knowledge-brains` en `openspec/changes/archive/2026-10-28-add-knowledge-brains/`, con specs sincronizadas (`main-brain`, `daily-brain` y `brain-retrieval`, nuevas; 21 requisitos).
 - Integrada con `factory land` (a petición del usuario) la ejecución `20261028-052249-en-repos-con-pyproject-toml-factory-a254` (objetivo `en-repos-con-pyproject-toml-factory`, 2 rondas, 2,14 USD): merge `1fa6e05` sobre `31423c1`, verificado antes de mover `main`, sin push. El `init.sh` de `factory init` en proyectos Python crea e instala en un `.venv` propio; se quitó del README el aviso sobre pip global. La rama `factory/20261028-052249-…-a254` se conserva.
 - Mejor próximo paso: empezar a alimentar el cerebro diario con `factory brain learn` y lanzar un objetivo real con `knowledge.queries`.
+
+### Sesión 006 — 2026-10-29
+
+- Objetivo: el usuario quería versionar las notas de `redPDF/book` para que cada clon tuviera una base de conocimiento. Esas notas son el texto completo de 82 libros comerciales y el remoto es GitHub, así que no se versionaron. El usuario eligió dos alternativas: un **mapa de la biblioteca sin texto** y **fichas propias** en el cerebro diario. Él mueve los libros a mano entre sus equipos.
+- Completado (cambio OpenSpec `add-library-map`, feature `library-map`):
+  - `brain/libmap.py`: mapa construido desde una lista blanca de campos (sin `abstract` ni cuerpos ni guías del vault), con títulos recortados a 20 palabras y salida determinista que solo reescribe lo que cambia;
+  - `factory brain import` regenera `brain-mapa/`; `status` lo muestra; `search` avisa del modo "solo mapa";
+  - sin principal importado, la búsqueda, la inyección y el intake usan el mapa (solo citas, "texto no disponible en este equipo"); con principal, el mapa se ignora;
+  - `doctor`: comprobación crítica `brain-map-sin-texto`, dentro de `_brain_checks` como pidió la otra sesión;
+  - el mapa es ruta prohibida en todo objetivo, con denegaciones `Edit/Write` y huella;
+  - `factory brain commit`, `status` y `land` cubren el mapa;
+  - documentación en `cerebros.md` (tabla de tres columnas, mapa, fichas propias) y en el README, paso G;
+  - 6 fichas sembradas en `brain-diario/` con aprendizajes de este proyecto (macOS `timeout`, `/tmp` → `/private/tmp`, denegaciones con `--add-dir`, cobertura, fusión intercalada, zsh `:t`); ninguna sale de los libros.
+- Verificación ejecutada:
+  - `./scripts/check.sh` → código 0 (355 tests, ruff y doctor sin fallos);
+  - `openspec validate add-library-map --strict` → válido;
+  - `factory features verify library-map` → `passing`.
+- Evidencia con el vault real (sin coste de API):
+  - mapa de 11.245 notas y 82 libros, 5,3 MB, generado en ~3,5 s; reimportar → "sin cambios";
+  - **ninguna fuga**: 0 de 10.822 `abstract` y 0 de 45.011 fragmentos de 8 palabras de 1.500 notas al azar aparecen en el mapa; campos del mapa = lista blanca exacta;
+  - clon simulado (solo `factory.toml` + `brain-mapa/`): `factory brain search "rate limiting"` → *Defending APIs* · cap. 9 · pp. 259–260 primero, igual que con el texto completo.
+- Coordinación: otra sesión (`equipo-ideal-subagentes`) trabaja en `add-equipo-ideal` en worktrees bajo `.claude/worktrees/`, sin tocar el checkout principal. Commiteó su preparación (`f18df16`). Acordado: features con prioridades únicas (`library-map` = 23), commits con pathspec explícito y aviso antes de integrar.
+- Revisión independiente (`checker`), primera pasada: `fail` con 7 `medium`. No encontró texto de los libros en el mapa, pero sí que `doctor` solo validaba los nombres de los campos y no los valores. Corregido:
+  - `subtitle` fuera de la lista blanca: en el vault real a veces trae texto de una página ("Copyright © 2022 Packt Publishing");
+  - formatos estrictos por campo (keywords e identificadores sin espacios; las 89.425 keywords reales los cumplen);
+  - `doctor` reconstruye y compara cada línea, libro, guía y `.gitignore`, y su salida de texto muestra el detalle (archivo y campo);
+  - `.gitignore` propio del mapa (`.DS_Store` y `.obsidian/` ni cuentan ni se commitean);
+  - aviso y check recomendado si el mapa está en `.gitignore`, sin bloquear `factory brain commit`;
+  - `search --json` deja los avisos en stderr;
+  - el commit solo pasa las rutas con cambios preparados;
+  - el intake recibe el mapa en `--add-dir`; `_map.json` entra en la huella;
+  - `factory.toml` rechaza rutas de cerebros que se solapen;
+  - tests: mapa construido (no copiado), texto pegado en valores, clon con `--json`, mapa ignorado, aviso de integridad del mapa, tipos raros, diario y mapa juntos.
+  - Vault real regenerado: 0 de 10.822 `abstract`, 0 subtítulos y 2 de 74.154 fragmentos de 8 palabras (2.000 notas). Los 2 son títulos de sección que el resumen del capítulo repite como índice, no prosa. `./scripts/check.sh` → código 0 (369 tests).
+- Segunda pasada del `checker`: `fail` con 1 `medium`, porque `doctor` comparaba el JSON interpretado, no el texto. Un párrafo cabía en una clave repetida o en `_map.json`. Corregido:
+  - comparación del texto exacto de cada archivo con su forma canónica (catálogo línea a línea, `_books.json`, `_map.json` con recuentos reales y huella `[0-9a-f]{64}`, guías y `.gitignore`), y error si falta alguno;
+  - aviso de notas descartadas en `import`;
+  - ruta configurada en el mensaje de `doctor`;
+  - el `.gitignore` del mapa entra en la huella;
+  - tests de clave repetida, `_map.json` manipulado, archivo ausente, intake con el mapa y aviso en `decision.md` y la bandeja.
+  - `./scripts/check.sh` → código 0 (376 tests); el mapa real pasa la validación de texto exacto.
+- Tercera pasada del `checker`: `pass_with_minor`, con el `medium` cerrado y 4 `minor` nuevos, también corregidos:
+  - `factory brain commit` se niega a commitear un mapa que `doctor` rechazaría;
+  - un mapa con UTF-8 inválido nombra el archivo;
+  - test de clave repetida en `_books.json`;
+  - redacción de la spec sobre los autores.
+- Riesgos / pendientes:
+  - sin commitear; al commitear, avisar a la otra sesión.
+- Mejor próximo paso: revisión del `checker`, commit (incluye `brain-mapa/` y `brain-diario/`) y archivar `add-library-map`.

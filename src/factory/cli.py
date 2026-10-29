@@ -19,8 +19,9 @@ from factory.agents.claude_code import ClaudeCodeRunner
 from factory.brain import BrainError
 from factory.brain import search as brain_search
 from factory.brain.captures import CaptureStore
-from factory.brain.daily import KINDS, DailyBrain, commit_daily
+from factory.brain.daily import KINDS, DailyBrain, commit_daily, map_ignored
 from factory.brain.importer import import_vault, read_metadata
+from factory.brain.libmap import build_map
 from factory.config import Config, ConfigError, load_config
 from factory.engine import EngineError, Limits, LoopEngine, exit_code
 from factory.gitops import PreflightError
@@ -368,6 +369,25 @@ def cmd_brain(args: argparse.Namespace) -> int:
         )
         if result.gitignore_added:
             print("Añadido a .gitignore: los libros no se versionan.")
+        built = build_map(config.principal_path, config.map_path)
+        state = f"actualizado ({', '.join(built.changed)})" if built.changed else "sin cambios"
+        print(
+            f"Mapa de la biblioteca en {built.path}: {built.notes} notas, {built.books} libros, "
+            f"sin texto de los libros; {state}."
+        )
+        if built.dropped:
+            print(
+                f"AVISO: {built.dropped} nota(s) del catálogo no entran en el mapa porque su "
+                "ruta no tiene el formato esperado (`<libro>/…/<nota>.md`)."
+            )
+        ignored = map_ignored(config)
+        if ignored:
+            print(
+                f"AVISO: `{ignored}/` está en .gitignore, así que el mapa no viajará con el "
+                "repo. Quítalo de .gitignore: no contiene texto de los libros."
+            )
+        elif built.changed:
+            print("Versiónalo con `factory brain commit` para que viaje con el repo.")
         return EXIT_OK
     if args.brain_cmd == "status":
         meta = read_metadata(config.principal_path)
@@ -380,15 +400,32 @@ def cmd_brain(args: argparse.Namespace) -> int:
             )
         else:
             print("  no importado: usa `factory brain import <ruta-del-vault>`")
+        print(f"Mapa de la biblioteca: {config.map_path}")
+        map_meta = config.map_path / "_map.json"
+        if map_meta.is_file():
+            info = json.loads(map_meta.read_text(encoding="utf-8"))
+            mode = " · en uso (sin texto)" if brain_search.principal_from_map(config) else ""
+            print(f"  {info['notes']} notas · {info['books']} libros{mode}")
+        else:
+            print("  no generado: se crea con `factory brain import`")
         return EXIT_OK
     if args.brain_cmd == "search":
-        if (
+        notice_to = sys.stderr if args.json else sys.stdout  # --json: stdout solo con el JSON
+        if args.brain in ("all", "principal") and brain_search.principal_from_map(config):
+            print(
+                "Cerebro principal no importado en este equipo: resultados del mapa de la "
+                "biblioteca (citas, sin texto). Importa tu copia con "
+                "`factory brain import <ruta-del-vault>`.",
+                file=notice_to,
+            )
+        elif (
             args.brain in ("all", "principal")
             and not (config.principal_path / "_catalog.jsonl").is_file()
         ):
             print(
                 "Cerebro principal no disponible: impórtalo con "
-                "`factory brain import <ruta-del-vault>`. Se busca solo en el diario."
+                "`factory brain import <ruta-del-vault>`. Se busca solo en el diario.",
+                file=notice_to,
             )
         hits = brain_search.search(config, args.query, args.brain, args.limit)
         if args.json:
@@ -434,11 +471,11 @@ def cmd_brain(args: argparse.Namespace) -> int:
     if args.brain_cmd == "commit":
         commit, fallback = commit_daily(config, args.message)
         if commit is None:
-            print("El cerebro diario no tiene cambios que commitear.")
+            print("El cerebro diario no tiene cambios que commitear, y el mapa tampoco.")
             return EXIT_OK
         if fallback:
             print("AVISO: git no tiene identidad configurada; se usó la de reserva de factory.")
-        print(f"Commit {commit[:10]} solo con el cerebro diario (sin push).")
+        print(f"Commit {commit[:10]} solo con el cerebro diario y el mapa (sin push).")
         return EXIT_OK
     captures = CaptureStore(config.state_path)
     if args.brain_cmd == "pending":

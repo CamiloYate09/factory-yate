@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from factory import artifacts
-from factory.brain.daily import daily_relative
+from factory.brain.daily import versioned_relatives
 from factory.config import Config
 from factory.gitops import Worktree, name_status
 from factory.goal import parse_goal_text
@@ -54,13 +54,16 @@ def _current_branch(root: Path) -> str:
     return proc.stdout.strip()
 
 
-def _check_main_checkout(root: Path, main_branch: str, daily_rel: str | None = None) -> None:
+def _check_main_checkout(root: Path, main_branch: str, brain_rels: list[str] | None = None) -> None:
     dirty = _dirty_tracked(root)
     if dirty:
         shown = ", ".join(dirty[:5]) + (" …" if len(dirty) > 5 else "")
         hint = ""
-        if daily_rel and any(p.startswith(f"{daily_rel}/") for p in dirty):
-            hint = " Si son notas del cerebro diario, versiónalas con `factory brain commit`."
+        if any(p.startswith(f"{rel}/") for rel in brain_rels or [] for p in dirty):
+            hint = (
+                " Si son notas del cerebro diario o el mapa de la biblioteca, versiónalos con "
+                "`factory brain commit`."
+            )
         raise LandError(
             f"El checkout principal tiene cambios sin commitear ({shown}). Haz commit o "
             f"`git stash` antes de integrar.{hint}"
@@ -109,8 +112,8 @@ def land(
     if branch_proc.returncode != 0:
         raise LandError(f"La rama {state.branch} de la ejecución no existe.")
     branch_tip = branch_proc.stdout.strip()
-    daily_rel = daily_relative(config)
-    _check_main_checkout(root, main_branch, daily_rel)
+    brain_rels = versioned_relatives(config)
+    _check_main_checkout(root, main_branch, brain_rels)
     main_tip = git(root, "rev-parse", main_branch)
 
     goal_copy = run_dir / "goal.md"
@@ -179,7 +182,7 @@ def land(
             raise LandError(
                 f"{main_branch} cambió durante la verificación; vuelve a ejecutar `factory land`."
             )
-        _check_main_checkout(root, main_branch, daily_rel)
+        _check_main_checkout(root, main_branch, brain_rels)
         try:
             git(root, "merge", "--ff-only", "-q", merge_commit)
         except GitError as exc:

@@ -46,10 +46,25 @@ def score(entry: Entry, query_terms: list[str], phrase: str) -> float:
     return round(total * matched / len(unique), 2)
 
 
+def principal_from_map(config: Config) -> bool:
+    """True si el principal no está importado y se usa el mapa de la biblioteca (sin texto)."""
+    return (
+        not (config.principal_path / "_catalog.jsonl").is_file()
+        and (config.map_path / "_catalog.jsonl").is_file()
+    )
+
+
+def principal_entries(config: Config) -> list[Entry]:
+    """El catálogo del principal si está importado; si no, el del mapa. Nunca los dos."""
+    if principal_from_map(config):
+        return catalog.load(config.map_path, PRINCIPAL, base=config.principal_path)
+    return catalog.load(config.principal_path, PRINCIPAL)
+
+
 def brains(config: Config, which: str = "all") -> list[tuple[str, list[Entry]]]:
     selected = []
     if which in ("all", PRINCIPAL):
-        selected.append((PRINCIPAL, catalog.load(config.principal_path, PRINCIPAL)))
+        selected.append((PRINCIPAL, principal_entries(config)))
     if which in ("all", DIARIO):
         selected.append((DIARIO, catalog.load(config.daily_path, DIARIO)))
     return selected

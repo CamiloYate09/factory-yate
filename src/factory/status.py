@@ -162,7 +162,7 @@ def render(report: StatusReport) -> str:
 def brain_lines(config: Config) -> list[str]:
     """Avisos de los cerebros para `factory status` (cambios sin commitear del diario)."""
     from factory.brain.captures import CaptureStore
-    from factory.brain.daily import uncommitted
+    from factory.brain.daily import repo_relative, uncommitted
 
     lines = []
     pending = CaptureStore(config.state_path).pending()
@@ -171,9 +171,17 @@ def brain_lines(config: Config) -> list[str]:
             f"  {len(pending)} captura(s) pendiente(s) de revisión → factory brain pending"
         )
     changes = uncommitted(config)
-    if changes:
+    map_rel = repo_relative(config, config.map_path)
+    in_map = [c for c in changes if map_rel and c.startswith(f"{map_rel}/")]
+    in_daily = [c for c in changes if c not in in_map]
+    if in_daily:
         lines.append(
-            f"  [AVISO] Cerebro diario con {len(changes)} cambio(s) sin commitear → "
+            f"  [AVISO] Cerebro diario con {len(in_daily)} cambio(s) sin commitear → "
+            "factory brain commit"
+        )
+    if in_map:
+        lines.append(
+            f"  [AVISO] Mapa de la biblioteca con {len(in_map)} cambio(s) sin commitear → "
             "factory brain commit"
         )
     return ["\nCerebros:", *lines] if lines else []

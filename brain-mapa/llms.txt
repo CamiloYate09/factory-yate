@@ -1,0 +1,103 @@
+# Mapa de la biblioteca
+
+> Índice sin texto de los libros. Lee AGENTS.md; usa _catalog.jsonl para localizar notas y citarlas.
+
+## ai-ml
+
+- AI Engineering — Chip Huyen: 10 capítulos, 145 notas, ~257,410 tokens
+- Architecting Data and Machine Learning Platforms — Marco Tranquillin, Valliappa Lakshmanan, Firat Tekiner: 12 capítulos, 103 notas, ~172,765 tokens
+- Developing Apps with GPT-4 and ChatGPT — Olivier Caelen, Marie-Alice Blete: 7 capítulos, 90 notas, ~116,207 tokens
+- Generative AI on AWS — Chris Fregly, Antje Barth, Shelbee Eigenbrode: 12 capítulos, 97 notas, ~107,839 tokens
+- Generative Deep Learning — David Foster: 14 capítulos, 167 notas, ~159,788 tokens
+- Hands-On Generative AI with Transformers and Diffusion Models — Omar Sanseviero, Pedro Cuenca, Apolinário Passos, Jonathan Whitaker: 13 capítulos, 167 notas, ~169,748 tokens
+- Hands-On Large Language Models — Jay Alammar, Maarten Grootendorst: 12 capítulos, 113 notas, ~143,062 tokens
+- Hands-On Machine Learning with Scikit-Learn, Keras, and TensorFlow — Aurélien Géron: 23 capítulos, 320 notas, ~406,108 tokens
+- Learning LangChain — Mayo Oshin, Nuno Campos: 11 capítulos, 81 notas, ~107,521 tokens
+- Low-Code AI — Gwendolyn Stripling, Michael Abel: 9 capítulos, 84 notas, ~121,985 tokens
+- Machine Learning Interviews — Susan Shu Chang: 9 capítulos, 112 notas, ~138,993 tokens
+- Machine Learning with Python Cookbook — Kyle Gallatin, Chris Albon: 23 capítulos, 262 notas, ~139,871 tokens
+- Natural Language Processing with Transformers — Lewis Tunstall, Leandro von Werra, Thomas Wolf: 11 capítulos, 119 notas, ~177,684 tokens
+- Prompt Engineering for Generative AI — James Phoenix, Mike Taylor: 10 capítulos, 161 notas, ~162,862 tokens
+- Prompt Engineering for LLMs — John Berryman, Albert Ziegler: 11 capítulos, 79 notas, ~129,742 tokens
+- Training Data for Machine Learning — Anthony Sarkis: 9 capítulos, 127 notas, ~150,712 tokens
+
+## api
+
+- Continuous API Management — Mehdi Medjaoui, Erik Wilde, Ronnie Mitra, Mike Amundsen: 12 capítulos, 143 notas, ~205,191 tokens
+- Defending APIs — Colin Domoney: 13 capítulos, 133 notas, ~146,938 tokens
+
+## architecture
+
+- Architecture Patterns with Python — Harry Percival, Bob Gregory: 18 capítulos, 160 notas, ~109,385 tokens
+- Building an Event-Driven Data Mesh — Adam Bellemare: 11 capítulos, 105 notas, ~126,004 tokens
+- Building Evolutionary Architectures — Neal Ford, Rebecca Parsons, Patrick Kua, Pramod Sadalage: 9 capítulos, 81 notas, ~111,801 tokens
+- Building Microservices — Sam Newman: 16 capítulos, 272 notas, ~315,579 tokens
+- Building Multi-Tenant SaaS Architectures — Tod Golding: 17 capítulos, 192 notas, ~254,902 tokens
+- Cloud Application Architecture Patterns — Kyle Brown, Bobby Woolf, Joseph Yoder: 10 capítulos, 136 notas, ~324,462 tokens
+- Communication Patterns — Jacqui Read: 16 capítulos, 102 notas, ~114,457 tokens
+- Data Mesh — Zhamak Dehghani: 16 capítulos, 123 notas, ~170,651 tokens
+- Deciphering Data Architectures — James Serra: 16 capítulos, 123 notas, ~123,164 tokens
+- Designing Distributed Systems — Brendan Burns: 16 capítulos, 116 notas, ~94,342 tokens
+- Facilitating Software Architecture — Andrew Harmel-Law: 17 capítulos, 168 notas, ~275,438 tokens
+- Flow Architectures — James Urquhart: 7 capítulos, 88 notas, ~135,244 tokens
+- Foundations of Scalable Systems — Ian Gorton: 16 capítulos, 115 notas, ~154,814 tokens
+- Fundamentals of Enterprise Architecture — Tanusree McCabe: 14 capítulos, 86 notas, ~114,413 tokens
+- Fundamentals of Software Architecture — Mark Richards, Neal Ford: 27 capítulos, 251 notas, ~222,587 tokens
+- Head First Software Architecture — Raju Gandhi, Mark Richards, Neal Ford: 13 capítulos, 197 notas, ~116,902 tokens
+- Learning Domain-Driven Design — Vlad Khononov: 18 capítulos, 165 notas, ~127,358 tokens
+- Learning Systems Thinking — Diana Montalion: 12 capítulos, 108 notas, ~129,237 tokens
+- Mastering API Architecture — James Gough, Daniel Bryant, Matthew Auburn: 10 capítulos, 127 notas, ~127,198 tokens
+- Monolith to Microservices — Sam Newman: 8 capítulos, 102 notas, ~113,806 tokens
+- Software Architecture Metrics — Christian Ciceri, Dave Farley, Neal Ford, Andrew Harmel-Law, Michael Keeling, Carola Lilienthal, João Rosa, Alexander von Zitzewitz, Rene Weiss, Eoin Christian Ciceri, Eoin Woods: 10 capítulos, 89 notas, ~93,616 tokens
+- Software Architecture: The Hard Parts — Neal Ford, Mark Richards, Pramod Sadalage, Zhamak Dehghani: 18 capítulos, 115 notas, ~178,090 tokens
+- The Software Architect Elevator — Gregor Hohpe: 41 capítulos, 349 notas, ~148,104 tokens
+
+## cloud
+
+- Mastering Microsoft 365 Defender — Ru Campbell, Viktor Hedberg: 23 capítulos, 162 notas, ~196,442 tokens
+- Mastering Microsoft Defender for Office 365 — Samuel Soto: 12 capítulos, 131 notas, ~184,087 tokens
+
+## general
+
+- Microsoft Defender for Endpoint in Depth — Paul Snow, Ru Campbell, Ian Hoyle, Joe Anich, Justen Graves: 13 capítulos, 184 notas, ~244,189 tokens
+
+## security
+
+- Advanced Cyber Threat Intelligence and Hunting — Gianluca Tiepolo, Dan Sorensen: 18 capítulos, 218 notas, ~402,855 tokens
+- Adversarial AI Attacks, Mitigations, and Defense Strategies — John Sotiropoulos: 19 capítulos, 217 notas, ~273,703 tokens
+- Agentic AI for Offensive Cybersecurity — Orhan Yildirim: 9 capítulos, 94 notas, ~153,587 tokens
+- Attacking and Exploiting Modern Web Applications — Simone Onofri, Donato Onofri: 8 capítulos, 109 notas, ~132,656 tokens
+- Blue Team Handbook: Incident Response — Don Murdoch: 13 capítulos, 152 notas, ~158,640 tokens
+- Building a Cyber Risk Management Program — Brian Allen, Brandon Bapst, Terry Allan Hicks: 10 capítulos, 93 notas, ~119,149 tokens
+- Cloud Native Security Cookbook — Josh Armitage: 11 capítulos, 116 notas, ~185,362 tokens
+- Cyber Security Kill Chain - Tactics and Strategies — Gourav Nagar, Shreyas Kumar: 12 capítulos, 132 notas, ~182,164 tokens
+- Cybersecurity - Attack and Defense Strategies — Yuri Diogenes, Dr. Erdal Ozkaya: 17 capítulos, 239 notas, ~234,721 tokens
+- Cybersecurity Attacks - Red Team Strategies — Johann Rehberger: 12 capítulos, 170 notas, ~170,889 tokens
+- Cybersecurity Blue Team Strategies — Kunal Sehgal, Nikolaos Thymianis: 12 capítulos, 105 notas, ~109,374 tokens
+- Cybersecurity Ops with bash — Paul Troncone, Carl Albing, PhD: 23 capítulos, 157 notas, ~99,396 tokens
+- Defensive Security Handbook — Amanda Berlin, Lee Brotherston, William F. Reyor III: 24 capítulos, 154 notas, ~167,064 tokens
+- Digital Forensics Cookbook — Cody Bounds: 13 capítulos, 149 notas, ~210,399 tokens
+- Hands-On Red Team Tactics — Himanshu Sharma, Harpreet Singh: 13 capítulos, 93 notas, ~75,154 tokens
+- Identity Security for Software Development — John Walsh, Uzi Ailon, Matt Barker: 9 capítulos, 83 notas, ~90,435 tokens
+- Incident Response Techniques for Ransomware Attacks — Oleg Skulkin: 12 capítulos, 83 notas, ~64,109 tokens
+- Inside Cyber Warfare — Jeffrey Caruso: 7 capítulos, 68 notas, ~66,026 tokens
+- Intelligent Continuous Security — Marc Hornbeek: 11 capítulos, 125 notas, ~154,922 tokens
+- Kali Linux Cookbook Third Edition — Corey P. Schultz: 12 capítulos, 145 notas, ~113,293 tokens
+- Kubernetes Security and Observability — Brendan Creane, Amit Gupta: 11 capítulos, 86 notas, ~84,869 tokens
+- Learning Cloud Security — Ric Messier: 11 capítulos, 126 notas, ~175,446 tokens
+- Learning Serverless Security — Joshua Arvin Lat: 13 capítulos, 159 notas, ~211,469 tokens
+- Linux Shell Scripting for Hackers — Valentine G. Nachi, Donald A. Tevault: 12 capítulos, 153 notas, ~165,814 tokens
+- Microsoft Defender for Identity in Depth — Pierre Thoor: 10 capítulos, 101 notas, ~163,271 tokens
+- Practical Cloud Security — Chris Dotson: 8 capítulos, 117 notas, ~116,282 tokens
+- Practical Threat Intelligence and Data-Driven Threat Hunting — Valentina Palacín: 15 capítulos, 105 notas, ~120,650 tokens
+- Privacy and Security for Large Language Models — Baihan Lin: 9 capítulos, 86 notas, ~147,700 tokens
+- Security and Microservice Architecture on AWS — Gaurav Raje: 13 capítulos, 119 notas, ~157,212 tokens
+- Security Architecture for Hybrid Cloud — Mark Buckwell, Stefaan Van daele, Carsten Horst: 15 capítulos, 176 notas, ~209,258 tokens
+- Security as Code — BK Sarthak Das, Virginia Chu: 7 capítulos, 51 notas, ~48,372 tokens
+- Software Supply Chain Security — Cassie Crossley: 12 capítulos, 96 notas, ~105,603 tokens
+- The Cybersecurity Manager’s Guide — Todd Barnum: 12 capítulos, 109 notas, ~86,356 tokens
+- The Developer’s Playbook for Large Language Model Security — Steve Wilson: 12 capítulos, 82 notas, ~98,641 tokens
+- The Ultimate Kali Linux Book — Glen D. Singh: 17 capítulos, 173 notas, ~208,663 tokens
+- Web Application Security — Andrew Hoffman: 37 capítulos, 242 notas, ~194,768 tokens
+- Zed Attack Proxy Cookbook — Ryan Soper, Ahmed Almoailu: 11 capítulos, 71 notas, ~73,674 tokens
+- Zero Trust Networks — Razi Rais, Christina Morillo, Evan Gilman, Doug Barth: 13 capítulos, 141 notas, ~163,959 tokens

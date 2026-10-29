@@ -425,6 +425,27 @@
       "manual_checks": [],
       "evidence": [],
       "notes": "OpenSpec add-equipo-ideal, grupo 8"
+    },
+    {
+      "id": "library-map",
+      "priority": 23,
+      "area": "brain",
+      "title": "Mapa de la biblioteca versionado (sin texto)",
+      "user_visible_behavior": "Cada `factory brain import` regenera `brain-mapa/` solo con metadatos de una lista blanca; un clon sin libros busca y cita desde el mapa, `doctor` falla si el mapa tiene texto y `factory brain commit` lo versiona.",
+      "status": "passing",
+      "verification": [
+        "python -m pytest -q tests/test_brain_map.py tests/test_brain_search.py tests/test_brain_daily.py tests/test_doctor.py"
+      ],
+      "manual_checks": [],
+      "evidence": [
+        {
+          "command": "python -m pytest -q tests/test_brain_map.py tests/test_brain_search.py tests/test_brain_daily.py tests/test_doctor.py",
+          "exit_code": 0,
+          "date": "2026-10-29T06:09:31+00:00",
+          "commit": "f18df16b8a03a490aaf29321cde930be726129d2"
+        }
+      ],
+      "notes": "OpenSpec add-library-map"
     }
   ]
 }
