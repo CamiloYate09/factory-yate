@@ -35,8 +35,8 @@
 
 ## 6. Constructores (`team-builders`)
 
-- [ ] 6.1 Crear `.claude/agents/ingeniero-software.md` (#9, constructor). Verificar con `pytest tests/test_team_constructores.py`.
-- [ ] 6.2 Crear `.claude/agents/documentador.md` (#3, constructor; solo `*.md`). Verificar con `pytest tests/test_team_constructores.py`, escenario "El documentador no toca código", y con una prueba real en haiku (≤ 0,05 USD).
+- [x] 6.1 Crear `.claude/agents/ingeniero-software.md` (#9, constructor). Verificar con `pytest tests/test_team_constructores.py`.
+- [x] 6.2 Crear `.claude/agents/documentador.md` (#3, constructor; solo `*.md`). Verificar con `pytest tests/test_team_constructores.py`, escenario "El documentador no toca código", y con una prueba real en haiku (≤ 0,05 USD).
 
 ## 7. Revisores (`team-reviewers`)
 
