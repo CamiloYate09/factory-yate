@@ -343,8 +343,8 @@
         {
           "command": "python -m pytest -q tests/test_team_roster.py tests/test_team_lineup.py tests/test_doctor.py tests/test_scaffold_integration.py",
           "exit_code": 0,
-          "date": "2026-10-30T05:46:33+00:00",
-          "commit": "7800a7961cf56e85d21bf2708c2a5f18c6c288c6"
+          "date": "2026-10-30T06:01:44+00:00",
+          "commit": "fed72fde528435f9856ca9165bf893078ee66125"
         }
       ],
       "notes": "OpenSpec add-equipo-ideal, grupo 2"
@@ -469,8 +469,8 @@
         {
           "command": "python -m pytest -q tests/test_protected_config.py tests/test_protected_paths.py tests/test_doctor.py",
           "exit_code": 0,
-          "date": "2026-10-30T05:46:48+00:00",
-          "commit": "7800a7961cf56e85d21bf2708c2a5f18c6c288c6"
+          "date": "2026-10-30T06:01:56+00:00",
+          "commit": "fed72fde528435f9856ca9165bf893078ee66125"
         }
       ],
       "notes": "OpenSpec add-equipo-ideal, grupo 8"
