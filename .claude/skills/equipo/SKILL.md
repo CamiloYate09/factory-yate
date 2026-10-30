@@ -197,4 +197,4 @@ Revisa una rama ya hecha: propia, ajena o una `factory/<run-id>` antes de `facto
 - Ver `docs/harness/equipo.md`.
 
 ---
-Diseño en `openspec/changes/add-equipo-ideal/design.md` (D3 y D4). Las reglas del veredicto ambiguo y del rango con tres puntos están inspiradas en gentleman-guardian-angel (Gentleman-Programming, MIT).
+Diseño en `openspec/changes/archive/2026-10-30-add-equipo-ideal/design.md` (D3 y D4). Las reglas del veredicto ambiguo y del rango con tres puntos están inspiradas en gentleman-guardian-angel (Gentleman-Programming, MIT).

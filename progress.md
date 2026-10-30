@@ -5,7 +5,7 @@
 - Raíz del repositorio: `factory-yate/`, la que contiene `AGENTS.md`.
 - Arranque estándar: `./init.sh`.
 - Verificación estándar: `./scripts/check.sh`.
-- OpenSpec: specs principales en `openspec/specs/` (12 capacidades). Cambios archivados: `2026-10-27-add-harness-loop-engine`, `2026-10-28-extend-factory-pipeline`, `2026-10-28-add-knowledge-brains` y `2026-10-29-add-library-map`. Cambios activos: `add-equipo-ideal` (integrado en `main`; faltan `features verify`, el partido real y el archivado; sesión 007) y `add-panel` (otra sesión).
+- OpenSpec: specs principales en `openspec/specs/` (15 capacidades). Cambios archivados: `2026-10-27-add-harness-loop-engine`, `2026-10-28-extend-factory-pipeline`, `2026-10-28-add-knowledge-brains`, `2026-10-29-add-library-map` y `2026-10-30-add-equipo-ideal` (sesión 007). Cambio activo: `add-panel` (otra sesión).
 - Feature activa / siguiente: ver `.venv/bin/factory features list`.
 - Commits: `d7c3d5b` (commit inicial) y `9d74594` (evidencia de las features con hash real).
 - Bloqueos actuales: la prueba live (9.2) no está aprobada. El contrato de `--json-schema` se valida con el dogfooding (9.3).
@@ -265,11 +265,24 @@
   - Los `critical` y `medium` están corregidos, con tests. Entre ellos: `revisor-pr` leía el razonamiento del maker, la spec de `allow_modify` prometía más de lo que hace la heurística, y el prefijo `./` esquivaba el rechazo.
   - Última ronda: `pass_with_minor`; también se corrigieron sus 6 `minor`.
 - Pruebas reales con haiku (una por jugador nuevo): total ≈ 0,029 USD. Todas cargaron el agente y respondieron con su cabecera, y los revisores no cambiaron el árbol.
+- Cierre (2026-10-30):
+  - **9.2:** `factory features verify` de las 7 features → `passing`. `verify` no exige `in_progress`, así que no se tocó `review-hooks`, que está en `in_progress` en add-panel. `team-roster` y `team-integration` se volvieron a verificar sobre el código final.
+  - **9.4, primer partido real con el reglamento `/equipo`:**
+    - revisión de `cde950b`, con los jugadores en `claude -p --agent … --model haiku` y un tope de 0,05 USD por jugador (los subagentes nuevos aún no estaban registrados en la sesión);
+    - convocatoria determinista de 6, ajustada a 4: `seguridad`, `qa`, `revisor-pr` y `metricas`;
+    - vuelta 1 → `fail`, con 2 `medium`: falta un test del `.gitignore`, y `load_roster` sube de 27 a 29 (D);
+    - vuelta 2 (`qa` y `metricas`) → `pass_with_minor`;
+    - árbitro → `pass_with_minor`, con sus `minor` corregidos;
+    - coste total del partido: 0,078 USD; los revisores nunca cambiaron el árbol.
+  - **Lecciones del partido:**
+    - **Subagentes en la sesión:** los subagentes de `.claude/agents` creados durante la sesión solo están disponibles tras recargarla. Mientras tanto, `claude -p --agent` sirve igual y además permite un tope duro de coste.
+    - **zsh y `--paths`:** zsh no separa por espacios una variable sin comillas; pasar las rutas a `--paths` con `xargs -0`.
+    - **Varios jugadores sobre lo mismo:** `seguridad`, `qa` y `revisor-pr` coincidieron en el mismo `minor` (`lineup` recortaba sus salidas `-z`).
+  - **Archivado:** `openspec archive add-equipo-ideal` → `2026-10-30-add-equipo-ideal`. Specs nuevas: `team-roster`, `team-match` y `complexity-metrics`; `goal-loop` gana 5 requisitos.
 - Riesgos / pendientes:
-  - **`features start|verify` de las 7 features (tarea 9.2):** pendiente por WIP=1, porque `review-hooks` (add-panel) está en `in_progress`. La sesión de add-panel avisará al cerrarla.
-  - **Partido real con `/equipo` (9.4):** pendiente de que el humano fije un tope de coste.
-  - **Después:** archivar con `/opsx:archive add-equipo-ideal`.
   - **Push:** no hecho; decisión humana.
+  - **README:** la fila de "Cómo está organizado" dice "12 capacidades" y ahora son 15. No se tocó porque `README.md` tiene cambios sin commitear de add-panel.
+  - **Mejoras menores anotadas por el árbitro:** `--paths` recorta espacios, a diferencia de las rutas de git (documentado), y el riesgo de `.claude/settings.local.json` creado por un maker dentro de su worktree.
   - **Riesgo conocido:** un maker puede crear `.claude/settings.local.json` en su worktree. Ya no llega a `main`, porque está en `.gitignore`, pero el checker de esa misma ronda lo cargaría.
 - Seguimiento propuesto (cambios aparte): el equipo dentro de `factory goal run` (fase 2), fichar las vacantes y refactorizar la deuda de complejidad que mide `factory complexity` (`parse_intake` 35, `parse_goal_text` 32, `cmd_brain` 30, `render_loop_state` 30).
-- Mejor próximo paso: cuando `review-hooks` deje `in_progress`, ejecutar `factory features start|verify` de `team-roster`, `complexity-metrics`, `team-security`, `team-coach`, `team-builders`, `team-reviewers` y `team-integration`, una a una.
+- Mejor próximo paso: decidir el push de `main`. Siguientes cambios propuestos: el equipo dentro de `factory goal run` (fase 2), fichar las vacantes y refactorizar la deuda de complejidad.

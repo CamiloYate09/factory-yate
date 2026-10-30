@@ -13,7 +13,7 @@ Este directorio es una **copia literal** de `skills/security-audit/` del reposit
 ## Política
 
 - **La copia es literal y no se edita.** Ningún archivo de este directorio, salvo este `UPSTREAM.md`, se modifica a mano; tampoco `SKILL.md`.
-- **Las adaptaciones van en `.claude/agents/seguridad.md`.** Ahí se fijan el modo guía sobre el diff, el listón de prueba "no ejecutado", el mapeo de severidad, la sección `needs_validation` y la checklist de este repositorio (decisión D5 de `openspec/changes/add-equipo-ideal/design.md`).
+- **Las adaptaciones van en `.claude/agents/seguridad.md`.** Ahí se fijan el modo guía sobre el diff, el listón de prueba "no ejecutado", el mapeo de severidad, la sección `needs_validation` y la checklist de este repositorio (decisión D5 de `openspec/changes/archive/2026-10-30-add-equipo-ideal/design.md`).
 - **Integridad.** `tests/test_team_seguridad.py` recalcula el sha256 de cada archivo y lo compara con la tabla de abajo. El test además fija una huella de la tabla, de modo que editar un archivo y su fila a la vez también rompe la verificación.
 
 ## Resincronizar

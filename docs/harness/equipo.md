@@ -156,4 +156,4 @@ Las definiciones del equipo son archivos críticos del harness en los loops (D7)
 - Crear archivos nuevos en esas rutas sigue permitido, como en el resto de rutas protegidas. Ver [Loops](loops.md#rutas-protegidas).
 
 ---
-Diseño y requisitos en `openspec/changes/add-equipo-ideal/` (D1–D9). `seguridad` se basa en cloudflare/security-audit-skill (MIT). Las reglas del veredicto ambiguo y del rango con tres puntos se inspiran en gentleman-guardian-angel (Gentleman-Programming, MIT).
+Diseño y requisitos en `openspec/changes/archive/2026-10-30-add-equipo-ideal/` (D1–D9). `seguridad` se basa en cloudflare/security-audit-skill (MIT). Las reglas del veredicto ambiguo y del rango con tres puntos se inspiran en gentleman-guardian-angel (Gentleman-Programming, MIT).
