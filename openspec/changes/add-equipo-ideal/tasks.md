@@ -16,6 +16,8 @@
 - [x] 2.3 Implementar la convocatoria (`factory team lineup [--base] [--paths] [--peticion | --peticion-file] [--json]`), reutilizando `factory.globs.matches`. Verificar con `pytest tests/test_team_lineup.py`, escenarios "Rutas desde git" (repo git temporal), "Cambio solo en documentación", "Petición de producto sin cambios" y "Nada que jugar".
 - [x] 2.4 Añadir a `doctor` la comprobación crítica `team-roster` (subsistema `instrucciones`). Verificar con `pytest tests/test_team_roster.py tests/test_doctor.py tests/test_scaffold_integration.py`, escenario "Plantilla rota en el doctor".
 
+- [x] 2.5 Validar que ningún agente de `.claude/agents/` repite el `name` de otro (suplantación del árbitro o de un jugador). Verificar con `pytest tests/test_team_roster.py`, escenario "Un agente suplanta al árbitro".
+
 ## 3. Complejidad ciclomática (`complexity-metrics`)
 
 - [x] 3.1 Implementar `src/factory/complexity.py` (D6). Verificar con `pytest tests/test_complexity.py`, escenarios "Función lineal", "Ramas y operadores lógicos", "Rango de una función lineal", "Método de una clase" y "Función anidada", más casos de `match`, comprensiones, `try/except` y lambdas.
@@ -38,6 +40,8 @@
 - [x] 6.1 Crear `.claude/agents/ingeniero-software.md` (#9, constructor). Verificar con `pytest tests/test_team_constructores.py`.
 - [x] 6.2 Crear `.claude/agents/documentador.md` (#3, constructor; solo `*.md`). Verificar con `pytest tests/test_team_constructores.py`, escenario "El documentador no toca código", y con una prueba real en haiku (≤ 0,05 USD).
 
+- [x] 6.3 Ampliar la convocatoria del documentador a `scripts/check.sh`, `src/factory/doctor.py`, `prompts/**` y `src/factory/templates/**`. Verificar con `pytest tests/test_team_constructores.py tests/test_team_roster.py`.
+
 ## 7. Revisores (`team-reviewers`)
 
 - [x] 7.1 Crear `.claude/agents/qa.md` (#2), `producto.md` (#6) y `revisor-pr.md` (#4), todos revisores de solo lectura con el formato D3. Verificar con `pytest tests/test_team_revisores.py`, escenarios "Revisión sin efectos", "Cabecera del jugador" y "Hallazgo sin evidencia" (contrato del prompt).
@@ -53,6 +57,10 @@
   - `docs/harness/roles.md`: árbitro frente a equipo.
 
   Verificar con `./scripts/check.sh` (doctor sin fallos).
+
+- [x] 8.3 Proteger también `.claude/commands/**`, `.claude/hooks/**` y `.claude/settings.json`, y marcar como "sin efecto: crítico" las liberaciones que caen en un crítico. Verificar con `pytest tests/test_protected_config.py`, escenario "Un objetivo intenta liberar los hooks".
+- [x] 8.4 Leer las rutas cambiadas con `git … -z` (alcance, protección, `land` y prompt del checker), para que las rutas con tildes no escapen. Verificar con `pytest tests/test_protected_paths.py`, escenario "Un crítico con tildes".
+- [x] 8.5 Completar la lista de subcomandos de `tests/test_cli_help.py` y contrastarla con `build_parser`. Verificar con `pytest tests/test_cli_help.py`.
 
 ## 9. Integración y validación
 

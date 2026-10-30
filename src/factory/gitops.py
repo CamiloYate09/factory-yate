@@ -85,8 +85,8 @@ class Worktree:
         self.git("clean", "-q", "-fd")
 
     def changed_files(self, since: str) -> list[str]:
-        tracked = self.git("diff", "--name-only", since).splitlines()
-        untracked = self.git("ls-files", "--others", "--exclude-standard").splitlines()
+        tracked = split_z(self.git("diff", "--name-only", "-z", since))
+        untracked = split_z(self.git("ls-files", "-z", "--others", "--exclude-standard"))
         return sorted({p for p in tracked + untracked if p})
 
     def tree_hash(self) -> str:
@@ -102,16 +102,26 @@ class Worktree:
         return name_status(self.path, since, until)
 
 
+def split_z(output: str) -> list[str]:
+    """Rutas de una salida `-z` de git: sin comillas ni escapes, aunque lleven tildes."""
+    return [item for item in output.split("\0") if item]
+
+
 def name_status(cwd: Path, since: str, until: str) -> list[tuple[str, str, str | None]]:
     """(estado, ruta, ruta nueva) de `git diff --name-status -M`; en renombrados, la ruta es la
-    original y la nueva va aparte."""
-    entries = []
-    for line in git(cwd, "diff", "--name-status", "-M", f"{since}..{until}").splitlines():
-        parts = line.split("\t")
-        if len(parts) == 3:
-            entries.append((parts[0], parts[1], parts[2]))
-        elif len(parts) == 2:
-            entries.append((parts[0], parts[1], None))
+    original y la nueva va aparte. Con `-z`, para que las rutas con tildes no lleguen entre
+    comillas y escapen a las rutas protegidas."""
+    tokens = split_z(git(cwd, "diff", "--name-status", "-M", "-z", f"{since}..{until}"))
+    entries: list[tuple[str, str, str | None]] = []
+    i = 0
+    while i + 1 < len(tokens):
+        status = tokens[i]
+        if status[:1] in ("R", "C") and i + 2 < len(tokens):
+            entries.append((status, tokens[i + 1], tokens[i + 2]))
+            i += 3
+        else:
+            entries.append((status, tokens[i + 1], None))
+            i += 2
     return entries
 
 

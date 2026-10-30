@@ -102,6 +102,7 @@ def test_liberar_el_script_de_verificacion(tmp_path):
     prot = goal.protection_for(tmp_path, [], None)
     assert "scripts/check.sh" in prot.critical
     assert prot.is_protected("scripts/check.sh")
+    assert "Liberadas por el objetivo: scripts/check.sh (sin efecto: crítico)" in prot.describe()
 
 
 @pytest.mark.parametrize("pattern", [".claude/*/qa.md", "**/LICENSE", "**/*.cjs"])
@@ -130,3 +131,18 @@ def test_las_definiciones_del_equipo_son_criticas(tmp_path):
     assert prot.is_protected(".claude/skills/equipo/SKILL.md")
     assert not prot.is_protected(".claude/agents-old/x.md")
     assert ".claude/agents/**, .claude/skills/**" in goal.describe(prot)
+
+
+@pytest.mark.parametrize(
+    "pattern", [".claude/settings.json", ".claude/hooks/**", ".claude/commands/opsx/apply.md"]
+)
+def test_un_objetivo_intenta_liberar_la_configuracion_de_claude_code(pattern):
+    with pytest.raises(GoalError, match="no puede liberar archivos críticos del harness"):
+        _goal(f'  allow_modify: ["{pattern}"]\n')
+
+
+def test_la_configuracion_de_claude_code_es_critica(tmp_path):
+    prot = _goal().protection_for(tmp_path, [], None)
+    for path in (".claude/settings.json", ".claude/hooks/panel-hook.sh", ".claude/commands/x.md"):
+        assert prot.is_protected(path), path
+    assert not prot.is_protected(".claude/settings.local.json")

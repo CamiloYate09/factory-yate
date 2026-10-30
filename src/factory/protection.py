@@ -1,9 +1,9 @@
 """Rutas protegidas (spec goal-loop): una rama no puede modificar, borrar ni renombrar archivos
 existentes protegidos, aunque sí crear archivos nuevos en esas rutas.
 
-Los archivos críticos del harness (lo que define cómo se juzga una rama, y los sub-agentes y
-skills de Claude Code de `.claude/agents/` y `.claude/skills/`, como el equipo ideal) están
-siempre protegidos y ningún objetivo ni configuración puede liberarlos.
+Los archivos críticos del harness (lo que define cómo se juzga una rama, y la configuración de
+Claude Code: sub-agentes, skills, comandos, hooks y `.claude/settings.json`, como el equipo ideal)
+están siempre protegidos y ningún objetivo ni configuración puede liberarlos.
 """
 
 from __future__ import annotations
@@ -21,6 +21,9 @@ STATIC_CRITICAL = (
     "prompts/**",
     ".claude/agents/**",
     ".claude/skills/**",
+    ".claude/commands/**",
+    ".claude/hooks/**",
+    ".claude/settings.json",
 )
 # Rutas de ejemplo para detectar un `allow_modify` que liberaría algún crítico estático.
 CRITICAL_SAMPLES = (
@@ -30,6 +33,9 @@ CRITICAL_SAMPLES = (
     "prompts/x/y.md",
     ".claude/agents/x.md",
     ".claude/skills/x/SKILL.md",
+    ".claude/commands/x/y.md",
+    ".claude/hooks/x.sh",
+    ".claude/settings.json",
 )
 SHELLS = ("bash", "sh", "zsh")
 # Estados de `git diff --name-status` que alteran un archivo existente. Las altas (A) y las
@@ -73,10 +79,14 @@ class Protection:
         return matches(path, self.protected) and not matches(path, self.released)
 
     def describe(self) -> list[str]:
+        released = [
+            f"{p} (sin efecto: crítico)" if matches(p.removeprefix("./"), self.critical) else p
+            for p in self.released
+        ]
         return [
             f"Rutas protegidas (críticas, siempre): {', '.join(self.critical)}",
             f"Rutas protegidas (configuración/objetivo): {', '.join(self.protected) or '—'}",
-            f"Liberadas por el objetivo: {', '.join(self.released) or '—'}",
+            f"Liberadas por el objetivo: {', '.join(released) or '—'}",
         ]
 
 

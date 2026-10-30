@@ -103,3 +103,10 @@ Sin rutas cambiadas ni petición, `factory team lineup` SHALL terminar con códi
 #### Scenario: Plantilla rota en el doctor
 - **WHEN** un revisor declara `Edit` entre sus herramientas
 - **THEN** `factory doctor` marca `team-roster` como crítica fallida y termina con código distinto de cero
+
+### Requirement: Nombres de agente únicos
+La validación SHALL considerar error que dos archivos de `.claude/agents/`, sean o no del equipo, declaren el mismo `name`. Conserva el nombre el archivo que se llama igual; el error MUST nombrar al otro archivo y al que ya usa el nombre. Así ningún agente puede suplantar a un jugador ni al árbitro.
+
+#### Scenario: Un agente suplanta al árbitro
+- **WHEN** existe `.claude/agents/checker.md` y otro archivo `.claude/agents/arbitro-falso.md` declara `name: checker`
+- **THEN** `factory team validate` termina con código 1 y nombra `arbitro-falso.md` y `checker.md`

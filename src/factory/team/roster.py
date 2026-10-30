@@ -307,6 +307,36 @@ def _read_candidate(path: Path, label: str) -> _Candidate | None:
     return _Candidate(label, meta.get("tipo") == "tecnico", member, dorsal, reasons)
 
 
+def _declared_name(path: Path) -> str | None:
+    """`name` del frontmatter de cualquier agente, del equipo o no; None si no se puede leer."""
+    try:
+        meta = read_frontmatter(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    name = meta.get("name") if meta else None
+    return name if isinstance(name, str) and name else None
+
+
+def _impersonations(paths: list[Path]) -> dict[str, str]:
+    """Archivo → motivo, para cada agente cuyo `name` ya usa otro. Conserva el nombre el archivo
+    que se llama igual o, si ninguno, el primero."""
+    by_name: dict[str, list[Path]] = {}
+    for path in paths:
+        if name := _declared_name(path):
+            by_name.setdefault(name, []).append(path)
+    found = {}
+    for name, group in by_name.items():
+        if len(group) > 1:
+            holder = next((p for p in group if p.stem == name), group[0])
+            for path in group:
+                if path is not holder:
+                    found[(AGENTS_DIR / path.name).as_posix()] = (
+                        f"`name` «{name}» repetido: ya lo usa "
+                        f"{(AGENTS_DIR / holder.name).as_posix()} (un agente no suplanta a otro)"
+                    )
+    return found
+
+
 def load_roster(root: Path) -> Roster:
     """Lee `.claude/agents/*.md` en orden y valida la plantilla (D1, D8). Sin directorio o sin
     miembros, la plantilla está vacía y es válida."""
@@ -329,8 +359,13 @@ def load_roster(root: Path) -> Roster:
             repeated += [(c, template.format(holder.label)) for c in group if c is not holder]
     for candidate, reason in repeated:
         candidate.reasons.append(reason)
+    impersonations = _impersonations(paths)
+    for candidate in candidates:
+        if reason := impersonations.pop(candidate.label, None):
+            candidate.reasons.append(reason)
     members = [c.member for c in candidates if c.member is not None and not c.reasons]
     errors = [f"{c.label}: {reason}" for c in candidates for reason in c.reasons]
+    errors += [f"{label}: {reason}" for label, reason in impersonations.items()]
     team_files = {c.label for c in candidates}
     arbitro_file = (AGENTS_DIR / f"{ARBITRO}.md").as_posix()
     arbitro = (

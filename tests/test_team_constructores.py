@@ -29,7 +29,8 @@ ESPERADO = {
         "model": "sonnet",
         "convocatoria": (
             "src/factory/cli.py, src/factory/config.py, factory.toml, docs/**, "
-            "README.md, AGENTS.md, CLAUDE.md"
+            "README.md, AGENTS.md, CLAUDE.md, scripts/check.sh, src/factory/doctor.py, "
+            "prompts/**, src/factory/templates/**"
         ),
         "tools": {"Read", "Edit", "Write", "Glob", "Grep"},
     },

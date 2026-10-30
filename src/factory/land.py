@@ -16,7 +16,7 @@ from pathlib import Path
 from factory import artifacts
 from factory.brain.daily import versioned_relatives
 from factory.config import Config
-from factory.gitops import Worktree, name_status
+from factory.gitops import Worktree, name_status, split_z
 from factory.goal import parse_goal_text
 from factory.inbox import Inbox, InboxError
 from factory.protection import violations
@@ -133,7 +133,7 @@ def land(
             text=True,
         )
         if merge.returncode != 0:
-            conflicts = wt.git("diff", "--name-only", "--diff-filter=U").splitlines()
+            conflicts = split_z(wt.git("diff", "--name-only", "-z", "--diff-filter=U"))
             wt.git("merge", "--abort", check=False)
             atomic_write_text(
                 checks_path,

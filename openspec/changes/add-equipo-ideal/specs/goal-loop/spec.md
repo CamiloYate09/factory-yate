@@ -38,3 +38,17 @@ Un patrón de `scope.allow_modify` que la validación acepta SHALL NOT liberar n
 #### Scenario: Liberar el script de verificación
 - **WHEN** un `goal.md` cuyo criterio ejecuta `./scripts/check.sh` declara `scope.allow_modify` con `scripts/check.sh`
 - **THEN** la validación lo acepta y `scripts/check.sh` sigue protegido como crítico
+
+### Requirement: Configuración de Claude Code protegida
+Además de los agentes y las skills, `.claude/commands/**`, `.claude/hooks/**` y `.claude/settings.json` SHALL estar siempre protegidos, porque cambian cómo se comportan las sesiones de Claude Code. Ni `factory.toml` ni `goal.md` MUST poder liberarlos.
+
+#### Scenario: Un objetivo intenta liberar los hooks
+- **WHEN** un `goal.md` declara `scope.allow_modify` con `.claude/hooks/**`
+- **THEN** la validación del objetivo falla indicando que los archivos críticos del harness no se pueden liberar
+
+### Requirement: Rutas con caracteres no ASCII
+El alcance y las rutas protegidas SHALL aplicarse igual a las rutas con caracteres no ASCII (por ejemplo, con tildes): las rutas cambiadas MUST leerse de git sin comillas ni escapes.
+
+#### Scenario: Un crítico con tildes
+- **WHEN** una ronda modifica `.claude/agents/métricas.md`, que ya existía en la base
+- **THEN** la ronda se revierte por modificar un archivo crítico del harness

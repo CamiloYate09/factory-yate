@@ -66,7 +66,7 @@ Cada miembro del equipo es `.claude/agents/<name>.md` con tres claves planas adi
 | — | técnico | `tecnico` | tecnico | opus | — |
 | 1 | portero | `seguridad` | revisor | opus | `**/*.py, **/*.sh, pyproject.toml, factory.toml, prompts/**, .claude/**, src/factory/templates/**, goals/**` |
 | 2 | lateral-derecho | `qa` | revisor | sonnet | `src/**, tests/**` |
-| 3 | lateral-izquierdo | `documentador` | constructor | sonnet | `src/factory/cli.py, src/factory/config.py, factory.toml, docs/**, README.md, AGENTS.md, CLAUDE.md` |
+| 3 | lateral-izquierdo | `documentador` | constructor | sonnet | `src/factory/cli.py, src/factory/config.py, factory.toml, docs/**, README.md, AGENTS.md, CLAUDE.md, scripts/check.sh, src/factory/doctor.py, prompts/**, src/factory/templates/**` |
 | 4 | central-derecho | `revisor-pr` | revisor | opus | `siempre` |
 | 5 | central-izquierdo | `metricas` | revisor | sonnet | `**/*.py` |
 | 6 | pivote | `producto` | revisor | opus | `peticion, openspec/changes/**` |
@@ -136,7 +136,8 @@ Para revisar una rama ya hecha (propia, de otra persona o una `factory/<run-id>`
 - **Verificación.** No se añade a `scripts/check.sh`: cambiar la verificación requiere una petición explícita.
 
 ### D7. Protección del equipo
-- `STATIC_CRITICAL` incluye `.claude/agents/**` y `.claude/skills/**`.
+- `STATIC_CRITICAL` incluye `.claude/agents/**` y `.claude/skills/**`, y también el resto de la configuración de Claude Code: `.claude/commands/**`, `.claude/hooks/**` y `.claude/settings.json` (`settings.local.json` es personal y no se versiona).
+- Las rutas cambiadas se leen de git con `-z`, sin comillas ni escapes, para que una ruta con tildes no escape al alcance ni a la protección.
 - `CRITICAL_SAMPLES` añade `.claude/agents/x.md` y `.claude/skills/x/SKILL.md`, de modo que un `scope.allow_modify` que los liberase se detecta y se rechaza.
 - Crear archivos nuevos en esas rutas sigue permitido, como en el resto de rutas protegidas.
 - `releases_critical` rechaza además un patrón que, leído como ruta, cae dentro de un crítico estático (`prompts/checker.md`, `.claude/agents/qa.md`). Antes esos objetivos pasaban la validación y cada ronda que tocaba el archivo se revertía hasta agotar el presupuesto. Es una heurística: rechaza lo que casa con una muestra (`**/SKILL.md`) o lo que, sin `./`, cae dentro de un crítico. Otros comodines (`.claude/*/qa.md`, `**/LICENSE`) y el script de verificación pasan la validación, pero no liberan nada, porque `Protection.is_protected` consulta los críticos antes que las liberaciones.

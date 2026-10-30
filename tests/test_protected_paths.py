@@ -232,7 +232,9 @@ def test_comodin_que_solapa_en_parte_con_un_critico(tmp_path):
         ]
     )
     config = load_config(root)
-    state = LoopEngine(config, load_goal(text_goal, config.loop), runner, echo=lambda _: None).run()
+    goal = load_goal(text_goal, config.loop)
+    assert goal.allow_modify == [".claude/*/qa.md"]
+    state = LoopEngine(config, goal, runner, echo=lambda _: None).run()
     assert state.rounds[0].decision == "protected_revert"
     assert state.rounds[0].protected_violations == [".claude/agents/qa.md (modificado)"]
     assert git(root, "show", f"{state.branch}:.claude/agents/qa.md").endswith("Revisor.")
@@ -261,3 +263,36 @@ def test_el_maker_crea_un_agente_nuevo_del_equipo(tmp_path):
     assert state.rounds[0].decision == "keep" and state.status == "completed"
     tracked = git(root, "ls-tree", "-r", "--name-only", state.branch).splitlines()
     assert set(new_files) <= set(tracked)
+
+
+# ------------------------------------------------------------------ rutas con caracteres no ASCII
+
+
+def test_un_critico_con_tildes_sigue_protegido(tmp_path):
+    root = _team_repo(tmp_path)
+    (root / ".claude" / "agents" / "métricas.md").write_text("---\nname: métricas\n---\nX.\n")
+    subprocess.run(["git", "add", "-A"], cwd=root, check=True)
+    subprocess.run(["git", "commit", "-qm", "tildes"], cwd=root, check=True)
+    runner = FakeRunner(
+        maker=[
+            maker_done("toco", **{"a.txt": "1", ".claude/agents/métricas.md": "Otro.\n"}),
+            maker_done("bien", **{"a.txt": "1"}),
+        ]
+    )
+    state = _run(root, runner)
+    assert state.rounds[0].decision == "protected_revert"
+    assert state.rounds[0].protected_violations == [".claude/agents/métricas.md (modificado)"]
+
+
+def test_name_status_y_changed_files_sin_comillas(tmp_path):
+    root = _protected_repo(tmp_path, toml="")
+    wt = create_worktree(root, tmp_path / "wts", "r1", "main")
+    (wt.path / "tests" / "test_a.py").rename(wt.path / "tests" / "test_ñandú.py")
+    (wt.path / "docs").mkdir()
+    (wt.path / "docs" / "guía.md").write_text("x\n")
+    assert wt.changed_files("HEAD") == ["docs/guía.md", "tests/test_a.py", "tests/test_ñandú.py"]
+    base = wt.head()
+    wt.snapshot("renombro")
+    [(status, old, new)] = [e for e in wt.name_status(base) if e[0].startswith("R")]
+    assert (old, new) == ("tests/test_a.py", "tests/test_ñandú.py")
+    assert ("A", "docs/guía.md", None) in wt.name_status(base)

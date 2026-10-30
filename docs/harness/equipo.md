@@ -15,7 +15,7 @@ No hay registro central: fichar es añadir un archivo y dar de baja es borrarlo.
 | — | técnico | `tecnico` | tecnico | opus | — | decide la convocatoria y dirige el partido; no edita |
 | 1 | portero | `seguridad` | revisor | opus | `**/*.py, **/*.sh, pyproject.toml, factory.toml, prompts/**, .claude/**, src/factory/templates/**, goals/**` | vulnerabilidades del diff, en modo guía |
 | 2 | lateral-derecho | `qa` | revisor | sonnet | `src/**, tests/**` | plan de pruebas y auditoría de la cobertura |
-| 3 | lateral-izquierdo | `documentador` | constructor | sonnet | `src/factory/cli.py, src/factory/config.py, factory.toml, docs/**, README.md, AGENTS.md, CLAUDE.md` | actualiza la documentación (solo `*.md`) |
+| 3 | lateral-izquierdo | `documentador` | constructor | sonnet | `src/factory/cli.py, src/factory/config.py, factory.toml, docs/**, README.md, AGENTS.md, CLAUDE.md, scripts/check.sh, src/factory/doctor.py, prompts/**, src/factory/templates/**` | actualiza la documentación (solo `*.md`) |
 | 4 | central-derecho | `revisor-pr` | revisor | opus | `siempre` | revisa una rama o PR completos, propios o ajenos |
 | 5 | central-izquierdo | `metricas` | revisor | sonnet | `**/*.py` | lee el informe de `factory complexity` |
 | 6 | pivote | `producto` | revisor | opus | `peticion, openspec/changes/**` | preguntas y respuestas, criterios WHEN/THEN y matriz petición→diff |
@@ -150,7 +150,7 @@ No lances al técnico como subagente (`subagent_type: tecnico`). Un subagente no
 
 Las definiciones del equipo son archivos críticos del harness en los loops (D7):
 
-- `.claude/agents/**` y `.claude/skills/**` están en `STATIC_CRITICAL`. Si el maker de `factory goal run` o `factory tick` modifica, borra o renombra un agente o una skill existentes, el orquestador lo revierte.
+- `.claude/agents/**` y `.claude/skills/**` están en `STATIC_CRITICAL`, junto con el resto de la configuración de Claude Code (`.claude/commands/**`, `.claude/hooks/**` y `.claude/settings.json`). Si el maker de `factory goal run` o `factory tick` modifica, borra o renombra un agente o una skill existentes, el orquestador lo revierte.
 - Nadie puede liberarlos: siguen protegidos en cada ronda aunque un objetivo los nombre. Además, para avisar antes de gastar rondas, `goal validate` rechaza un `scope.allow_modify` que case con una ruta de muestra (`.claude/**`, `**/SKILL.md`) o que apunte dentro de ellos (`.claude/agents/qa.md`, con o sin `./`). Es una heurística: otros comodines (`**/LICENSE`) pasan la validación, pero tampoco los liberan.
 - Crear archivos nuevos en esas rutas sigue permitido, como en el resto de rutas protegidas. Ver [Loops](loops.md#rutas-protegidas).
 

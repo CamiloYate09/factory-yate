@@ -21,7 +21,14 @@ from factory.brain.captures import CaptureStore, Injected, propose
 from factory.brain.daily import versioned_relatives
 from factory.brain.integrity import fingerprint
 from factory.config import Config, RoleConfig, brain_denials
-from factory.gitops import Worktree, create_worktree, diffstat, preflight, remove_worktree
+from factory.gitops import (
+    Worktree,
+    create_worktree,
+    diffstat,
+    preflight,
+    remove_worktree,
+    split_z,
+)
 from factory.goal import Goal, out_of_scope
 from factory.inbox import Inbox, InboxError, run_entry
 from factory.protection import violations as find_protected
@@ -591,7 +598,7 @@ class LoopEngine:
     ) -> str:
         cumulative = wt.diff(state.base_commit)
         round_diff = wt.diff(pre_commit)
-        changed = wt.git("diff", "--name-only", f"{state.base_commit}..HEAD").splitlines()
+        changed = split_z(wt.git("diff", "--name-only", "-z", f"{state.base_commit}..HEAD"))
         return "\n\n".join(
             [
                 f"# Revisión de la ronda {number} del objetivo `{self.goal.id}`",
