@@ -132,7 +132,7 @@ def test_revisor_pr_ramas_de_loop_y_land():
     prohibicion = next(linea for linea in seccion.splitlines() if linea.startswith("**No leas**"))
     prohibidos = ("decision.md", "loop-state.md", "rounds/<n>/maker.md", "rounds/<n>/review.md")
     for artefacto in prohibidos:
-        assert artefacto in prohibicion, artefacto
+        assert artefacto in prohibicion and artefacto not in permitidas, artefacto
     assert any("factory land" in linea and "decisión humana" in linea for linea in lineas)
     assert "## Resumen para el autor" in cuerpo
     assert "integrar / pedir cambios / descartar" in cuerpo

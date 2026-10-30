@@ -139,6 +139,14 @@ def test_revision_de_una_rama_de_un_loop():
     assert "git log main..<rama>" in texto
     assert "git diff --name-only main...<rama>" in texto
     assert "archivo completo" in texto
+    # Mismos artefactos del loop que revisor-pr: criterios y verificación, nunca razonamiento.
+    regla = next(linea for linea in texto.splitlines() if "**Ramas `factory/<run-id>`:**" in linea)
+    pasan, nunca = regla.split("Nunca", 1)
+    for artefacto in ("goal.md", "rounds/<n>/checks.md", "land/checks.md"):
+        assert artefacto in pasan, artefacto
+    prohibidos = ("decision.md", "loop-state.md", "rounds/<n>/maker.md", "rounds/<n>/review.md")
+    for artefacto in prohibidos:
+        assert artefacto in nunca and artefacto not in pasan, artefacto
 
 
 def test_veredicto_ambiguo_cuenta_como_fail():

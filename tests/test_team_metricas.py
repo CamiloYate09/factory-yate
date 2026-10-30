@@ -113,6 +113,7 @@ def test_informe_sin_ref_o_con_ref_y_vacio():
     regla = next(linea for linea in reglas.splitlines() if "`ref`" in linea)
     assert "nulo" in regla and "como si faltara el informe" in regla
     assert "sin funciones" in regla and "no genera hallazgos de complejidad" in regla
+    assert "`pass`" not in regla  # el veredicto depende también de la verificación
     assert "`ref`" in _cuerpo().split("## Reglas", 1)[0]  # la forma del JSON nombra `ref`
 
 

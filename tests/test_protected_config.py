@@ -82,9 +82,22 @@ def test_un_objetivo_intenta_liberar_las_skills(pattern):
         "prompts/checker.md",
     ],
 )
-def test_un_objetivo_intenta_liberar_un_archivo_concreto_del_equipo(pattern):
+def test_un_objetivo_intenta_liberar_un_agente_concreto_del_equipo(pattern):
     with pytest.raises(GoalError, match="no puede liberar archivos críticos del harness"):
         _goal(f'  allow_modify: ["{pattern}"]\n')
+
+
+@pytest.mark.parametrize("pattern", [".claude/*/qa.md", "**/LICENSE", "**/*.cjs"])
+def test_comodin_que_solapa_en_parte_con_un_critico(tmp_path, pattern):
+    """La validación no lo detecta, pero no libera nada: los críticos se consultan primero."""
+    goal = _goal(f'  allow_modify: ["{pattern}"]\n')
+    prot = goal.protection_for(tmp_path, [], None)
+    for critico in (
+        ".claude/agents/qa.md",
+        ".claude/skills/security-audit/LICENSE",
+        ".claude/skills/security-audit/validate-findings.cjs",
+    ):
+        assert prot.is_protected(critico), critico
 
 
 def test_cada_critico_estatico_tiene_una_muestra():

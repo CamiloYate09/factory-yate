@@ -139,7 +139,7 @@ Para revisar una rama ya hecha (propia, de otra persona o una `factory/<run-id>`
 - `STATIC_CRITICAL` incluye `.claude/agents/**` y `.claude/skills/**`.
 - `CRITICAL_SAMPLES` añade `.claude/agents/x.md` y `.claude/skills/x/SKILL.md`, de modo que un `scope.allow_modify` que los liberase se detecta y se rechaza.
 - Crear archivos nuevos en esas rutas sigue permitido, como en el resto de rutas protegidas.
-- `releases_critical` rechaza además un patrón que, leído como ruta, cae dentro de un crítico estático (`prompts/checker.md`, `.claude/agents/qa.md`). Antes esos objetivos pasaban la validación y cada ronda que tocaba el archivo se revertía hasta agotar el presupuesto.
+- `releases_critical` rechaza además un patrón que, leído como ruta, cae dentro de un crítico estático (`prompts/checker.md`, `.claude/agents/qa.md`). Antes esos objetivos pasaban la validación y cada ronda que tocaba el archivo se revertía hasta agotar el presupuesto. Es una heurística: un comodín que solo solapa en parte (`.claude/*/qa.md`, `**/LICENSE`) no se detecta al validar, pero tampoco libera nada, porque `Protection.is_protected` consulta los críticos antes que las liberaciones.
 
 ### D8. Frontmatter de referencia
 Todos los agentes del equipo siguen exactamente estos tipos:
