@@ -76,12 +76,12 @@ Cada función de lectura recibe sus rutas (raíz del repo, directorio de proyect
   - `agent_transcript_path` si viene en el payload;
   - si no, `<dir de transcript_path>/<session_id>/subagents/agent-<agent_id>.jsonl`.
 
-  Se lee hasta la última fila `assistant` que tenga texto.
+  La respuesta final es el `message` de la llamada a `SubagentHandback`, si la hay. Si no, la última fila `assistant` que tenga texto y, si la transcripción no acabó, `last_assistant_message` del payload.
 - **Veredicto:**
-  - se busca el primer `pass_with_minor`, `pass` o `fail` (en ese orden de prioridad dentro de la misma línea) en las líneas que siguen a una cabecera `Veredicto`;
+  - se toma la primera palabra `pass_with_minor`, `pass` o `fail` de la línea de la cabecera `Veredicto` o de las siguientes, leyendo de izquierda a derecha (`fail (antes era pass)` es `fail`);
   - si no hay cabecera, en una clave JSON `"verdict"`;
   - si no, `sin_veredicto`.
-- **Severidades:** recuento de `[critical]`, `[medium]`, `[minor]` y `[low]` en los títulos de hallazgo, sin distinguir mayúsculas.
+- **Severidades:** recuento de `[critical]`, `[medium]`, `[minor]` y `[low]` en los títulos y viñetas de hallazgo (una línea que empieza por `##` a `######`, `-`, `*` o `N.`) de la sección `Hallazgos` (hasta la siguiente cabecera de su nivel; todo el texto si no la hay), sin distinguir mayúsculas. Así no se suman los hallazgos anteriores que repasa una segunda revisión.
 - **¿Es una revisión?** Si el tipo es `checker`, o si `.claude/agents/<tipo>.md` del checkout de la sesión (si no, del repo principal) declara `tipo: revisor` en su frontmatter. El frontmatter se lee con pyyaml directamente, sin depender del paquete `team` de la otra sesión.
 - **Escritura:** `os.open(O_APPEND|O_CREAT|O_WRONLY)`, `fcntl.flock` exclusivo y un solo `os.write` de la línea. Los subagentes terminan en paralelo y así no se mezclan líneas.
 - **Salida:** todo va dentro de un `try/except BaseException`, que escribe en stderr y devuelve 0. Nunca se imprime en stdout, porque Claude Code interpreta como JSON de control la salida de algunos hooks.
@@ -95,7 +95,7 @@ Cada función de lectura recibe sus rutas (raíz del repo, directorio de proyect
 - **Unión de inicio y fin:**
   - un `SubagentStop` se une a su `PreToolUse` por `tool_use_id`, que sale del `meta.json`;
   - si falta, se une al inicio más reciente sin cerrar de la misma sesión y del mismo tipo;
-  - un inicio sin fin queda `en_curso`, con el tiempo transcurrido;
+  - un inicio sin fin queda `en_curso`, con el tiempo transcurrido. Pasadas 2 horas queda `sin_cierre`, sin duración. La prueba con datos reales encontró inicios cuyo fin nunca llegó: el de una sesión cerrada con el revisor trabajando, y cuatro lanzamientos de jugadores que no crearon subagente, porque la sesión aún no conocía esos tipos. Una revisión real dura minutos;
   - un fin sin inicio (hook instalado a mitad de una revisión) aparece igual, sin duración.
 - **Revisiones de los loops:** cada ronda con `checker_verdict` en `state.json` aporta una entrada con origen `loop`, `run_id`, ronda, veredicto y severidades de sus `findings`. La marca de tiempo es el `finished` de la ronda.
 - **Orden:** de la más reciente a la más antigua, con un límite de 200 entradas. Solo cuentan los eventos con `review: true`. Los demás subagentes no salen en el feed, pero sí en los tokens.
@@ -140,7 +140,7 @@ Un solo archivo con CSS y JS en línea, sin `fetch` a otros orígenes. Los token
   - barras apiladas por día (entrada, escritura de caché, lectura de caché y salida);
   - barras horizontales por tipo de agente y por modelo;
   - coste por ejecución de los loops.
-- **Revisiones:** feed vivo con un chip de estado (`en_curso`, `pass`, `pass_with_minor`, `fail` o `sin_veredicto`), origen, revisor, duración, severidades y el extracto plegable.
+- **Revisiones:** feed vivo con un chip de estado (`en_curso`, `pass`, `pass_with_minor`, `fail`, `sin_veredicto` o `sin_cierre`), origen, revisor, duración, severidades y el extracto plegable.
 - **Tareas:**
   - tablero de features por estado, con WIP;
   - barras de progreso de cada cambio OpenSpec por grupo;
@@ -159,10 +159,10 @@ Los dos handlers importan `factory.panel` dentro de la función, igual que propo
 ## Risks / Trade-offs
 
 - **[Los campos del payload de `SubagentStop` difieren de los supuestos]** → El handler acepta campos ausentes y recurre al `meta.json` y a la ruta derivada de `transcript_path`. Tarea de validación: la propia revisión del `checker` de este cambio, con el hook instalado, deja un evento real sin coste extra. Su forma se compara con los fixtures y, si difiere, se ajustan los fixtures y el código.
-- **[El formato interno de las transcripciones cambia]** → El parser ignora filas que no entiende y añade un aviso en `warnings`. Los tests fijan el formato observado. Lo peor que pasa es que la sección de tokens de las sesiones queda vacía.
+- **[El formato interno de las transcripciones cambia]** → El parser ignora las filas que no entiende. Si un archivo existe pero no se puede leer, añade un aviso en `warnings` que lo nombra. Los tests fijan el formato observado. Lo peor que pasa es que la sección de tokens de las sesiones queda vacía.
 - **[Transcripciones grandes hacen lento el refresco]** → Caché incremental por desplazamiento (D3). Tarea de medida con los datos reales: tiempo de `factory panel --json` y de un refresco incremental.
 - **[El hook añade latencia a cada subagente]** → Solo se registra en el lanzamiento de `Agent`/`Task` y en `SubagentStop`, no en cada herramienta. Tarea de medida: tiempo del hook; si supera ~300 ms, el script llama directamente a `python -m factory.panel.hooks`.
-- **[Un maker de un loop reescribe `.claude/settings.json` o el script del hook]** → El script del hook se ejecuta en las sesiones humanas. Protegerlo encaja con la D7 de `add-equipo-ideal`, que ya edita las rutas críticas, y se le propone como seguimiento. Mientras tanto, el checker de cada loop revisa el diff y `factory land` lo enseña antes de integrar.
+- **[Un maker de un loop reescribe `.claude/settings.json` o el script del hook]** → El script del hook se ejecuta en las sesiones humanas. `add-equipo-ideal` (D7) ya protege `.claude/settings.json` y `.claude/hooks/**` como rutas críticas (`src/factory/protection.py`): la rama de un loop no puede modificarlos y ningún objetivo puede liberarlos.
 - **[El extracto de una revisión contiene datos sensibles]** → Se guarda solo en `.factory/` (ignorado por git), con 4.000 caracteres como máximo, y se sirve únicamente en loopback.
 - **[Conflictos con `add-equipo-ideal`]** → Los archivos compartidos (`cli.py`, `AGENTS.md`, `feature_list.json`) reciben diffs mínimos. Las prioridades 24–26 son únicas. Se commitea con pathspec explícito y se avisa a la otra sesión antes de integrar.
 - **[Sondear cada segundo gasta CPU con el panel abierto]** → Unos cientos de `stat` por segundo. Si hiciera falta, el intervalo es una constante.
@@ -178,3 +178,5 @@ Los dos handlers importan `factory.panel` dentro de la función, igual que propo
 ## Open Questions
 
 - ¿El `SubagentStop` de esta versión de Claude Code trae `agent_type` y `agent_transcript_path`? La captura real lo dirá. El diseño funciona con o sin ellos.
+  - **Respuesta (captura real, 2026-10-30):** sí. `SubagentStop` trae `agent_id`, `agent_transcript_path`, `agent_type`, `background_tasks`, `cwd`, `effort`, `hook_event_name`, `last_assistant_message`, `permission_mode`, `prompt_id`, `scratchpad_dir`, `session_crons`, `session_id`, `stop_hook_active` y `transcript_path`. `PreToolUse` trae `cwd`, `effort`, `hook_event_name`, `permission_mode`, `prompt_id`, `scratchpad_dir`, `session_id`, `tool_input`, `tool_name`, `tool_use_id` y `transcript_path`.
+  - **Diferencia con el supuesto:** el subagente no termina con un mensaje de texto, sino con una llamada a la herramienta `SubagentHandback` cuyo `input.message` es la respuesta final. Le sigue un `tool_result`. Las cinco primeras revisiones reales quedaron como `sin_veredicto` con un extracto intermedio. Ahora el parser toma el `SubagentHandback` como respuesta final y, si la transcripción no la tiene, recurre a `last_assistant_message`. Con las transcripciones reales, las cinco dan su veredicto y sus severidades.

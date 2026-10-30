@@ -511,8 +511,8 @@
         {
           "command": "python -m pytest -q tests/test_panel_tokens.py",
           "exit_code": 0,
-          "date": "2026-10-29T16:05:26+00:00",
-          "commit": "c3bc34db01e0402b59bfa029d7d498cd4ac32a29"
+          "date": "2026-10-30T06:15:33+00:00",
+          "commit": "24918540c2c003979ff90df03ecf144015f9ae1b"
         }
       ],
       "notes": "OpenSpec add-panel, grupo 2"
@@ -523,12 +523,19 @@
       "area": "panel",
       "title": "Revisiones en tiempo real con hooks",
       "user_visible_behavior": "Con `.claude/settings.json`, cada lanzamiento y fin de un subagente revisor queda en `.factory/hooks/events.jsonl` con su veredicto y severidades; `factory hook` siempre termina en 0 y el feed une esas revisiones con las del checker de los loops.",
-      "status": "in_progress",
+      "status": "passing",
       "verification": [
         "python -m pytest -q tests/test_panel_hooks.py tests/test_panel_reviews.py"
       ],
       "manual_checks": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "command": "python -m pytest -q tests/test_panel_hooks.py tests/test_panel_reviews.py",
+          "exit_code": 0,
+          "date": "2026-10-30T06:15:29+00:00",
+          "commit": "24918540c2c003979ff90df03ecf144015f9ae1b"
+        }
+      ],
       "notes": "OpenSpec add-panel, grupo 3"
     },
     {
@@ -537,12 +544,19 @@
       "area": "panel",
       "title": "Panel gráfico local (factory panel)",
       "user_visible_behavior": "`factory panel` sirve en 127.0.0.1 una página sin recursos externos con tokens, feed de revisiones y estado de features, cambios OpenSpec y ejecuciones, que se actualiza sola por SSE; `--json` imprime la instantánea.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "python -m pytest -q tests/test_panel_tasks.py tests/test_panel_server.py"
       ],
       "manual_checks": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "command": "python -m pytest -q tests/test_panel_tasks.py tests/test_panel_server.py",
+          "exit_code": 0,
+          "date": "2026-10-30T06:15:32+00:00",
+          "commit": "24918540c2c003979ff90df03ecf144015f9ae1b"
+        }
+      ],
       "notes": "OpenSpec add-panel, grupo 4"
     }
   ]

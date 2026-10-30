@@ -7,11 +7,12 @@ Ofrece un panel gráfico local que reúne en una sola vista el consumo de tokens
 ## ADDED Requirements
 
 ### Requirement: Instantánea del estado
-`factory panel --json` SHALL imprimir en stdout una instantánea JSON con las secciones `tokens`, `reviews` y `tasks`, y terminar con código 0. El servidor MUST devolver la misma instantánea en `GET /api/snapshot`. Un archivo de estado ausente o ilegible MUST dejar su sección vacía con un aviso en `warnings`.
+`factory panel --json` SHALL imprimir en stdout una instantánea JSON con las secciones `tokens`, `reviews` y `tasks`, y terminar con código 0. El servidor MUST devolver la misma instantánea en `GET /api/snapshot`. Un archivo de estado ausente MUST dejar su parte de la sección vacía sin aviso, porque un repo sin ejecuciones ni hooks es normal. Uno ilegible MUST dejarla vacía con un aviso en `warnings` que nombre el archivo.
 
 #### Scenario: Repo sin ejecuciones
 - **WHEN** se ejecuta `factory panel --json` en un repo sin `.factory/`
 - **THEN** termina con código 0 y la instantánea tiene las tres secciones, con listas vacías donde no hay datos
+- **AND** `warnings` está vacío
 
 #### Scenario: Lista de features corrupta
 - **WHEN** `feature_list.json` no es JSON válido

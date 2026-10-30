@@ -13,7 +13,15 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from factory.panel import day_of, is_number, number, read_jsonl
+from factory.panel import (
+    DESCRIPTION_MAX,
+    day_of,
+    is_number,
+    number,
+    read_jsonl,
+    read_meta,
+    unreadable,
+)
 
 LOOP_COUNTERS = ("input", "output", "turns", "cost_usd", "calls")
 SESSION_COUNTERS = ("input", "cache_write", "cache_read", "output", "messages")
@@ -28,7 +36,6 @@ UNKNOWN_AGENT = "subagente"
 SYNTHETIC_MODEL = "<synthetic>"
 WORKTREES_MARK = "--claude-worktrees-"
 SESSIONS_LIMIT = 50
-DESCRIPTION_MAX = 200
 
 
 def _zero(counters: tuple[str, ...]) -> dict[str, int | float]:
@@ -78,7 +85,7 @@ def _loop_row(event: dict[str, Any]) -> dict[str, Any] | None:
     }
 
 
-def loop_usage(state_dir: Path) -> dict[str, Any]:
+def loop_usage(state_dir: Path, warnings: list[str] | None = None) -> dict[str, Any]:
     """Consumo de los eventos `agent` de cada ejecución, por ejecución, rol, modelo y día."""
     runs: list[dict[str, Any]] = []
     by_role: dict[str, dict] = {}
@@ -89,7 +96,7 @@ def loop_usage(state_dir: Path) -> dict[str, Any]:
         run = {"run_id": events.parent.name, "day": "", **_zero(LOOP_COUNTERS)}
         run_roles: dict[str, dict] = {}
         run_models: dict[str, dict] = {}
-        for event in read_jsonl(events):
+        for event in read_jsonl(events, warnings):
             row = _loop_row(event)
             if row is None:
                 continue
@@ -140,10 +147,6 @@ class Transcript:
     project: str  # "principal" o el nombre del worktree de `.claude/worktrees/`
     session: str  # sesión principal (la padre, en un subagente)
     agent_id: str = ""  # vacío en la transcripción de la sesión
-
-    @property
-    def meta_path(self) -> Path:
-        return self.path.with_name(self.path.stem + ".meta.json")
 
 
 def transcript_files(projects: Path, root: Path) -> list[Transcript]:
@@ -214,11 +217,12 @@ class TranscriptReader:
     def __init__(self) -> None:
         self._files: dict[Path, _FileState] = {}
 
-    def rows(self, path: Path) -> dict[str, dict[str, Any]]:
+    def rows(self, path: Path, warnings: list[str] | None = None) -> dict[str, dict[str, Any]]:
         try:
             stat = path.stat()
-        except OSError:
+        except OSError as exc:
             self._files.pop(path, None)
+            unreadable(path, exc, warnings)
             return {}
         state = self._files.get(path)
         if state is None or state.inode != stat.st_ino or stat.st_size < state.offset:
@@ -228,7 +232,8 @@ class TranscriptReader:
                 with path.open("rb") as handle:
                     handle.seek(state.offset)
                     chunk = handle.read(stat.st_size - state.offset)
-            except OSError:
+            except OSError as exc:
+                unreadable(path, exc, warnings)
                 return state.rows
             end = chunk.rfind(b"\n")
             if end >= 0:
@@ -252,19 +257,17 @@ class TranscriptReader:
 
 def _meta(transcript: Transcript) -> tuple[str, str]:
     """Tipo y descripción declarados de un subagente (`agent-<id>.meta.json`)."""
-    try:
-        meta = json.loads(transcript.meta_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return UNKNOWN_AGENT, ""
-    if not isinstance(meta, dict):
-        return UNKNOWN_AGENT, ""
+    meta = read_meta(transcript.path)
     agent = meta.get("agentType") if isinstance(meta.get("agentType"), str) else ""
     description = meta.get("description") if isinstance(meta.get("description"), str) else ""
     return agent or UNKNOWN_AGENT, description[:DESCRIPTION_MAX]
 
 
 def session_usage(
-    projects: Path, root: Path, reader: TranscriptReader | None = None
+    projects: Path,
+    root: Path,
+    reader: TranscriptReader | None = None,
+    warnings: list[str] | None = None,
 ) -> dict[str, Any]:
     """Consumo de las sesiones por día, modelo, tipo de agente y sesión (solo tokens)."""
     reader = reader or TranscriptReader()
@@ -277,7 +280,7 @@ def session_usage(
     sessions: dict[str, dict[str, Any]] = {}
     for transcript in transcripts:
         agent, description = _meta(transcript) if transcript.agent_id else (MAIN_AGENT, "")
-        for key, row in reader.rows(transcript.path).items():
+        for key, row in reader.rows(transcript.path, warnings).items():
             if key in seen:
                 continue
             seen.add(key)
@@ -338,10 +341,14 @@ def session_usage(
 
 
 def usage(
-    state_dir: Path, projects: Path, root: Path, reader: TranscriptReader | None = None
+    state_dir: Path,
+    projects: Path,
+    root: Path,
+    reader: TranscriptReader | None = None,
+    warnings: list[str] | None = None,
 ) -> dict[str, Any]:
     """Sección `tokens` de la instantánea."""
     return {
-        "loops": loop_usage(state_dir),
-        "sessions": session_usage(projects, root, reader),
+        "loops": loop_usage(state_dir, warnings),
+        "sessions": session_usage(projects, root, reader, warnings),
     }

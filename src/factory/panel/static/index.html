@@ -1,0 +1,790 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Panel de factory</title>
+<style>
+:root {
+  color-scheme: light;
+  --page: #f9f9f7;
+  --surface: #fcfcfb;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --border: rgba(11, 11, 11, 0.10);
+  --wash: rgba(11, 11, 11, 0.04);
+  --s1: #2a78d6;
+  --s2: #eb6834;
+  --s3: #1baf7a;
+  --s4: #eda100;
+  --track: #cde2fb;
+  --fill: #2a78d6;
+  --good: #0ca30c;
+  --warning: #fab219;
+  --serious: #ec835a;
+  --critical: #d03b3b;
+  --good-ink: #006300;
+}
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --page: #0d0d0d;
+    --surface: #1a1a19;
+    --ink: #f0efec;
+    --ink-2: #c3c2b7;
+    --muted: #898781;
+    --grid: #2c2c2a;
+    --axis: #383835;
+    --border: rgba(255, 255, 255, 0.10);
+    --wash: rgba(255, 255, 255, 0.05);
+    --s1: #3987e5;
+    --s2: #d95926;
+    --s3: #199e70;
+    --s4: #c98500;
+    --track: #0d366b;
+    --fill: #3987e5;
+    --good-ink: #0ca30c;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0d0d0d;
+  --surface: #1a1a19;
+  --ink: #f0efec;
+  --ink-2: #c3c2b7;
+  --muted: #898781;
+  --grid: #2c2c2a;
+  --axis: #383835;
+  --border: rgba(255, 255, 255, 0.10);
+  --wash: rgba(255, 255, 255, 0.05);
+  --s1: #3987e5;
+  --s2: #d95926;
+  --s3: #199e70;
+  --s4: #c98500;
+  --track: #0d366b;
+  --fill: #3987e5;
+  --good-ink: #0ca30c;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--page);
+  color: var(--ink);
+  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+header {
+  position: sticky; top: 0; z-index: 5;
+  background: var(--page);
+  border-bottom: 1px solid var(--border);
+}
+.bar {
+  max-width: 1200px; margin: 0 auto; padding: 12px 16px;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px;
+}
+h1 { font-size: 16px; margin: 0; font-weight: 600; }
+.repo { color: var(--muted); font-size: 12px; overflow-wrap: anywhere; }
+.spacer { flex: 1; }
+.live { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); font-size: 12px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+.live[data-state="on"] .dot { background: var(--good); }
+.live[data-state="off"] .dot { background: var(--critical); }
+nav { display: flex; gap: 4px; }
+nav button, .ghost {
+  font: inherit; color: var(--ink-2); background: none; border: 1px solid transparent;
+  border-radius: 8px; padding: 6px 12px; cursor: pointer;
+}
+nav button[aria-selected="true"] { color: var(--ink); border-color: var(--border); background: var(--surface); font-weight: 600; }
+nav button:hover, .ghost:hover { background: var(--wash); }
+main { max-width: 1200px; margin: 0 auto; padding: 16px; }
+main[data-loading="true"] { opacity: 0.6; transition: opacity 0.2s; }
+.warnings {
+  border: 1px solid var(--border); border-left: 3px solid var(--warning);
+  background: var(--surface); border-radius: 8px; padding: 8px 12px; margin-bottom: 16px;
+}
+.warnings:empty { display: none; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.tile, .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+.tile { padding: 12px 14px; min-width: 0; }
+.tile .label { color: var(--ink-2); font-size: 12px; }
+.tile .value { font-size: 24px; font-weight: 600; margin-top: 2px; overflow-wrap: anywhere; }
+.tile .value.text { font-size: 17px; padding-top: 5px; }
+.tile .note { color: var(--muted); font-size: 12px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr)); gap: 16px; }
+.card { padding: 14px 16px; min-width: 0; margin-bottom: 16px; }
+.grid .card { margin-bottom: 0; }
+.card h2 { font-size: 14px; margin: 0 0 2px; font-weight: 600; }
+.card .sub { color: var(--ink-2); font-size: 12px; margin: 0 0 10px; }
+.chart { width: 100%; position: relative; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+.legend { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0 0 8px; color: var(--ink-2); font-size: 12px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; flex: none; }
+.empty { color: var(--muted); padding: 16px 0; }
+details { margin-top: 8px; }
+summary { color: var(--ink-2); cursor: pointer; font-size: 12px; }
+.table-wrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 12px; margin-top: 6px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+th { color: var(--ink-2); font-weight: 600; }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+code { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap: anywhere; }
+.tooltip {
+  position: fixed; z-index: 20; pointer-events: none; display: none;
+  background: var(--surface); color: var(--ink); border: 1px solid var(--border);
+  border-radius: 8px; padding: 8px 10px; font-size: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  max-width: 280px;
+}
+.tooltip .t-title { color: var(--ink-2); margin-bottom: 4px; }
+.tooltip .t-row { display: flex; align-items: center; gap: 8px; }
+.tooltip .t-key { width: 12px; height: 2px; flex: none; }
+.tooltip strong { font-variant-numeric: tabular-nums; }
+.tooltip .t-name { color: var(--ink-2); }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600;
+  border: 1px solid var(--border); border-radius: 999px; padding: 1px 8px; white-space: nowrap;
+  color: var(--ink);
+}
+.chip .dot { width: 8px; height: 8px; }
+.chip[data-tone="good"] .dot { background: var(--good); }
+.chip[data-tone="warning"] .dot { background: var(--warning); }
+.chip[data-tone="critical"] .dot { background: var(--critical); }
+.chip[data-tone="active"] .dot { background: var(--fill); animation: pulse 1.4s ease-in-out infinite; }
+.chip[data-tone="muted"] .dot { background: var(--muted); }
+@keyframes pulse { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .chip[data-tone="active"] .dot { animation: none; } }
+.feed { list-style: none; margin: 0; padding: 0; }
+.feed li { border-bottom: 1px solid var(--grid); padding: 10px 0; }
+.feed li:last-child { border-bottom: 0; }
+.feed .row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
+.feed .who { font-weight: 600; overflow-wrap: anywhere; min-width: 0; }
+.feed .meta { color: var(--muted); font-size: 12px; }
+.feed .desc { color: var(--ink-2); overflow-wrap: anywhere; }
+.sev { color: var(--ink-2); font-size: 12px; font-variant-numeric: tabular-nums; }
+pre.excerpt {
+  white-space: pre-wrap; overflow-wrap: anywhere; font: 12px ui-monospace, SFMono-Regular, Menlo, monospace;
+  background: var(--page); border: 1px solid var(--border); border-radius: 8px; padding: 8px; margin: 6px 0 0;
+  max-height: 320px; overflow-y: auto;
+}
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; align-items: center; }
+select { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; }
+.board { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); gap: 12px; }
+.column h3 { font-size: 12px; color: var(--ink-2); margin: 0 0 6px; font-weight: 600; }
+.feature {
+  display: block; width: 100%; text-align: left; font: inherit; color: var(--ink);
+  background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+  padding: 8px 10px; margin-bottom: 6px; cursor: pointer;
+}
+.feature:hover, .feature:focus-visible { background: var(--wash); }
+.feature[aria-pressed="true"] { border-color: var(--fill); }
+.feature .fid { font-weight: 600; overflow-wrap: anywhere; }
+.feature .ftitle { color: var(--ink-2); font-size: 12px; }
+.meter { height: 8px; border-radius: 4px; background: var(--track); overflow: hidden; margin-top: 6px; }
+.meter > div { height: 100%; background: var(--fill); border-radius: 4px 0 0 4px; }
+.progress-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: baseline; margin: 10px 0; }
+.progress-row .meter { grid-column: 1 / -1; margin-top: 2px; }
+.progress-row .count { color: var(--ink-2); font-size: 12px; font-variant-numeric: tabular-nums; }
+.tasklist { list-style: none; margin: 4px 0 0; padding: 0; }
+.tasklist li { display: flex; gap: 8px; padding: 2px 0; color: var(--ink-2); }
+.tasklist li[data-done="true"] { color: var(--ink); }
+.check { flex: none; width: 16px; text-align: center; font-weight: 700; }
+.detail-head { display: flex; align-items: flex-start; gap: 12px; }
+.detail-head h2 { flex: 1; overflow-wrap: anywhere; }
+dl { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 12px; margin: 8px 0; }
+dt { color: var(--ink-2); }
+dd { margin: 0; overflow-wrap: anywhere; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1>Panel de factory</h1>
+    <span class="repo" id="repo"></span>
+    <span class="spacer"></span>
+    <span class="live" id="live" data-state="wait"><span class="dot"></span><span id="live-text">Conectando…</span></span>
+    <button class="ghost" id="theme" type="button" title="Cambiar tema">Tema</button>
+    <nav role="tablist" aria-label="Vistas">
+      <button role="tab" data-tab="tokens" aria-selected="true">Tokens</button>
+      <button role="tab" data-tab="revisiones" aria-selected="false">Revisiones</button>
+      <button role="tab" data-tab="tareas" aria-selected="false">Tareas</button>
+    </nav>
+  </div>
+</header>
+<main id="main">
+  <div class="warnings" id="warnings" role="status"></div>
+  <section class="kpis" id="kpis" aria-label="Indicadores"></section>
+  <section id="view-tokens" role="tabpanel"></section>
+  <section id="view-revisiones" role="tabpanel" hidden></section>
+  <section id="view-tareas" role="tabpanel" hidden></section>
+</main>
+<div class="tooltip" id="tooltip" role="tooltip"></div>
+<script>
+"use strict";
+const SVG_NS = "http://www.w3.org/2000/svg";
+const STACK = [
+  { key: "input", label: "Entrada", color: "var(--s1)" },
+  { key: "cache_write", label: "Escritura de caché", color: "var(--s2)" },
+  { key: "cache_read", label: "Lectura de caché", color: "var(--s3)" },
+  { key: "output", label: "Salida", color: "var(--s4)" },
+];
+const STATUS = {
+  pass: { tone: "good", icon: "✓", label: "pass" },
+  pass_with_minor: { tone: "warning", icon: "!", label: "pass_with_minor" },
+  fail: { tone: "critical", icon: "✗", label: "fail" },
+  en_curso: { tone: "active", icon: "●", label: "en curso" },
+  sin_veredicto: { tone: "muted", icon: "?", label: "sin veredicto" },
+  sin_cierre: { tone: "muted", icon: "○", label: "sin cierre" },
+};
+const FEATURE_STATUS = [
+  ["in_progress", "En curso"],
+  ["blocked", "Bloqueadas"],
+  ["not_started", "Sin empezar"],
+  ["passing", "Terminadas (passing)"],
+];
+const state = { snap: null, tab: "tokens", feature: null, origin: "todas", fetchedAt: 0, open: new Set() };
+const numberFmt = new Intl.NumberFormat("es");
+const compactFmt = new Intl.NumberFormat("es", { notation: "compact", maximumFractionDigits: 1 });
+const usdFmt = new Intl.NumberFormat("es", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
+const pctFmt = new Intl.NumberFormat("es", { style: "percent", maximumFractionDigits: 1 });
+const dateFmt = new Intl.DateTimeFormat("es", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+
+// --- utilidades DOM: todo el texto entra con textContent ---------------------------------
+function h(tag, attrs, ...children) {
+  const el = document.createElement(tag);
+  for (const [name, value] of Object.entries(attrs || {})) {
+    if (value === null || value === undefined || value === false) continue;
+    if (name === "class") el.className = value;
+    else if (name === "text") el.textContent = value;
+    else if (name.startsWith("on")) el.addEventListener(name.slice(2), value);
+    else el.setAttribute(name, value === true ? "" : String(value));
+  }
+  for (const child of children.flat()) {
+    if (child === null || child === undefined || child === false) continue;
+    el.append(child instanceof Node ? child : document.createTextNode(String(child)));
+  }
+  return el;
+}
+function s(tag, attrs) {
+  const el = document.createElementNS(SVG_NS, tag);
+  for (const [name, value] of Object.entries(attrs || {})) el.setAttribute(name, String(value));
+  return el;
+}
+function clear(el) { el.replaceChildren(); return el; }
+function tokensOf(row) { return STACK.reduce((sum, k) => sum + (row[k.key] || 0), 0); }
+function fmtDate(ts) {
+  if (!ts) return "";
+  const d = new Date(ts);
+  return Number.isNaN(d.getTime()) ? ts : dateFmt.format(d);
+}
+function fmtDuration(seconds) {
+  if (seconds === null || seconds === undefined) return "";
+  const total = Math.max(0, Math.round(seconds));
+  const m = Math.floor(total / 60), sec = total % 60;
+  if (m >= 60) return `${Math.floor(m / 60)} h ${m % 60} min`;
+  return m ? `${m} min ${sec} s` : `${sec} s`;
+}
+function safeStorage(action, key, value) {
+  try {
+    if (action === "get") return window.localStorage.getItem(key);
+    window.localStorage.setItem(key, value);
+  } catch (_) { /* sin almacenamiento: el panel funciona igual */ }
+  return null;
+}
+
+// --- tooltip -----------------------------------------------------------------------------
+const tooltip = document.getElementById("tooltip");
+function showTip(event, title, rows) {
+  clear(tooltip);
+  tooltip.append(h("div", { class: "t-title", text: title }));
+  for (const row of rows) {
+    tooltip.append(h("div", { class: "t-row" },
+      row.color ? h("span", { class: "t-key", style: `background:${row.color}` }) : null,
+      h("strong", { text: row.value }), h("span", { class: "t-name", text: row.name })));
+  }
+  tooltip.style.display = "block";
+  let x, y;
+  if (event.clientX !== undefined && event.type !== "focus") { x = event.clientX; y = event.clientY; }
+  else { const r = event.target.getBoundingClientRect(); x = r.left + r.width / 2; y = r.top; }
+  const box = tooltip.getBoundingClientRect();
+  tooltip.style.left = Math.min(window.innerWidth - box.width - 8, Math.max(8, x + 12)) + "px";
+  tooltip.style.top = Math.max(8, y - box.height - 12) + "px";
+}
+function hideTip() { tooltip.style.display = "none"; }
+function hover(el, title, rows) {
+  el.setAttribute("tabindex", "0");
+  const show = (e) => showTip(e, title, rows());
+  el.addEventListener("pointermove", show);
+  el.addEventListener("focus", show);
+  el.addEventListener("pointerleave", hideTip);
+  el.addEventListener("blur", hideTip);
+}
+
+// --- gráficos ----------------------------------------------------------------------------
+function niceMax(value) {
+  if (value <= 0) return 1;
+  const exp = Math.pow(10, Math.floor(Math.log10(value)));
+  for (const step of [1, 2, 2.5, 5, 10]) if (step * exp >= value) return step * exp;
+  return 10 * exp;
+}
+function roundedTop(x, y, w, hgt, r) {
+  r = Math.min(r, w / 2, hgt);
+  return `M${x},${y + hgt}V${y + r}Q${x},${y} ${x + r},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + hgt}Z`;
+}
+function roundedRight(x, y, w, hgt, r) {
+  r = Math.min(r, hgt / 2, w);
+  return `M${x},${y}H${x + w - r}Q${x + w},${y} ${x + w},${y + r}V${y + hgt - r}Q${x + w},${y + hgt} ${x + w - r},${y + hgt}H${x}Z`;
+}
+function legend(series) {
+  return h("div", { class: "legend" }, series.map((k) =>
+    h("span", {}, h("span", { class: "swatch", style: `background:${k.color}` }), k.label)));
+}
+function table(columns, rows) {
+  return h("details", {}, h("summary", { text: "Ver tabla" }),
+    h("div", { class: "table-wrap" }, h("table", {},
+      h("thead", {}, h("tr", {}, columns.map((c) => h("th", { class: c.num ? "num" : null, text: c.label })))),
+      h("tbody", {}, rows.map((row) => h("tr", {}, columns.map((c) =>
+        h("td", { class: c.num ? "num" : null, text: c.value(row) }))))))));
+}
+
+function stackedColumns(container, rows) {
+  const width = Math.max(280, container.clientWidth || 600);
+  const height = 220, left = 48, right = 8, top = 10, bottom = 26;
+  const plotW = width - left - right, plotH = height - top - bottom;
+  const max = niceMax(Math.max(...rows.map(tokensOf), 0));
+  const svg = s("svg", { viewBox: `0 0 ${width} ${height}`, role: "img", "aria-label": "Tokens por día" });
+  for (let i = 0; i <= 4; i++) {
+    const value = (max / 4) * i, y = top + plotH - (plotH * value) / max;
+    svg.append(s("line", { x1: left, x2: width - right, y1: y, y2: y, stroke: i ? "var(--grid)" : "var(--axis)", "stroke-width": 1 }));
+    const label = s("text", { x: left - 6, y: y + 4, "text-anchor": "end", "font-size": 11, fill: "var(--muted)" });
+    label.textContent = compactFmt.format(value);
+    svg.append(label);
+  }
+  const band = plotW / Math.max(rows.length, 1);
+  const barW = Math.max(2, Math.min(24, band * 0.6));
+  const every = Math.ceil(rows.length / Math.max(1, Math.floor(plotW / 56)));
+  rows.forEach((row, i) => {
+    const x = left + band * i + (band - barW) / 2;
+    let y = top + plotH;
+    const visible = STACK.filter((k) => (row[k.key] || 0) > 0);
+    visible.forEach((k, j) => {
+      const hgt = (plotH * row[k.key]) / max;
+      const gap = j > 0 ? 2 : 0; // hueco de superficie entre segmentos
+      const segH = Math.max(0, hgt - gap);
+      y -= hgt;
+      if (segH <= 0) return;
+      const isTop = j === visible.length - 1;
+      svg.append(s("path", {
+        d: isTop ? roundedTop(x, y, barW, segH, 4) : `M${x},${y}h${barW}v${segH}h${-barW}Z`,
+        fill: k.color,
+      }));
+    });
+    const hit = s("rect", { x: left + band * i, y: top, width: band, height: plotH, fill: "transparent" });
+    hover(hit, row.day, () => STACK.slice().reverse().map((k) => ({ color: k.color, value: numberFmt.format(row[k.key] || 0), name: k.label })));
+    svg.append(hit);
+    if (i % every === 0) {
+      const label = s("text", { x: left + band * i + band / 2, y: height - 8, "text-anchor": "middle", "font-size": 11, fill: "var(--muted)" });
+      label.textContent = row.day.slice(5);
+      svg.append(label);
+    }
+  });
+  container.append(svg);
+}
+
+function horizontalBars(container, rows, opts) {
+  const width = Math.max(280, container.clientWidth || 600);
+  const rowH = 30, labelW = Math.min(170, width * 0.38), valueW = 64;
+  const height = rows.length * rowH + 4;
+  const plotW = width - labelW - valueW - 8;
+  const max = Math.max(...rows.map(opts.value), 0) || 1;
+  const svg = s("svg", { viewBox: `0 0 ${width} ${height}`, role: "img", "aria-label": opts.title });
+  svg.append(s("line", { x1: labelW, x2: labelW, y1: 0, y2: height, stroke: "var(--axis)", "stroke-width": 1 }));
+  rows.forEach((row, i) => {
+    const y = i * rowH + 7, barH = 16;
+    const w = Math.max(1, (plotW * opts.value(row)) / max);
+    const name = s("text", { x: labelW - 8, y: y + 12, "text-anchor": "end", "font-size": 12, fill: "var(--ink-2)" });
+    const label = opts.label(row);
+    name.textContent = label.length > 24 ? label.slice(0, 23) + "…" : label;
+    svg.append(name);
+    svg.append(s("path", { d: roundedRight(labelW + 1, y, w, barH, 4), fill: "var(--s1)" }));
+    const value = s("text", { x: labelW + 1 + w + 6, y: y + 12, "font-size": 12, fill: "var(--ink)" });
+    value.textContent = opts.format(opts.value(row));
+    svg.append(value);
+    const hit = s("rect", { x: 0, y: i * rowH, width, height: rowH, fill: "transparent" });
+    hover(hit, label, () => opts.tip(row));
+    svg.append(hit);
+  });
+  container.append(svg);
+}
+
+function chartCard(title, sub, draw, tableNode, legendNode) {
+  const chart = h("div", { class: "chart" });
+  const card = h("div", { class: "card" }, h("h2", { text: title }), sub ? h("p", { class: "sub", text: sub }) : null, legendNode || null, chart, tableNode || null);
+  requestAnimationFrame(() => draw(chart));
+  return card;
+}
+
+// --- vistas ------------------------------------------------------------------------------
+function tile(label, value, note, isText) {
+  return h("div", { class: "tile" }, h("div", { class: "label", text: label }), h("div", { class: isText ? "value text" : "value", text: value }), note ? h("div", { class: "note", text: note }) : null);
+}
+
+function renderKpis(snap) {
+  const kpis = clear(document.getElementById("kpis"));
+  const sessions = (snap.tokens && snap.tokens.sessions) || {};
+  const loops = (snap.tokens && snap.tokens.loops) || {};
+  const today = new Date().toISOString().slice(0, 10);
+  const todayRow = (sessions.by_day || []).find((d) => d.day === today);
+  const reviews = snap.reviews || [];
+  const running = reviews.filter((r) => r.status === "en_curso").length;
+  const tasks = snap.tasks || {};
+  kpis.append(
+    tile("Tokens de hoy (sesiones)", todayRow ? compactFmt.format(tokensOf(todayRow)) : "0", today),
+    tile("Tokens totales (sesiones)", compactFmt.format(sessions.total ? tokensOf(sessions.total) : 0), `${numberFmt.format((sessions.total || {}).messages || 0)} mensajes`),
+    tile("Lectura de caché", pctFmt.format(sessions.cache_ratio || 0), "sobre la entrada total"),
+    tile("Coste registrado (loops)", usdFmt.format((loops.total || {}).cost_usd || 0), `${numberFmt.format((loops.runs || []).length)} ejecuciones`),
+    tile("Revisiones en curso", numberFmt.format(running), `${numberFmt.format(reviews.length)} en el feed`),
+    tile("Feature en curso", (tasks.in_progress || []).join(", ") || "ninguna", tasks.inbox ? `${tasks.inbox.pending} en la bandeja` : "", true),
+  );
+}
+
+function renderTokens(snap) {
+  const view = clear(document.getElementById("view-tokens"));
+  const sessions = (snap.tokens && snap.tokens.sessions) || {};
+  const loops = (snap.tokens && snap.tokens.loops) || {};
+  const days = sessions.by_day || [];
+  const tokenCols = [
+    ...STACK.map((k) => ({ label: k.label, num: true, value: (r) => numberFmt.format(r[k.key] || 0) })),
+    { label: "Mensajes", num: true, value: (r) => numberFmt.format(r.messages || 0) },
+  ];
+  view.append(days.length
+    ? chartCard("Tokens por día (sesiones de Claude Code)", "Sesiones del repo y de sus worktrees, con subagentes; sin USD (las transcripciones no traen coste).",
+        (el) => stackedColumns(el, days),
+        table([{ label: "Día", value: (r) => r.day }, ...tokenCols], days), legend(STACK))
+    : h("div", { class: "card" }, h("h2", { text: "Tokens por día" }), h("p", { class: "empty", text: `No hay transcripciones del proyecto en ${sessions.projects_dir || "~/.claude/projects"}.` })));
+
+  const grid = h("div", { class: "grid" });
+  const tokenTip = (row) => STACK.slice().reverse().map((k) => ({ color: k.color, value: numberFmt.format(row[k.key] || 0), name: k.label }));
+  for (const [key, title, sub] of [["by_agent", "Por tipo de agente", "principal = la sesión; el resto, subagentes por su tipo"], ["by_model", "Por modelo", "tokens totales de las sesiones"]]) {
+    const rows = sessions[key] || [];
+    const labelKey = key === "by_agent" ? "agent" : "model";
+    if (!rows.length) continue;
+    if (rows.length === 1) { // una sola barra no es un gráfico: es un dato
+      grid.append(h("div", { class: "card" }, h("h2", { text: title }), h("p", { class: "sub", text: sub }),
+        h("div", { class: "tile", style: "border:0;padding:0" }, h("div", { class: "value", text: compactFmt.format(tokensOf(rows[0])) }),
+          h("div", { class: "note", text: `todo con ${rows[0][labelKey]}` })),
+        table([{ label: title, value: (r) => r[labelKey] }, ...tokenCols], rows)));
+      continue;
+    }
+    grid.append(chartCard(title, sub, (el) => horizontalBars(el, rows, {
+      title, value: tokensOf, label: (r) => r[labelKey], format: (v) => compactFmt.format(v), tip: tokenTip,
+    }), table([{ label: title, value: (r) => r[labelKey] }, ...tokenCols], rows)));
+  }
+  const runs = (loops.runs || []).slice(0, 15);
+  if (runs.length) {
+    grid.append(chartCard("Coste por ejecución (loops)", "USD registrado por factory en events.jsonl", (el) => horizontalBars(el, runs, {
+      title: "Coste por ejecución", value: (r) => r.cost_usd || 0, label: (r) => r.run_id.replace(/^\d{8}-\d{6}-/, ""), format: (v) => usdFmt.format(v),
+      tip: (r) => [{ value: usdFmt.format(r.cost_usd), name: "coste" }, { value: compactFmt.format(r.input), name: "entrada" }, { value: compactFmt.format(r.output), name: "salida" }, { value: numberFmt.format(r.turns), name: "turnos" }, ...(r.by_role || []).map((x) => ({ value: usdFmt.format(x.cost_usd), name: x.role }))],
+    }), table([
+      { label: "Ejecución", value: (r) => r.run_id },
+      { label: "USD", num: true, value: (r) => usdFmt.format(r.cost_usd) },
+      { label: "Entrada", num: true, value: (r) => numberFmt.format(r.input) },
+      { label: "Salida", num: true, value: (r) => numberFmt.format(r.output) },
+      { label: "Turnos", num: true, value: (r) => numberFmt.format(r.turns) },
+      { label: "Llamadas", num: true, value: (r) => numberFmt.format(r.calls) },
+    ], loops.runs)));
+  }
+  if (grid.childElementCount) view.append(grid);
+
+  const top = (sessions.sessions || []).slice(0, 12);
+  if (top.length) {
+    view.append(h("div", { class: "card", style: "margin-top:16px" }, h("h2", { text: "Sesiones recientes" }),
+      h("p", { class: "sub", text: "Las 12 más recientes, con sus subagentes" }),
+      h("div", { class: "table-wrap" }, h("table", {},
+        h("thead", {}, h("tr", {}, ["Última actividad", "Proyecto", "Modelos", "Subagentes", "Tokens", "Mensajes"].map((t, i) => h("th", { class: i >= 3 ? "num" : null, text: t })))),
+        h("tbody", {}, top.map((row) => h("tr", {},
+          h("td", { text: fmtDate(row.last) }), h("td", { text: row.project }), h("td", { text: (row.models || []).join(", ") }),
+          h("td", { class: "num", text: subagentSummary(row.subagents || []) }),
+          h("td", { class: "num", text: compactFmt.format(tokensOf(row)) }), h("td", { class: "num", text: numberFmt.format(row.messages) }))))))));
+  }
+}
+
+function subagentSummary(subagents) {
+  if (!subagents.length) return "0";
+  const counts = {};
+  for (const sub of subagents) counts[sub.agent] = (counts[sub.agent] || 0) + 1;
+  const parts = Object.entries(counts).sort((a, b) => b[1] - a[1]).map(([agent, n]) => `${n} ${agent}`);
+  return `${subagents.length}: ${parts.join(" · ")}`;
+}
+
+function chip(status) {
+  const info = STATUS[status] || { tone: "muted", icon: "·", label: status || "?" };
+  return h("span", { class: "chip", "data-tone": info.tone }, h("span", { class: "dot" }), `${info.icon} ${info.label}`);
+}
+function severityText(sev) {
+  const parts = ["critical", "medium", "minor", "low"].filter((k) => sev && sev[k]).map((k) => `${sev[k]} ${k}`);
+  return parts.length ? parts.join(" · ") : "sin hallazgos";
+}
+function reviewItem(r) {
+  const who = r.source === "loop" ? `checker · ${r.run_id} · ronda ${r.round}` : r.reviewer || "revisor";
+  const duration = r.status === "en_curso" ? h("span", { class: "meta elapsed", "data-started": r.started }, fmtDuration(r.duration_s)) : h("span", { class: "meta", text: fmtDuration(r.duration_s) });
+  return h("li", {},
+    h("div", { class: "row" }, chip(r.status), h("span", { class: "who", text: who }),
+      h("span", { class: "meta", text: r.source === "loop" ? "loop" : "hook" }),
+      h("span", { class: "meta", text: fmtDate(r.finished || r.started) }), duration,
+      !["en_curso", "sin_cierre"].includes(r.status) ? h("span", { class: "sev", text: severityText(r.severities) }) : null,
+      r.final === false ? h("span", { class: "meta", text: "terminó sin respuesta final" }) : null),
+    r.description ? h("div", { class: "desc", text: r.description }) : null,
+    r.excerpt ? h("details", { "data-key": `rev:${r.source}:${r.tool_use_id || r.run_id || ""}:${r.round || ""}:${r.started || ""}` }, h("summary", { text: "Ver respuesta del revisor" }), h("pre", { class: "excerpt", text: r.excerpt })) : null);
+}
+function renderReviews(snap) {
+  const view = clear(document.getElementById("view-revisiones"));
+  const all = snap.reviews || [];
+  const select = h("select", { "aria-label": "Origen", onchange: (e) => { state.origin = e.target.value; withOpen("view-revisiones", renderReviews, state.snap); } },
+    [["todas", "Todas"], ["hook", "Subagentes (hooks)"], ["loop", "Loops de factory"]].map(([v, t]) => h("option", { value: v, selected: state.origin === v, text: t })));
+  const reviews = all.filter((r) => state.origin === "todas" || r.source === state.origin);
+  const counts = {};
+  for (const r of reviews) counts[r.status] = (counts[r.status] || 0) + 1;
+  view.append(h("div", { class: "filters" }, select, Object.entries(counts).map(([k, v]) => h("span", { class: "meta" }, chip(k), ` ${v}`))));
+  view.append(h("div", { class: "card" }, h("h2", { text: "Revisiones" }),
+    h("p", { class: "sub", text: "checker (árbitro) y jugadores revisores, capturados con hooks; más el checker de cada ronda de los loops. Se actualiza solo." }),
+    reviews.length ? h("ul", { class: "feed" }, reviews.map(reviewItem))
+      : h("p", { class: "empty", text: "Aún no hay revisiones. Lanza el checker o un revisor del equipo y aparecerá aquí." })));
+}
+
+function meter(done, total) {
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  return h("div", { class: "meter", role: "progressbar", "aria-valuemin": 0, "aria-valuemax": total, "aria-valuenow": done },
+    h("div", { style: `width:${pct}%` }));
+}
+function featureButton(f) {
+  const groups = f.groups || [];
+  const done = groups.reduce((a, g) => a + g.done, 0), total = groups.reduce((a, g) => a + g.total, 0);
+  return h("button", { class: "feature", type: "button", "aria-pressed": String(state.feature === f.id),
+    onclick: () => { state.feature = state.feature === f.id ? null : f.id; location.hash = state.feature ? `tareas/${state.feature}` : "tareas"; withOpen("view-tareas", renderTasks, state.snap); } },
+    h("div", { class: "fid", text: f.id }), h("div", { class: "ftitle", text: f.title }),
+    total ? meter(done, total) : null,
+    total ? h("div", { class: "ftitle", text: `${done}/${total} tareas` }) : null);
+}
+function renderDetail(f, snap) {
+  const runs = ((snap.tasks || {}).runs || []).filter((r) => r.feature === f.id);
+  const reviews = (snap.reviews || []).filter((r) => [r.description, r.excerpt, r.run_id].some((t) => t && t.includes(f.id)) || runs.some((x) => x.run_id === r.run_id));
+  const evidence = f.evidence || [];
+  return h("div", { class: "card" },
+    h("div", { class: "detail-head" }, h("h2", { text: `${f.id} — ${f.title}` }),
+      h("button", { class: "ghost", type: "button", text: "Cerrar", onclick: () => { state.feature = null; location.hash = "tareas"; withOpen("view-tareas", renderTasks, state.snap); } })),
+    h("dl", {},
+      h("dt", { text: "Estado" }), h("dd", { text: f.status }),
+      h("dt", { text: "Prioridad" }), h("dd", { text: f.priority ?? "" }),
+      h("dt", { text: "Comportamiento" }), h("dd", { text: f.user_visible_behavior }),
+      h("dt", { text: "Verificación" }), h("dd", {}, (f.verification || []).map((c) => h("div", {}, h("code", { text: c })))),
+      h("dt", { text: "Evidencia" }), h("dd", {}, evidence.length ? evidence.map((e) => h("div", {},
+        `${e.exit_code === 0 ? "✓" : "✗"} código ${e.exit_code} · ${fmtDate(e.date)} · ${(e.commit || "").slice(0, 10)}`)) : "sin evidencia"),
+      f.notes ? h("dt", { text: "Notas" }) : null, f.notes ? h("dd", { text: f.notes }) : null),
+    (f.groups || []).map((g) => h("div", {},
+      h("div", { class: "progress-row" }, h("span", { text: `${g.change} · ${g.number}. ${g.title}` }), h("span", { class: "count", text: `${g.done}/${g.total}` }), meter(g.done, g.total)),
+      h("ul", { class: "tasklist" }, g.tasks.map((t) => h("li", { "data-done": String(Boolean(t.done)) },
+        h("span", { class: "check", text: t.done ? "✓" : "○" }), h("span", { text: `${t.id} ${t.text}`.trim() })))))),
+    runs.length ? h("div", {}, h("h2", { text: "Ejecuciones", style: "margin-top:12px" }), runTable(runs)) : null,
+    reviews.length ? h("div", {}, h("h2", { text: "Revisiones relacionadas", style: "margin-top:12px" }), h("ul", { class: "feed" }, reviews.map(reviewItem))) : null);
+}
+function runTable(runs) {
+  return h("div", { class: "table-wrap" }, h("table", {},
+    h("thead", {}, h("tr", {}, ["Ejecución", "Estado", "Ronda", "Criterios", "Veredicto", "USD"].map((t, i) => h("th", { class: i === 5 ? "num" : null, text: t })))),
+    h("tbody", {}, runs.map((r) => h("tr", {},
+      h("td", {}, h("code", { text: r.run_id })),
+      h("td", { text: r.status === "running" ? (r.alive ? "running (vivo)" : "running (huérfana)") : r.status }),
+      h("td", { text: String(r.round) }), h("td", { text: `${r.score}/${r.criteria_total}` }),
+      h("td", {}, r.verdict ? chip(r.verdict) : ""), h("td", { class: "num", text: usdFmt.format(r.cost_usd || 0) }))))));
+}
+function renderTasks(snap) {
+  const view = clear(document.getElementById("view-tareas"));
+  const tasks = snap.tasks || {};
+  const features = tasks.features || [];
+  const selected = features.find((f) => f.id === state.feature);
+  if (selected) view.append(renderDetail(selected, snap));
+  view.append(h("div", { class: "card" }, h("h2", { text: "Features" }),
+    h("p", { class: "sub", text: "feature_list.json · WIP=1 · pulsa una feature para ver su detalle" }),
+    features.length ? h("div", { class: "board" }, FEATURE_STATUS.map(([key, label]) => {
+      const items = features.filter((f) => f.status === key);
+      return h("div", { class: "column" }, h("h3", { text: `${label} (${items.length})` }), items.map(featureButton));
+    })) : h("p", { class: "empty", text: "No hay feature_list.json." })));
+  const changes = tasks.changes || [];
+  view.append(h("div", { class: "card" }, h("h2", { text: "Cambios OpenSpec activos" }),
+    h("p", { class: "sub", text: "Avance de tasks.md por grupo" }),
+    changes.length ? changes.map((c) => h("div", {},
+      h("div", { class: "progress-row" }, h("strong", { text: c.name }), h("span", { class: "count", text: `${c.done}/${c.total}` }), meter(c.done, c.total)),
+      c.groups.map((g) => h("div", { class: "progress-row", style: "margin-left:12px" },
+        h("span", { text: `${g.number}. ${g.title}` }), h("span", { class: "count", text: `${g.done}/${g.total}` }), meter(g.done, g.total)))))
+      : h("p", { class: "empty", text: "No hay cambios activos." })));
+  const runs = tasks.runs || [];
+  view.append(h("div", { class: "card" }, h("h2", { text: "Ejecuciones de factory" }),
+    h("p", { class: "sub", text: `Bandeja: ${(tasks.inbox || {}).pending || 0} pendiente(s)` }),
+    runs.length ? runTable(runs) : h("p", { class: "empty", text: "Aún no hay ejecuciones." })));
+}
+
+// Los <details> abiertos sobreviven a los refrescos: se recuerdan por una clave estable.
+function detailsKey(el) {
+  if (el.dataset.key) return el.dataset.key;
+  const card = el.closest(".card");
+  const title = card && card.querySelector("h2");
+  return `${title ? title.textContent : ""}:${el.querySelector("summary")?.textContent || ""}`;
+}
+document.addEventListener("toggle", (event) => {
+  const el = event.target;
+  if (!(el instanceof HTMLDetailsElement)) return;
+  if (el.open) state.open.add(detailsKey(el)); else state.open.delete(detailsKey(el));
+}, true);
+function restoreOpen(root, scrolls) {
+  for (const el of root.querySelectorAll("details")) {
+    const key = detailsKey(el);
+    if (!state.open.has(key)) continue;
+    el.open = true;
+    const pre = el.querySelector("pre");
+    if (pre && scrolls.has(key)) pre.scrollTop = scrolls.get(key);
+  }
+}
+function withOpen(id, renderView, snap) {
+  const root = document.getElementById(id);
+  const scrolls = new Map(); // el desplazamiento de un extracto abierto también sobrevive
+  for (const el of root.querySelectorAll("details[open]")) {
+    const pre = el.querySelector("pre");
+    if (pre) scrolls.set(detailsKey(el), pre.scrollTop);
+  }
+  renderView(snap);
+  restoreOpen(root, scrolls);
+}
+
+const ALL_SECTIONS = ["tokens", "reviews", "tasks"];
+function render(sections = ALL_SECTIONS) {
+  const snap = state.snap;
+  if (!snap) return;
+  document.getElementById("repo").textContent = snap.repo || "";
+  const warnings = clear(document.getElementById("warnings"));
+  for (const w of snap.warnings || []) warnings.append(h("div", { text: `⚠ ${w}` }));
+  renderKpis(snap);
+  // Solo se rehacen las vistas cuyas fuentes cambiaron. Los gráficos de tokens necesitan el
+  // ancho visible: si la pestaña está oculta, se dibujan al abrirla (selectTab).
+  if (sections.includes("tokens") && state.tab === "tokens") withOpen("view-tokens", renderTokens, snap);
+  if (sections.includes("reviews")) withOpen("view-revisiones", renderReviews, snap);
+  if (sections.includes("tasks") || (sections.includes("reviews") && state.feature)) withOpen("view-tareas", renderTasks, snap);
+}
+
+// --- pestañas, tema y datos --------------------------------------------------------------
+function selectTab(tab) {
+  state.tab = tab;
+  for (const button of document.querySelectorAll("nav button")) button.setAttribute("aria-selected", String(button.dataset.tab === tab));
+  for (const name of ["tokens", "revisiones", "tareas"]) document.getElementById(`view-${name}`).hidden = name !== tab;
+  safeStorage("set", "panel-tab", tab);
+  if (tab === "tokens") withOpen("view-tokens", renderTokens, state.snap || {}); // los gráficos necesitan el ancho visible
+}
+for (const button of document.querySelectorAll("nav button")) button.addEventListener("click", () => {
+  if (button.dataset.tab !== "tareas") state.feature = null;
+  location.hash = button.dataset.tab;
+  selectTab(button.dataset.tab);
+});
+document.getElementById("theme").addEventListener("click", () => {
+  const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+  const current = document.documentElement.dataset.theme || (dark ? "dark" : "light");
+  const next = current === "dark" ? "light" : "dark";
+  document.documentElement.dataset.theme = next;
+  safeStorage("set", "panel-theme", next);
+});
+const savedTheme = safeStorage("get", "panel-theme");
+if (savedTheme === "dark" || savedTheme === "light") document.documentElement.dataset.theme = savedTheme;
+const [hashTab, hashFeature] = location.hash.replace(/^#/, "").split("/");
+try {
+  if (hashFeature) state.feature = decodeURIComponent(hashFeature);
+} catch (error) { // un hash mal formado no debe impedir que arranque la página
+  state.feature = null;
+}
+selectTab(["tokens", "revisiones", "tareas"].includes(hashTab) ? hashTab : (safeStorage("get", "panel-tab") || "tokens"));
+
+let pending = null;
+let pendingSections = new Set();
+// Las peticiones se numeran: una respuesta más antigua que la ya pintada se descarta, y cada
+// sección recuerda la última petición que la pidió para repintarse con la primera respuesta
+// igual o más nueva (aunque la suya se descarte o falle).
+let requested = 0;
+let applied = 0;
+const dirty = new Map();
+async function refresh(sections = ALL_SECTIONS) {
+  const main = document.getElementById("main");
+  const ticket = ++requested;
+  for (const name of sections) dirty.set(name, ticket);
+  main.dataset.loading = "true";
+  try {
+    const response = await fetch("/api/snapshot", { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const snap = await response.json();
+    if (ticket < applied) return;
+    const first = !state.snap;
+    applied = ticket;
+    state.snap = snap;
+    state.fetchedAt = Date.now();
+    const due = [];
+    for (const [name, asked] of dirty) if (asked <= ticket) { due.push(name); dirty.delete(name); }
+    render(first ? ALL_SECTIONS : due);
+  } catch (error) {
+    const warnings = document.getElementById("warnings");
+    document.getElementById("warn-conn")?.remove(); // un solo aviso de conexión, no uno por intento
+    warnings.append(h("div", { id: "warn-conn", text: `⚠ No se pudo cargar la instantánea: ${error.message}` }));
+  } finally {
+    if (ticket === requested) main.dataset.loading = "false";
+  }
+}
+function scheduleRefresh(sections = ALL_SECTIONS) {
+  for (const name of sections) if (ALL_SECTIONS.includes(name)) pendingSections.add(name);
+  clearTimeout(pending);
+  pending = setTimeout(() => {
+    const due = [...pendingSections];
+    pendingSections = new Set();
+    refresh(due);
+  }, 250);
+}
+function changedSections(event) {
+  try {
+    const data = JSON.parse(event.data);
+    return Array.isArray(data.sections) ? data.sections : ALL_SECTIONS;
+  } catch (error) {
+    return ALL_SECTIONS;
+  }
+}
+function setLive(on, text) {
+  const live = document.getElementById("live");
+  live.dataset.state = on ? "on" : "off";
+  document.getElementById("live-text").textContent = text;
+}
+function connect() {
+  if (!window.EventSource) { setLive(false, "Sin tiempo real"); return; }
+  const source = new EventSource("/api/stream");
+  source.addEventListener("hello", () => { setLive(true, "En vivo"); scheduleRefresh(); });
+  source.addEventListener("change", (event) => scheduleRefresh(changedSections(event)));
+  source.addEventListener("error", () => setLive(false, "Reconectando…"));
+}
+let lastWidth = window.innerWidth;
+window.addEventListener("resize", () => {
+  if (Math.abs(window.innerWidth - lastWidth) < 40) return;
+  lastWidth = window.innerWidth;
+  if (state.tab === "tokens" && state.snap) withOpen("view-tokens", renderTokens, state.snap);
+});
+const UNCLOSED_AFTER_S = 2 * 3600; // igual que reviews.UNCLOSED_AFTER_S
+setInterval(() => { // tiempo transcurrido de las revisiones en curso, sin pedir datos
+  let expired = false;
+  for (const el of document.querySelectorAll(".elapsed[data-started]")) {
+    const started = Date.parse(el.dataset.started);
+    if (Number.isNaN(started)) continue;
+    const seconds = (Date.now() - started) / 1000;
+    el.textContent = fmtDuration(seconds);
+    // Pasar el umbral no cambia ningún archivo: se pide la instantánea para ver `sin_cierre`.
+    if (seconds > UNCLOSED_AFTER_S) { expired = true; el.removeAttribute("data-started"); }
+  }
+  if (expired) scheduleRefresh(["reviews"]);
+}, 1000);
+refresh();
+connect();
+</script>
+</body>
+</html>

@@ -53,6 +53,10 @@ El sistema SHALL construir un feed de revisiones ordenado de la más reciente a 
 - **WHEN** hay un inicio de revisión sin su fin
 - **THEN** el feed muestra esa revisión como `en_curso` con el tiempo transcurrido
 
+#### Scenario: Revisión sin cierre
+- **WHEN** un inicio de revisión lleva más de 2 horas sin su fin, por ejemplo porque la sesión se cerró con el revisor trabajando o porque el lanzamiento falló
+- **THEN** el feed la muestra como `sin_cierre`, sin duración, y no cuenta como revisión en curso
+
 #### Scenario: Revisión de un loop
 - **WHEN** la ronda 2 de una ejecución tiene `checker_verdict: pass_with_minor`
 - **THEN** el feed incluye esa revisión con origen `loop`, la ejecución y la ronda

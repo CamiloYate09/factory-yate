@@ -8,7 +8,10 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
+from factory.config import ConfigError, load_config
 from factory.util import find_root
+
+DESCRIPTION_MAX = 200  # descripción de un subagente que se guarda o se muestra
 
 
 class PanelError(RuntimeError):
@@ -30,11 +33,37 @@ def main_root(start: Path | None = None) -> Path:
     return root
 
 
-def read_jsonl(path: Path) -> Iterator[dict[str, Any]]:
+def state_dir(root: Path, warnings: list[str] | None = None) -> Path:
+    """Directorio de estado de `root`: `[loop] state_dir` de `factory.toml` o `.factory/`."""
+    try:
+        return load_config(root).state_path
+    except ConfigError as exc:
+        if warnings is not None:
+            warnings.append(f"factory.toml: {exc}; se usa .factory/")
+        return root / ".factory"
+
+
+def read_meta(transcript: Path) -> dict[str, Any]:
+    """`agent-<id>.meta.json` junto a la transcripción de un subagente, o `{}` si no vale."""
+    try:
+        meta = json.loads(transcript.with_name(transcript.stem + ".meta.json").read_text("utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    return meta if isinstance(meta, dict) else {}
+
+
+def unreadable(path: Path, exc: OSError, warnings: list[str] | None) -> None:
+    """Aviso para un archivo que existe pero no se puede leer (uno ausente no avisa)."""
+    if warnings is not None and not isinstance(exc, FileNotFoundError):
+        warnings.append(f"{path}: no se pudo leer ({exc.strerror or exc})")
+
+
+def read_jsonl(path: Path, warnings: list[str] | None = None) -> Iterator[dict[str, Any]]:
     """Objetos JSON de un archivo de una línea por evento; ignora las líneas inválidas."""
     try:
         handle = path.open(encoding="utf-8", errors="replace")
-    except OSError:
+    except OSError as exc:
+        unreadable(path, exc, warnings)
         return
     with handle:
         for line in handle:

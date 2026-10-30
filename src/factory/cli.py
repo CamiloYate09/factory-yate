@@ -82,6 +82,35 @@ def cmd_features(args: argparse.Namespace) -> int:
     raise AssertionError(args.features_cmd)
 
 
+def _port(value: str) -> int:
+    port = int(value)
+    if not 0 <= port <= 65535:
+        raise argparse.ArgumentTypeError(f"puerto fuera de rango (0-65535): {port}")
+    return port
+
+
+def cmd_panel(args: argparse.Namespace) -> int:
+    from factory.panel import PanelError, main_root, server, snapshot
+    from factory.panel.tokens import projects_dir
+
+    root = main_root(args.root)
+    projects = projects_dir(args.projects_dir)
+    if args.json:
+        print(snapshot.to_json(snapshot.build(root, projects)))
+        return EXIT_OK
+    try:
+        return server.serve(root, projects, args.port, args.open)
+    except PanelError as exc:
+        print(f"error: {exc}", file=sys.stderr)
+        return EXIT_USAGE
+
+
+def cmd_hook(args: argparse.Namespace) -> int:
+    from factory.panel import hooks
+
+    return hooks.run()
+
+
 def cmd_doctor(args: argparse.Namespace) -> int:
     report = doctor.audit(load_config(args.root))
     if args.json:
@@ -748,6 +777,24 @@ def build_parser() -> argparse.ArgumentParser:
         "--delete-branch", action="store_true", help="borra la rama de la ejecución al integrar"
     )
     land_p.set_defaults(handler=cmd_land)
+
+    panel_p = sub.add_parser(
+        "panel", help="panel local de tokens, revisiones y tareas (solo lectura, 127.0.0.1)"
+    )
+    panel_p.add_argument("--port", type=_port, default=8765, help="puerto local (8765 por defecto)")
+    panel_p.add_argument("--json", action="store_true", help="imprime la instantánea y termina")
+    panel_p.add_argument("--open", action="store_true", help="abre el panel en el navegador")
+    panel_p.add_argument(
+        "--projects-dir",
+        type=Path,
+        help="proyectos de Claude Code (por defecto, $CLAUDE_CONFIG_DIR/projects o ~/.claude)",
+    )
+    panel_p.set_defaults(handler=cmd_panel)
+
+    hook_p = sub.add_parser(
+        "hook", help="registra un evento de hook de Claude Code para el panel (lee stdin)"
+    )
+    hook_p.set_defaults(handler=cmd_hook)
 
     stat = sub.add_parser("status", help="ejecuciones e indicadores de costes silenciosos")
     stat.set_defaults(handler=cmd_status)

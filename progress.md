@@ -5,7 +5,7 @@
 - Raíz del repositorio: `factory-yate/`, la que contiene `AGENTS.md`.
 - Arranque estándar: `./init.sh`.
 - Verificación estándar: `./scripts/check.sh`.
-- OpenSpec: specs principales en `openspec/specs/` (15 capacidades). Cambios archivados: `2026-10-27-add-harness-loop-engine`, `2026-10-28-extend-factory-pipeline`, `2026-10-28-add-knowledge-brains`, `2026-10-29-add-library-map` y `2026-10-30-add-equipo-ideal` (sesión 007). Cambio activo: `add-panel` (otra sesión).
+- OpenSpec: specs principales en `openspec/specs/` (15 capacidades). Cambios archivados: `2026-10-27-add-harness-loop-engine`, `2026-10-28-extend-factory-pipeline`, `2026-10-28-add-knowledge-brains`, `2026-10-29-add-library-map` y `2026-10-30-add-equipo-ideal` (sesión 007). Cambio activo: `add-panel` (sesión 008): sus tres features están en `passing` y quedan la parte visual de la prueba de humo (5.3) y el archivado.
 - Feature activa / siguiente: ver `.venv/bin/factory features list`.
 - Commits: `d7c3d5b` (commit inicial) y `9d74594` (evidencia de las features con hash real).
 - Bloqueos actuales: la prueba live (9.2) no está aprobada. El contrato de `--json-schema` se valida con el dogfooding (9.3).
@@ -286,3 +286,43 @@
   - **Riesgo conocido:** un maker puede crear `.claude/settings.local.json` en su worktree. Ya no llega a `main`, porque está en `.gitignore`, pero el checker de esa misma ronda lo cargaría.
 - Seguimiento propuesto (cambios aparte): el equipo dentro de `factory goal run` (fase 2), fichar las vacantes y refactorizar la deuda de complejidad que mide `factory complexity` (`parse_intake` 35, `parse_goal_text` 32, `cmd_brain` 30, `render_loop_state` 30).
 - Mejor próximo paso: decidir el push de `main`. Siguientes cambios propuestos: el equipo dentro de `factory goal run` (fase 2), fichar las vacantes y refactorizar la deuda de complejidad.
+
+### Sesión 008 — 2026-10-29 a 2026-10-30 (`add-panel`)
+
+- Objetivo: validar si el panel (`factory panel`) estaba completo y terminarlo (grupos 3 a 5 de `add-panel`).
+- Estado encontrado: lógica del panel hecha y con tests, pero `factory panel` y `factory hook` no existían en el CLI, el grupo 5 no estaba empezado y nada estaba en `progress.md`.
+- Completado:
+  - **CLI:** `factory panel [--port] [--json] [--open] [--projects-dir]` y `factory hook`, con import diferido (D10) y `--port` validado (0–65535).
+  - **Captura real (5.2):** esta versión de Claude Code entrega la respuesta final de un subagente con la herramienta `SubagentHandback`. Las 5 primeras revisiones reales quedaron como `sin_veredicto`; el parser ahora lee `SubagentHandback` y, si no, `last_assistant_message`. Las 5 transcripciones reales dan su veredicto, y las revisiones de esta sesión se registraron en vivo con el veredicto y las severidades exactos. Campos observados en `design.md` (Open Questions). Las líneas antiguas del registro conservan `sin_veredicto`, porque el registro no se reescribe.
+  - **Datos reales:**
+    - los `SubagentStop` sin tipo (agentes internos, como el evaluador del hook de `/goal`, cada ~30 s) ya no se registran;
+    - un inicio sin fin pasa a `sin_cierre` a las 2 h. Se vieron una sesión cerrada con el revisor trabajando y 4 lanzamientos de jugadores que no crearon subagente.
+  - **Hallazgos del checker (4 rondas):**
+    - un archivo ilegible avisa en `warnings` y uno ausente no (la spec delta se ajustó);
+    - el refresco por SSE solo repinta las secciones que cambian y conserva los `<details>` abiertos y su scroll;
+    - 405 para cualquier método distinto de GET o HEAD, incluido TRACE;
+    - las severidades se cuentan solo en la sección `Hallazgos`;
+    - se eliminaron duplicados en `panel/__init__.py`, y `hook_reviews` y `last_response` se refactorizaron por debajo de complejidad 20.
+  - **Documentación:** README (paso M y referencia de comandos), `docs/harness/panel.md` completo (uso, fuentes, privacidad, seguridad, tiempo real y límites) y enlace en `AGENTS.md`.
+  - **Coordinación con la sesión 007:** se apartaron y reaplicaron `cli.py` y `README.md` para su merge, y se añadieron `panel` y `hook` a `tests/test_cli_help.py`.
+- Verificación ejecutada (árbol final, sobre `2491854`):
+  - `./scripts/check.sh` → 0 (737 passed, ruff y doctor sin fallos);
+  - `openspec validate add-panel --strict` → válido;
+  - `factory features verify token-usage | review-hooks | observability-panel` → `passing`;
+  - `pip wheel . --no-deps` incluye `factory/panel/static/index.html`;
+  - `factory complexity src/factory/panel` → máximo 18.
+- Cifras medidas (2.4 y 3.5, 2026-10-29): agregación completa de tokens en 131 ms, refresco incremental en 4 ms, y el recuento independiente por `message.id` coincide (629 mensajes, 870.292 tokens de salida). Hook: ~68 ms por evento.
+- Prueba de humo (5.3), solo por HTTP y SSE (no hubo navegador en la sesión):
+  - `factory panel --json | python -m json.tool` → 0, sin `warnings`;
+  - `factory panel --port <libre>`: `/` y `/api/snapshot` 200, `TRACE` 405;
+  - la instantánea tiene tokens de 5 sesiones y 2 loops, las revisiones reales y el avance de `add-panel` (`add-equipo-ideal` ya está archivado, así que no aparece);
+  - al lanzar cada revisión del checker, `/api/stream` envió `change` con `reviews` en el mismo segundo.
+- Revisión independiente (`checker`): `fail` (3 medium) → `fail` (1 medium) → `pass_with_minor` → `pass_with_minor`. No quedan `critical` ni `medium`.
+- Riesgos / pendientes:
+  - **5.3 visual:** abrir `factory panel --open` y mirar las tres pestañas, los temas claro y oscuro y el ancho de móvil.
+  - **Límites aceptados** (`minor`):
+    - una sub-viñeta que cite una severidad entre corchetes cuenta como hallazgo;
+    - si falla la petición al pasar las 2 h, el contador de esa revisión se detiene hasta el siguiente evento.
+  - **Después de 5.3:** archivar con `/opsx:archive add-panel` y subir a 18 las capacidades del README y de este archivo.
+  - **Push:** no hecho; decisión humana.
+- Mejor próximo paso: la parte visual de 5.3 y, después, archivar `add-panel`.
