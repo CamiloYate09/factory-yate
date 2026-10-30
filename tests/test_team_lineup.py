@@ -242,3 +242,10 @@ def test_peticion_en_blanco_no_cuenta(tmp_path, capsys):
     root = _repo_con_equipo(tmp_path)
     assert _lineup(root, "--peticion", "   ") == 0
     assert capsys.readouterr().out.strip() == SIN_PARTIDO
+
+
+def test_rutas_desde_git_conservan_el_espacio_inicial(tmp_path, capsys):
+    root = _repo_con_equipo(tmp_path)
+    (root / " empieza.py").write_text("x = 1\n")  # no versionado
+    data = _lineup_json(root, capsys)
+    assert data["rutas"] == [" empieza.py"]

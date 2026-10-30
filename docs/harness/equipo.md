@@ -71,7 +71,7 @@ Los dorsales 7, 8, 10 y 11 están libres y se irán llenando a medida que llegue
    ---
    ```
 
-   - `name`: igual que el nombre del archivo y único entre todos los agentes de `.claude/agents/` (nadie suplanta a un jugador ni al árbitro).
+   - `name`: igual que el nombre del archivo y único entre todos los agentes de `.claude/agents/` (nadie suplanta a un jugador ni al árbitro). El árbitro, `checker.md`, declara `name: checker`.
    - `dorsal`: entero de 1 a 11, sin comillas y único.
    - `tipo`: `revisor` (`tools` ⊆ `Read, Grep, Glob`) o `constructor` (sin `Agent`).
    - `convocatoria`: globs relativos al repo (`**`, `*`, `?`) y los tokens `siempre` y `peticion`, separados por comas.

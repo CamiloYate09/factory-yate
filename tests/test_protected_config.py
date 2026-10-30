@@ -1,6 +1,11 @@
 """Escenarios de `goal-loop`: configuración de rutas protegidas y liberación explícita."""
 
+import shutil
+import subprocess
+from pathlib import Path
+
 import pytest
+from conftest import init_git_repo
 
 from factory.config import LoopConfig, load_config
 from factory.globs import matches
@@ -149,3 +154,16 @@ def test_la_configuracion_de_claude_code_es_critica(tmp_path):
     for path in (".claude/settings.json", ".claude/hooks/panel-hook.sh", ".claude/commands/x.md"):
         assert prot.is_protected(path), path
     assert not prot.is_protected(".claude/settings.local.json")
+
+
+def test_settings_local_no_se_versiona(tmp_path):
+    """Los ajustes personales de Claude Code no llegan nunca a una rama (ni a main con un land)."""
+    root = init_git_repo(tmp_path / "repo")
+    shutil.copy(Path(__file__).resolve().parents[1] / ".gitignore", root / ".gitignore")
+    ignorado = subprocess.run(
+        ["git", "check-ignore", "-q", ".claude/settings.local.json"], cwd=root, check=False
+    )
+    versionado = subprocess.run(
+        ["git", "check-ignore", "-q", ".claude/settings.json"], cwd=root, check=False
+    )
+    assert ignorado.returncode == 0 and versionado.returncode == 1

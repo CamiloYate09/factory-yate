@@ -337,6 +337,17 @@ def _impersonations(paths: list[Path]) -> dict[str, str]:
     return found
 
 
+def _arbitro_errors(root: Path) -> list[str]:
+    """El árbitro (`checker.md`), si existe, declara `name: checker`: nadie más puede ocuparlo."""
+    path = root / AGENTS_DIR / f"{ARBITRO}.md"
+    if not path.is_file() or _declared_name(path) == ARBITRO:
+        return []
+    return [
+        f"{(AGENTS_DIR / path.name).as_posix()}: el árbitro debe declarar `name: {ARBITRO}`, "
+        "para que ningún otro agente pueda ocupar ese nombre"
+    ]
+
+
 def load_roster(root: Path) -> Roster:
     """Lee `.claude/agents/*.md` en orden y valida la plantilla (D1, D8). Sin directorio o sin
     miembros, la plantilla está vacía y es válida."""
@@ -366,12 +377,7 @@ def load_roster(root: Path) -> Roster:
     members = [c.member for c in candidates if c.member is not None and not c.reasons]
     errors = [f"{c.label}: {reason}" for c in candidates for reason in c.reasons]
     errors += [f"{label}: {reason}" for label, reason in impersonations.items()]
-    arbitro_path = root / AGENTS_DIR / f"{ARBITRO}.md"
-    if arbitro_path.is_file() and _declared_name(arbitro_path) != ARBITRO:
-        errors.append(
-            f"{(AGENTS_DIR / arbitro_path.name).as_posix()}: el árbitro debe declarar "
-            f"`name: {ARBITRO}`, para que ningún otro agente pueda ocupar ese nombre"
-        )
+    errors += _arbitro_errors(root)
     team_files = {c.label for c in candidates}
     arbitro_file = (AGENTS_DIR / f"{ARBITRO}.md").as_posix()
     arbitro = (

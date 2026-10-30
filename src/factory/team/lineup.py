@@ -61,9 +61,9 @@ class Lineup:
         }
 
 
-def _git(root: Path, *args: str) -> str:
+def _git(root: Path, *args: str, strip: bool = True) -> str:
     try:
-        return git(root, *args)
+        return git(root, *args, strip=strip)
     except OSError as exc:
         raise TeamError(f"no se puede ejecutar git ({exc}); indica las rutas con --paths") from exc
     except UnicodeDecodeError as exc:
@@ -101,8 +101,10 @@ def changed_paths(root: Path, base: str = "HEAD") -> list[str]:
         ) from exc
     try:
         # --no-renames: un renombrado aporta el origen y el destino a la convocatoria.
-        diff = _git(root, "diff", "--name-only", "--no-renames", "-z", "--relative", base, "--")
-        others = _git(root, "ls-files", "-z", "--others", "--exclude-standard")
+        diff = _git(
+            root, "diff", "--name-only", "--no-renames", "-z", "--relative", base, "--", strip=False
+        )
+        others = _git(root, "ls-files", "-z", "--others", "--exclude-standard", strip=False)
     except GitError as exc:
         raise TeamError(str(exc)) from exc
     return sorted(set(_nul_list(diff)) | set(_nul_list(others)))
