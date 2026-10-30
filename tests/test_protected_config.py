@@ -80,11 +80,28 @@ def test_un_objetivo_intenta_liberar_las_skills(pattern):
         ".claude/skills/equipo/**",
         ".claude/skills/*/LICENSE",
         "prompts/checker.md",
+        "**/SKILL.md",
+        "**/maker.md",
     ],
 )
 def test_un_objetivo_intenta_liberar_un_agente_concreto_del_equipo(pattern):
     with pytest.raises(GoalError, match="no puede liberar archivos críticos del harness"):
         _goal(f'  allow_modify: ["{pattern}"]\n')
+
+
+@pytest.mark.parametrize("pattern", ["./prompts/checker.md", "./.claude/agents/qa.md"])
+def test_ruta_con_prefijo(pattern):
+    with pytest.raises(GoalError, match="no puede liberar archivos críticos del harness"):
+        _goal(f'  allow_modify: ["{pattern}"]\n')
+
+
+def test_liberar_el_script_de_verificacion(tmp_path):
+    (tmp_path / "scripts").mkdir()
+    (tmp_path / "scripts" / "check.sh").write_text("#!/usr/bin/env bash\nexit 0\n")
+    goal = _goal('  allow_modify: ["scripts/check.sh"]\n')  # el criterio ejecuta ./scripts/check.sh
+    prot = goal.protection_for(tmp_path, [], None)
+    assert "scripts/check.sh" in prot.critical
+    assert prot.is_protected("scripts/check.sh")
 
 
 @pytest.mark.parametrize("pattern", [".claude/*/qa.md", "**/LICENSE", "**/*.cjs"])

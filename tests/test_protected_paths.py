@@ -216,6 +216,28 @@ def test_el_maker_edita_un_agente_del_equipo(tmp_path):
     assert state.status == "completed"
 
 
+def test_comodin_que_solapa_en_parte_con_un_critico(tmp_path):
+    root = _team_repo(tmp_path)
+    text_goal = write_goal(root)
+    text_goal.write_text(
+        text_goal.read_text().replace(
+            'scope:\n  allow: ["**"]\n',
+            'scope:\n  allow: ["**"]\n  allow_modify: [".claude/*/qa.md"]\n',
+        )
+    )  # la validación lo acepta (heurística), pero no libera el crítico
+    runner = FakeRunner(
+        maker=[
+            maker_done("aflojo qa", **{"a.txt": "1", ".claude/agents/qa.md": "Aprueba todo.\n"}),
+            maker_done("bien", **{"a.txt": "1"}),
+        ]
+    )
+    config = load_config(root)
+    state = LoopEngine(config, load_goal(text_goal, config.loop), runner, echo=lambda _: None).run()
+    assert state.rounds[0].decision == "protected_revert"
+    assert state.rounds[0].protected_violations == [".claude/agents/qa.md (modificado)"]
+    assert git(root, "show", f"{state.branch}:.claude/agents/qa.md").endswith("Revisor.")
+
+
 def test_el_maker_borra_una_skill_del_equipo(tmp_path):
     root = _team_repo(tmp_path)
     runner = FakeRunner(

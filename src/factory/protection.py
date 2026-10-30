@@ -38,12 +38,13 @@ ALTERING = {"M": "modificado", "D": "borrado", "T": "cambio de tipo", "R": "reno
 
 
 def releases_critical(pattern: str) -> bool:
-    """¿Liberaría `pattern` algún crítico estático? Lo detecta tanto si el patrón cubre una
-    muestra (`**`, `.claude/**`) como si, leído como ruta, cae dentro de un crítico
-    (`.claude/agents/qa.md`, `prompts/checker.md`)."""
+    """¿Liberaría `pattern` algún crítico estático? Es una heurística: True si el patrón casa
+    con alguna muestra (`**`, `.claude/**`, `**/SKILL.md`) o si, leído como ruta y sin `./`,
+    cae dentro de un crítico (`.claude/agents/qa.md`, `./prompts/checker.md`). Lo que pasa
+    tampoco libera nada: `Protection.is_protected` consulta los críticos primero."""
     if any(matches(sample, [pattern]) for sample in CRITICAL_SAMPLES):
         return True
-    return matches(pattern, list(STATIC_CRITICAL))
+    return matches(pattern.strip().removeprefix("./"), list(STATIC_CRITICAL))
 
 
 def script_path(command: str, root: Path) -> str | None:

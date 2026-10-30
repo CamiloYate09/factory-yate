@@ -151,7 +151,7 @@ No lances al técnico como subagente (`subagent_type: tecnico`). Un subagente no
 Las definiciones del equipo son archivos críticos del harness en los loops (D7):
 
 - `.claude/agents/**` y `.claude/skills/**` están en `STATIC_CRITICAL`. Si el maker de `factory goal run` o `factory tick` modifica, borra o renombra un agente o una skill existentes, el orquestador lo revierte.
-- Nadie puede liberarlos: siguen protegidos en cada ronda aunque un objetivo los nombre. Además, `goal validate` rechaza un `scope.allow_modify` que los cubra (`.claude/**`) o que apunte dentro de ellos (`.claude/agents/qa.md`); un comodín que solo los solapa en parte (`**/LICENSE`) no se detecta al validar.
+- Nadie puede liberarlos: siguen protegidos en cada ronda aunque un objetivo los nombre. Además, para avisar antes de gastar rondas, `goal validate` rechaza un `scope.allow_modify` que case con una ruta de muestra (`.claude/**`, `**/SKILL.md`) o que apunte dentro de ellos (`.claude/agents/qa.md`, con o sin `./`). Es una heurística: otros comodines (`**/LICENSE`) pasan la validación, pero tampoco los liberan.
 - Crear archivos nuevos en esas rutas sigue permitido, como en el resto de rutas protegidas. Ver [Loops](loops.md#rutas-protegidas).
 
 ---

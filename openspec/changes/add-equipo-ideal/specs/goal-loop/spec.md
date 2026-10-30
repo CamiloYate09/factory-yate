@@ -18,15 +18,23 @@ Además de los archivos críticos del harness ya existentes, `.claude/agents/**`
 - **THEN** la validación del objetivo falla indicando que los archivos críticos del harness no se pueden liberar
 
 ### Requirement: Liberación de un archivo crítico concreto
-La validación de `scope.allow_modify` SHALL rechazar los patrones que cubren un crítico estático del harness (`feature_list.json`, `factory.toml`, `prompts/**`, `.claude/agents/**` y `.claude/skills/**`; por ejemplo `.claude/**`) y los que, leídos como ruta, caen dentro de uno (por ejemplo `prompts/checker.md` o `.claude/agents/qa.md`).
+La validación de `scope.allow_modify` SHALL rechazar un patrón si casa con alguna ruta de muestra de los críticos estáticos (`feature_list.json`, `factory.toml`, `prompts/**`, `.claude/agents/**` y `.claude/skills/**`), como `.claude/**` o `**/SKILL.md`, o si, leído como ruta y sin el prefijo `./`, cae dentro de uno de ellos, como `prompts/checker.md` o `./.claude/agents/qa.md`.
 
 #### Scenario: Un objetivo intenta liberar un agente concreto del equipo
 - **WHEN** un `goal.md` declara `scope.allow_modify` con `.claude/agents/qa.md`
 - **THEN** la validación del objetivo falla indicando que los archivos críticos del harness no se pueden liberar
 
-### Requirement: Patrones que la validación no detecta
-La validación SHALL dejar pasar el script del comando de verificación, que solo se marca crítico al ejecutar, y los comodines que solo solapan en parte con un crítico (por ejemplo `.claude/*/qa.md` o `**/LICENSE`). Ninguno de ellos MUST liberar el archivo crítico: sigue protegido en cada ronda.
+#### Scenario: Ruta con prefijo ./
+- **WHEN** un `goal.md` declara `scope.allow_modify` con `./prompts/checker.md`
+- **THEN** la validación del objetivo falla igual que sin el prefijo
+
+### Requirement: Un patrón aceptado no libera un crítico
+Un patrón de `scope.allow_modify` que la validación acepta SHALL NOT liberar ningún archivo crítico. Es el caso del script del comando de verificación, que solo se marca crítico al ejecutar, o de un comodín como `.claude/*/qa.md` o `**/LICENSE`: el archivo crítico sigue protegido en cada ronda.
 
 #### Scenario: Comodín que solapa en parte con un crítico
-- **WHEN** un `goal.md` declara `scope.allow_modify` con `.claude/*/qa.md`
-- **THEN** la validación lo acepta, pero `.claude/agents/qa.md` sigue protegido como crítico y una ronda que lo modifique se revierte
+- **WHEN** un `goal.md` que la validación acepta declara `scope.allow_modify` con `.claude/*/qa.md` y una ronda modifica `.claude/agents/qa.md`
+- **THEN** la ronda se revierte por modificar un archivo crítico del harness
+
+#### Scenario: Liberar el script de verificación
+- **WHEN** un `goal.md` cuyo criterio ejecuta `./scripts/check.sh` declara `scope.allow_modify` con `scripts/check.sh`
+- **THEN** la validación lo acepta y `scripts/check.sh` sigue protegido como crítico
