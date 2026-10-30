@@ -111,7 +111,8 @@ def changed_paths(root: Path, base: str = "HEAD") -> list[str]:
 
 
 def normalize_paths(paths: list[str]) -> list[str]:
-    """Rutas de --paths tal cual, sin `./` inicial, vacías ni repetidas."""
+    """Rutas de --paths sin espacios en los extremos, sin `./` inicial, vacías ni repetidas.
+    (Las que llegan de git, en cambio, se conservan tal cual: ver `changed_paths`.)"""
     out: list[str] = []
     for path in paths:
         path = path.strip().removeprefix("./")

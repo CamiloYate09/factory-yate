@@ -1,7 +1,8 @@
 """Plantilla del equipo: lectura y validación del frontmatter de `.claude/agents/*.md` (D1, D8).
 
-Un agente es miembro del equipo si su frontmatter declara `tipo` o `dorsal`; el resto (como el
-`checker`, que actúa de árbitro) queda fuera y no se valida, aunque su YAML sea ilegible. La
+Un agente es miembro del equipo si su frontmatter declara `tipo` o `dorsal`; el resto queda
+fuera de la plantilla, aunque su YAML sea ilegible. Dos reglas valen para todos los agentes:
+ningún `name` se repite y el árbitro (`checker.md`, si existe) declara `name: checker`. La
 validación nunca lanza excepciones: devuelve una línea `"<archivo>: <motivo>"` por error.
 """
 

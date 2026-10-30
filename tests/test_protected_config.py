@@ -160,10 +160,11 @@ def test_settings_local_no_se_versiona(tmp_path):
     """Los ajustes personales de Claude Code no llegan nunca a una rama (ni a main con un land)."""
     root = init_git_repo(tmp_path / "repo")
     shutil.copy(Path(__file__).resolve().parents[1] / ".gitignore", root / ".gitignore")
+    # Sin el excludesFile global: la regla tiene que salir del .gitignore del repo.
+    check = ["git", "-c", "core.excludesFile=/dev/null", "check-ignore", "-v"]
     ignorado = subprocess.run(
-        ["git", "check-ignore", "-q", ".claude/settings.local.json"], cwd=root, check=False
+        [*check, ".claude/settings.local.json"], cwd=root, capture_output=True, text=True
     )
-    versionado = subprocess.run(
-        ["git", "check-ignore", "-q", ".claude/settings.json"], cwd=root, check=False
-    )
-    assert ignorado.returncode == 0 and versionado.returncode == 1
+    versionado = subprocess.run([*check, ".claude/settings.json"], cwd=root, check=False)
+    assert ignorado.returncode == 0 and ignorado.stdout.startswith(".gitignore:")
+    assert versionado.returncode == 1

@@ -68,10 +68,10 @@
 
 ## 9. Integración y validación
 
-- [ ] 9.1 Integrar las ramas de las unidades en `main` (decisión humana) y ejecutar `./scripts/check.sh`, `factory team validate`, `factory team list` y `openspec validate add-equipo-ideal --strict`.
-- [ ] 9.2 Ejecutar `factory features start|verify` de las 7 features, una a una.
-- [ ] 9.3 Pedir la revisión independiente del `checker` sobre el diff conjunto y corregir los hallazgos `critical` y `medium`.
-- [ ] 9.4 Hacer un partido real con `/equipo` sobre un cambio pequeño, con un tope de coste acordado con el humano, y registrarlo en `progress.md`.
+- [x] 9.1 Integrar las ramas de las unidades en `main` (decisión humana) y ejecutar `./scripts/check.sh`, `factory team validate`, `factory team list` y `openspec validate add-equipo-ideal --strict`.
+- [x] 9.2 Ejecutar `factory features start|verify` de las 7 features, una a una.
+- [x] 9.3 Pedir la revisión independiente del `checker` sobre el diff conjunto y corregir los hallazgos `critical` y `medium`.
+- [x] 9.4 Hacer un partido real con `/equipo` sobre un cambio pequeño, con un tope de coste acordado con el humano, y registrarlo en `progress.md`.
 
 ## Workflow follow-up
 
