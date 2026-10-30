@@ -5,7 +5,7 @@
 - Raíz del repositorio: `factory-yate/`, la que contiene `AGENTS.md`.
 - Arranque estándar: `./init.sh`.
 - Verificación estándar: `./scripts/check.sh`.
-- OpenSpec: specs principales en `openspec/specs/` (11 capacidades). Cambios archivados: `2026-10-27-add-harness-loop-engine`, `2026-10-28-extend-factory-pipeline` y `2026-10-28-add-knowledge-brains`. Cambios activos: `add-library-map` (8/8 tareas, sin commitear; sesión 006) y `add-equipo-ideal` (de otra sesión, en worktrees aparte).
+- OpenSpec: specs principales en `openspec/specs/` (12 capacidades). Cambios archivados: `2026-10-27-add-harness-loop-engine`, `2026-10-28-extend-factory-pipeline`, `2026-10-28-add-knowledge-brains` y `2026-10-29-add-library-map`. Cambios activos: `add-equipo-ideal` (integrado en `main`; faltan `features verify`, el partido real y el archivado; sesión 007) y `add-panel` (otra sesión).
 - Feature activa / siguiente: ver `.venv/bin/factory features list`.
 - Commits: `d7c3d5b` (commit inicial) y `9d74594` (evidencia de las features con hash real).
 - Bloqueos actuales: la prueba live (9.2) no está aprobada. El contrato de `--json-schema` se valida con el dogfooding (9.3).
@@ -235,3 +235,41 @@
 - Riesgos / pendientes:
   - sin commitear; al commitear, avisar a la otra sesión.
 - Mejor próximo paso: revisión del `checker`, commit (incluye `brain-mapa/` y `brain-diario/`) y archivar `add-library-map`.
+
+### Sesión 007 — 2026-10-28 a 2026-10-30 (`add-equipo-ideal`)
+
+- Objetivo: el "equipo ideal" de sub-agentes. Un técnico (orquestador) decide la convocatoria y dirige a hasta 11 jugadores especialistas; el `checker` sigue como árbitro independiente.
+- Cómo se hizo:
+  - cambio OpenSpec `add-equipo-ideal`: propuesta, diseño D1–D9, 4 specs delta y tareas (`f18df16`);
+  - 7 unidades en paralelo (subagentes en worktrees, commits en ramas locales sin push);
+  - rama `integracion/equipo-ideal`, que trajo `main` y resolvió el README (equipo = paso L) y una línea pegada de `AGENTS.md`;
+  - 6 revisiones del árbitro hasta `pass_with_minor`;
+  - fast-forward de `main` a `c066f30` y después a `cde950b`, sin push. La sesión de `add-panel` apartó y reaplicó sus cambios de `cli.py` y `README.md` para hacerlo posible.
+- Completado:
+  - **`factory team list | validate | lineup`:** plantilla en el frontmatter de `.claude/agents/*.md` (`dorsal`, `tipo`, `convocatoria`), formación 4-3-3 con vacantes y convocatoria determinista con su motivo; comprobación crítica `team-roster` en `doctor`;
+  - **`factory complexity [rutas] [--base REF] [--max N] [--json]`:** complejidad ciclomática con `ast`, rangos A–F, delta y umbral;
+  - **jugadores:**
+    - #1 `seguridad`: copia literal de `cloudflare/security-audit-skill` @ `c1c8a8c` (MIT) con sha256 en `UPSTREAM.md`, siempre en modo guía;
+    - #2 `qa`, #3 `documentador`, #4 `revisor-pr` (ideas de `gentleman-guardian-angel`, MIT, sin copiar código), #5 `metricas`, #6 `producto` y #9 `ingeniero-software`;
+    - técnico `tecnico` + skill `/equipo` (reglamento del partido) + `docs/harness/equipo.md`;
+    - vacantes 7, 8, 10 y 11 con perfiles sugeridos;
+  - **protección:** `.claude/agents/**`, `.claude/skills/**`, `.claude/commands/**`, `.claude/hooks/**` y `.claude/settings.json` son críticos en los loops; `releases_critical` también rechaza rutas dentro de un crítico (con o sin `./`);
+  - **arreglo de un fallo previo:** git entrecomillaba las rutas con tildes y un loop podía modificar un crítico o un archivo fuera de alcance sin que se revirtiera. Ahora las rutas se leen con `-z`;
+  - **validación:** ningún agente puede repetir el `name` de otro y el árbitro debe declarar `name: checker` (contra la suplantación);
+  - **otros:** `.claude/settings.local.json` se ignora en git y `tests/test_cli_help.py` se contrasta con `build_parser`.
+- Verificación ejecutada (en `cde950b`):
+  - `./scripts/check.sh` → 0 (604 passed, ruff y doctor sin fallos);
+  - `openspec validate add-equipo-ideal --strict` → válido;
+  - `factory team validate` → 0 (8 miembros).
+- Revisión independiente (`checker`): 6 rondas sobre el diff conjunto.
+  - Los `critical` y `medium` están corregidos, con tests. Entre ellos: `revisor-pr` leía el razonamiento del maker, la spec de `allow_modify` prometía más de lo que hace la heurística, y el prefijo `./` esquivaba el rechazo.
+  - Última ronda: `pass_with_minor`; también se corrigieron sus 6 `minor`.
+- Pruebas reales con haiku (una por jugador nuevo): total ≈ 0,029 USD. Todas cargaron el agente y respondieron con su cabecera, y los revisores no cambiaron el árbol.
+- Riesgos / pendientes:
+  - **`features start|verify` de las 7 features (tarea 9.2):** pendiente por WIP=1, porque `review-hooks` (add-panel) está en `in_progress`. La sesión de add-panel avisará al cerrarla.
+  - **Partido real con `/equipo` (9.4):** pendiente de que el humano fije un tope de coste.
+  - **Después:** archivar con `/opsx:archive add-equipo-ideal`.
+  - **Push:** no hecho; decisión humana.
+  - **Riesgo conocido:** un maker puede crear `.claude/settings.local.json` en su worktree. Ya no llega a `main`, porque está en `.gitignore`, pero el checker de esa misma ronda lo cargaría.
+- Seguimiento propuesto (cambios aparte): el equipo dentro de `factory goal run` (fase 2), fichar las vacantes y refactorizar la deuda de complejidad que mide `factory complexity` (`parse_intake` 35, `parse_goal_text` 32, `cmd_brain` 30, `render_loop_state` 30).
+- Mejor próximo paso: cuando `review-hooks` deje `in_progress`, ejecutar `factory features start|verify` de `team-roster`, `complexity-metrics`, `team-security`, `team-coach`, `team-builders`, `team-reviewers` y `team-integration`, una a una.
