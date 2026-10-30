@@ -249,3 +249,12 @@ def test_rutas_desde_git_conservan_el_espacio_inicial(tmp_path, capsys):
     (root / " empieza.py").write_text("x = 1\n")  # no versionado
     data = _lineup_json(root, capsys)
     assert data["rutas"] == [" empieza.py"]
+
+
+def test_rutas_versionadas_conservan_el_espacio_inicial(tmp_path, capsys):
+    root = _repo_con_equipo(tmp_path)
+    (root / " versionado.py").write_text("x = 1\n")
+    _commit_all(root, "archivo que empieza por espacio")
+    (root / " versionado.py").write_text("x = 2\n")  # rama `diff --name-only -z`
+    data = _lineup_json(root, capsys, "--base", "HEAD")
+    assert data["rutas"] == [" versionado.py"]
