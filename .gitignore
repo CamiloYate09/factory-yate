@@ -22,3 +22,6 @@ dist/
 
 # Worktrees de los subagentes de Claude Code (trabajo en paralelo)
 .claude/worktrees/
+
+# Ajustes personales de Claude Code: nunca se versionan (tienen más precedencia que settings.json)
+.claude/settings.local.json

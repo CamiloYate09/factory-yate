@@ -530,3 +530,25 @@ def test_un_jugador_suplanta_a_otro(tmp_path):
     roster = load_roster(tmp_path)
     assert [m.name for m in roster.members] == ["qa"]
     assert any(e.startswith(".claude/agents/zz.md: `name` «qa» repetido") for e in roster.errors)
+
+
+def test_el_arbitro_debe_declarar_su_nombre(tmp_path):
+    arbitro = tmp_path / ".claude" / "agents" / "checker.md"
+    arbitro.parent.mkdir(parents=True)
+    arbitro.write_text("---\nname: juez\ndescription: x\n---\nRevisa.\n", encoding="utf-8")
+    errors = load_roster(tmp_path).errors
+    assert errors == [
+        ".claude/agents/checker.md: el árbitro debe declarar `name: checker`, para que ningún "
+        "otro agente pueda ocupar ese nombre"
+    ]
+
+
+def test_nombre_repetido_sin_dueno_lo_conserva_el_primero(tmp_path):
+    for stem in ("aa", "bb"):
+        path = tmp_path / ".claude" / "agents" / f"{stem}.md"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("---\nname: comun\ndescription: x\n---\nX.\n", encoding="utf-8")
+    assert load_roster(tmp_path).errors == [
+        ".claude/agents/bb.md: `name` «comun» repetido: ya lo usa .claude/agents/aa.md "
+        "(un agente no suplanta a otro)"
+    ]

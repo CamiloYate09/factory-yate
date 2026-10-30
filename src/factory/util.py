@@ -97,11 +97,12 @@ def run_shell(command: str, cwd: Path, timeout_s: float | None = None) -> Comman
     return CommandResult(command, proc.returncode, proc.stdout, time.monotonic() - started)
 
 
-def git(cwd: Path, *args: str, check: bool = True) -> str:
+def git(cwd: Path, *args: str, check: bool = True, strip: bool = True) -> str:
+    """Salida de git; `strip=False` la deja tal cual (las salidas `-z` no se recortan)."""
     proc = subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True)
     if check and proc.returncode != 0:
         raise GitError(f"git {' '.join(args)} falló: {proc.stderr.strip() or proc.stdout.strip()}")
-    return proc.stdout.strip()
+    return proc.stdout.strip() if strip else proc.stdout
 
 
 class GitError(RuntimeError):

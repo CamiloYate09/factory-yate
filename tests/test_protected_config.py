@@ -109,7 +109,10 @@ def test_liberar_el_script_de_verificacion(tmp_path):
 def test_comodin_que_solapa_en_parte_con_un_critico(tmp_path, pattern):
     """La validación no lo detecta, pero no libera nada: los críticos se consultan primero."""
     goal = _goal(f'  allow_modify: ["{pattern}"]\n')
+    assert goal.allow_modify == [pattern]
     prot = goal.protection_for(tmp_path, [], None)
+    assert prot.released == [pattern]
+    assert f"{pattern} (los críticos que cubra siguen protegidos)" in "\n".join(prot.describe())
     for critico in (
         ".claude/agents/qa.md",
         ".claude/skills/security-audit/LICENSE",

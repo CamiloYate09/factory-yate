@@ -18,6 +18,8 @@
 
 - [x] 2.5 Validar que ningún agente de `.claude/agents/` repite el `name` de otro (suplantación del árbitro o de un jugador). Verificar con `pytest tests/test_team_roster.py`, escenario "Un agente suplanta al árbitro".
 
+- [x] 2.6 Exigir que el árbitro (`checker.md`, si existe) declare `name: checker`, y que un `name` repetido sin dueño lo conserve el primero. Verificar con `pytest tests/test_team_roster.py`.
+
 ## 3. Complejidad ciclomática (`complexity-metrics`)
 
 - [x] 3.1 Implementar `src/factory/complexity.py` (D6). Verificar con `pytest tests/test_complexity.py`, escenarios "Función lineal", "Ramas y operadores lógicos", "Rango de una función lineal", "Método de una clase" y "Función anidada", más casos de `match`, comprensiones, `try/except` y lambdas.
@@ -61,6 +63,8 @@
 - [x] 8.3 Proteger también `.claude/commands/**`, `.claude/hooks/**` y `.claude/settings.json`, y marcar como "sin efecto: crítico" las liberaciones que caen en un crítico. Verificar con `pytest tests/test_protected_config.py`, escenario "Un objetivo intenta liberar los hooks".
 - [x] 8.4 Leer las rutas cambiadas con `git … -z` (alcance, protección, `land` y prompt del checker), para que las rutas con tildes no escapen. Verificar con `pytest tests/test_protected_paths.py`, escenario "Un crítico con tildes".
 - [x] 8.5 Completar la lista de subcomandos de `tests/test_cli_help.py` y contrastarla con `build_parser`. Verificar con `pytest tests/test_cli_help.py`.
+
+- [x] 8.6 No recortar las salidas `-z` de git (una ruta que empieza por espacio), avisar en `describe` de que una liberación con comodín no alcanza a los críticos, cubrir el alcance con tildes y no versionar `.claude/settings.local.json`. Verificar con `pytest tests/test_protected_paths.py tests/test_protected_config.py`.
 
 ## 9. Integración y validación
 

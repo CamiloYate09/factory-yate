@@ -60,8 +60,8 @@ class Worktree:
     def __post_init__(self) -> None:
         self.start = self.start or self.base
 
-    def git(self, *args: str, check: bool = True) -> str:
-        return git(self.path, *args, check=check)
+    def git(self, *args: str, check: bool = True, strip: bool = True) -> str:
+        return git(self.path, *args, check=check, strip=strip)
 
     def head(self) -> str:
         return self.git("rev-parse", "HEAD")
@@ -85,8 +85,10 @@ class Worktree:
         self.git("clean", "-q", "-fd")
 
     def changed_files(self, since: str) -> list[str]:
-        tracked = split_z(self.git("diff", "--name-only", "-z", since))
-        untracked = split_z(self.git("ls-files", "-z", "--others", "--exclude-standard"))
+        tracked = split_z(self.git("diff", "--name-only", "-z", since, strip=False))
+        untracked = split_z(
+            self.git("ls-files", "-z", "--others", "--exclude-standard", strip=False)
+        )
         return sorted({p for p in tracked + untracked if p})
 
     def tree_hash(self) -> str:
@@ -111,7 +113,9 @@ def name_status(cwd: Path, since: str, until: str) -> list[tuple[str, str, str |
     """(estado, ruta, ruta nueva) de `git diff --name-status -M`; en renombrados, la ruta es la
     original y la nueva va aparte. Con `-z`, para que las rutas con tildes no lleguen entre
     comillas y escapen a las rutas protegidas."""
-    tokens = split_z(git(cwd, "diff", "--name-status", "-M", "-z", f"{since}..{until}"))
+    tokens = split_z(
+        git(cwd, "diff", "--name-status", "-M", "-z", f"{since}..{until}", strip=False)
+    )
     entries: list[tuple[str, str, str | None]] = []
     i = 0
     while i + 1 < len(tokens):

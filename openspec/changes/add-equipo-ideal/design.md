@@ -56,7 +56,7 @@ Cada miembro del equipo es `.claude/agents/<name>.md` con tres claves planas adi
   - `constructor`: puede editar; `tools` no incluye `Agent`.
   - `tecnico`: sin `dorsal`; como mucho uno en la plantilla; `tools` no incluye `Edit`, `Write` ni `NotebookEdit`.
 - `convocatoria`: cadena con elementos separados por comas. Cada elemento es un glob de ruta relativa al repo (la misma sintaxis que `scope` de `goal.md`: `**`, `*`, `?`) o uno de los tokens `siempre` o `peticion`. El técnico no la lleva.
-- Un archivo sin `dorsal` ni `tipo` no pertenece al equipo y no se valida. Es el caso del `checker`, que actúa como **árbitro**.
+- Un archivo sin `dorsal` ni `tipo` no pertenece al equipo y no se valida, salvo una regla común a todos los agentes: ningún `name` puede repetirse, y el árbitro (`checker.md`, si existe) declara `name: checker`. Así nadie suplanta a un jugador ni al árbitro. Es el caso del `checker`, que actúa como **árbitro**.
 - *Alternativa: un `equipo.toml` central.* Se descarta porque cada fichaje tocaría dos archivos y porque las unidades de trabajo en paralelo chocarían en él.
 
 ### D2. Plantilla inicial
@@ -138,7 +138,7 @@ Para revisar una rama ya hecha (propia, de otra persona o una `factory/<run-id>`
 ### D7. Protección del equipo
 - `STATIC_CRITICAL` incluye `.claude/agents/**` y `.claude/skills/**`, y también el resto de la configuración de Claude Code: `.claude/commands/**`, `.claude/hooks/**` y `.claude/settings.json` (`settings.local.json` es personal y no se versiona).
 - Las rutas cambiadas se leen de git con `-z`, sin comillas ni escapes, para que una ruta con tildes no escape al alcance ni a la protección.
-- `CRITICAL_SAMPLES` añade `.claude/agents/x.md` y `.claude/skills/x/SKILL.md`, de modo que un `scope.allow_modify` que los liberase se detecta y se rechaza.
+- `CRITICAL_SAMPLES` añade `.claude/agents/x.md`, `.claude/skills/x/SKILL.md`, `.claude/commands/x/y.md`, `.claude/hooks/x.sh` y `.claude/settings.json`, de modo que un `scope.allow_modify` que los liberase se detecta y se rechaza.
 - Crear archivos nuevos en esas rutas sigue permitido, como en el resto de rutas protegidas.
 - `releases_critical` rechaza además un patrón que, leído como ruta, cae dentro de un crítico estático (`prompts/checker.md`, `.claude/agents/qa.md`). Antes esos objetivos pasaban la validación y cada ronda que tocaba el archivo se revertía hasta agotar el presupuesto. Es una heurística: rechaza lo que casa con una muestra (`**/SKILL.md`) o lo que, sin `./`, cae dentro de un crítico. Otros comodines (`.claude/*/qa.md`, `**/LICENSE`) y el script de verificación pasan la validación, pero no liberan nada, porque `Protection.is_protected` consulta los críticos antes que las liberaciones.
 

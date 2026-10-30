@@ -598,7 +598,9 @@ class LoopEngine:
     ) -> str:
         cumulative = wt.diff(state.base_commit)
         round_diff = wt.diff(pre_commit)
-        changed = split_z(wt.git("diff", "--name-only", "-z", f"{state.base_commit}..HEAD"))
+        changed = split_z(
+            wt.git("diff", "--name-only", "-z", f"{state.base_commit}..HEAD", strip=False)
+        )
         return "\n\n".join(
             [
                 f"# Revisión de la ronda {number} del objetivo `{self.goal.id}`",

@@ -133,7 +133,7 @@ def land(
             text=True,
         )
         if merge.returncode != 0:
-            conflicts = split_z(wt.git("diff", "--name-only", "-z", "--diff-filter=U"))
+            conflicts = split_z(wt.git("diff", "--name-only", "-z", "--diff-filter=U", strip=False))
             wt.git("merge", "--abort", check=False)
             atomic_write_text(
                 checks_path,

@@ -67,6 +67,16 @@ def script_path(command: str, root: Path) -> str | None:
     return relative if (root / relative).is_file() else None
 
 
+def _describe_release(pattern: str, critical: list[str]) -> str:
+    """Una liberación tal como la ve el maker: nunca alcanza a los críticos."""
+    path = pattern.strip().removeprefix("./")
+    if matches(path, critical):
+        return f"{pattern} (sin efecto: crítico)"
+    if any(ch in path for ch in "*?"):
+        return f"{pattern} (los críticos que cubra siguen protegidos)"
+    return pattern
+
+
 @dataclass
 class Protection:
     critical: list[str]
@@ -79,10 +89,7 @@ class Protection:
         return matches(path, self.protected) and not matches(path, self.released)
 
     def describe(self) -> list[str]:
-        released = [
-            f"{p} (sin efecto: crítico)" if matches(p.removeprefix("./"), self.critical) else p
-            for p in self.released
-        ]
+        released = [_describe_release(p, self.critical) for p in self.released]
         return [
             f"Rutas protegidas (críticas, siempre): {', '.join(self.critical)}",
             f"Rutas protegidas (configuración/objetivo): {', '.join(self.protected) or '—'}",

@@ -296,3 +296,23 @@ def test_name_status_y_changed_files_sin_comillas(tmp_path):
     [(status, old, new)] = [e for e in wt.name_status(base) if e[0].startswith("R")]
     assert (old, new) == ("tests/test_a.py", "tests/test_ñandú.py")
     assert ("A", "docs/guía.md", None) in wt.name_status(base)
+
+
+def test_changed_files_conserva_el_espacio_inicial(tmp_path):
+    root = _protected_repo(tmp_path, toml="")
+    wt = create_worktree(root, tmp_path / "wts", "r1", "main")
+    (wt.path / " empieza.txt").write_text("x\n")
+    assert wt.changed_files("HEAD") == [" empieza.txt"]
+
+
+def test_fuera_de_alcance_con_tildes_se_revierte(tmp_path):
+    root = _protected_repo(tmp_path, toml="")
+    runner = FakeRunner(
+        maker=[
+            maker_done("fuera", **{"a.txt": "1", "prohibido/guía.md": "x\n"}),
+            maker_done("bien", **{"a.txt": "1"}),
+        ]
+    )
+    state = _run(root, runner)  # GOAL_TEMPLATE: deny ["prohibido/**"]
+    assert state.rounds[0].decision == "scope_revert"
+    assert "prohibido/guía.md" in runner.calls_for("maker")[1].prompt
