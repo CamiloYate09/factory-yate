@@ -1,6 +1,6 @@
 {
   "project": "factory-yate",
-  "last_updated": "2026-10-29",
+  "last_updated": "2026-10-30",
   "rules": {
     "single_active_feature": true,
     "passing_requires_evidence": true,
@@ -334,12 +334,19 @@
       "area": "team",
       "title": "Plantilla y convocatoria del equipo",
       "user_visible_behavior": "`factory team list|validate|lineup` muestra la formación 4-3-3 con vacantes, valida el frontmatter de los agentes del equipo y sugiere la convocatoria con su motivo; `factory doctor` incluye `team-roster`.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "python -m pytest -q tests/test_team_roster.py tests/test_team_lineup.py tests/test_doctor.py tests/test_scaffold_integration.py"
       ],
       "manual_checks": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "command": "python -m pytest -q tests/test_team_roster.py tests/test_team_lineup.py tests/test_doctor.py tests/test_scaffold_integration.py",
+          "exit_code": 0,
+          "date": "2026-10-30T05:46:33+00:00",
+          "commit": "7800a7961cf56e85d21bf2708c2a5f18c6c288c6"
+        }
+      ],
       "notes": "OpenSpec add-equipo-ideal, grupo 2"
     },
     {
@@ -348,12 +355,19 @@
       "area": "team",
       "title": "Complejidad ciclomática y jugador de métricas",
       "user_visible_behavior": "`factory complexity [rutas] [--base REF] [--max N] [--json]` mide la complejidad ciclomática por función con rangos A–F y delta frente a una referencia; el jugador `metricas` (#5) interpreta el informe.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "python -m pytest -q tests/test_complexity.py tests/test_team_metricas.py"
       ],
       "manual_checks": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "command": "python -m pytest -q tests/test_complexity.py tests/test_team_metricas.py",
+          "exit_code": 0,
+          "date": "2026-10-30T05:46:38+00:00",
+          "commit": "7800a7961cf56e85d21bf2708c2a5f18c6c288c6"
+        }
+      ],
       "notes": "OpenSpec add-equipo-ideal, grupo 3"
     },
     {
@@ -362,12 +376,19 @@
       "area": "team",
       "title": "Jugador de seguridad (portero)",
       "user_visible_behavior": "El jugador `seguridad` (#1) revisa diffs en modo guía con la skill `security-audit` copiada literal de cloudflare/security-audit-skill (MIT), con hallazgos probados desde el código y pistas `needs_validation`.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "python -m pytest -q tests/test_team_seguridad.py"
       ],
       "manual_checks": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "command": "python -m pytest -q tests/test_team_seguridad.py",
+          "exit_code": 0,
+          "date": "2026-10-30T05:46:38+00:00",
+          "commit": "7800a7961cf56e85d21bf2708c2a5f18c6c288c6"
+        }
+      ],
       "notes": "OpenSpec add-equipo-ideal, grupo 4"
     },
     {
@@ -376,12 +397,19 @@
       "area": "team",
       "title": "Técnico y reglamento del partido",
       "user_visible_behavior": "`/equipo` y `claude --agent tecnico` publican la convocatoria justificada, dirigen el partido por fases y cierran con un acta; `docs/harness/equipo.md` documenta la plantilla, las vacantes y cómo fichar.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "python -m pytest -q tests/test_team_tecnico.py"
       ],
       "manual_checks": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "command": "python -m pytest -q tests/test_team_tecnico.py",
+          "exit_code": 0,
+          "date": "2026-10-30T05:46:38+00:00",
+          "commit": "7800a7961cf56e85d21bf2708c2a5f18c6c288c6"
+        }
+      ],
       "notes": "OpenSpec add-equipo-ideal, grupo 5"
     },
     {
@@ -390,12 +418,19 @@
       "area": "team",
       "title": "Constructores: ingeniero de software y documentador",
       "user_visible_behavior": "`ingeniero-software` (#9) implementa siguiendo AGENTS.md y `documentador` (#3) actualiza solo documentación `*.md`.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "python -m pytest -q tests/test_team_constructores.py"
       ],
       "manual_checks": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "command": "python -m pytest -q tests/test_team_constructores.py",
+          "exit_code": 0,
+          "date": "2026-10-30T05:46:38+00:00",
+          "commit": "7800a7961cf56e85d21bf2708c2a5f18c6c288c6"
+        }
+      ],
       "notes": "OpenSpec add-equipo-ideal, grupo 6"
     },
     {
@@ -404,12 +439,19 @@
       "area": "team",
       "title": "Revisores: QA, producto y revisor de PR",
       "user_visible_behavior": "`qa` (#2), `producto` (#6) y `revisor-pr` (#4) revisan en solo lectura con el formato común del equipo: plan de pruebas y cobertura, preguntas y respuestas frente a la petición, y revisión de ramas propias o ajenas.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "python -m pytest -q tests/test_team_revisores.py"
       ],
       "manual_checks": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "command": "python -m pytest -q tests/test_team_revisores.py",
+          "exit_code": 0,
+          "date": "2026-10-30T05:46:39+00:00",
+          "commit": "7800a7961cf56e85d21bf2708c2a5f18c6c288c6"
+        }
+      ],
       "notes": "OpenSpec add-equipo-ideal, grupo 7"
     },
     {
@@ -418,12 +460,19 @@
       "area": "team",
       "title": "Integración y protección del equipo",
       "user_visible_behavior": "`.claude/agents/**` y `.claude/skills/**` son archivos críticos que ningún loop puede modificar; AGENTS.md, CLAUDE.md, README y roles.md documentan el equipo y el árbitro.",
-      "status": "not_started",
+      "status": "passing",
       "verification": [
         "python -m pytest -q tests/test_protected_config.py tests/test_protected_paths.py tests/test_doctor.py"
       ],
       "manual_checks": [],
-      "evidence": [],
+      "evidence": [
+        {
+          "command": "python -m pytest -q tests/test_protected_config.py tests/test_protected_paths.py tests/test_doctor.py",
+          "exit_code": 0,
+          "date": "2026-10-30T05:46:48+00:00",
+          "commit": "7800a7961cf56e85d21bf2708c2a5f18c6c288c6"
+        }
+      ],
       "notes": "OpenSpec add-equipo-ideal, grupo 8"
     },
     {
