@@ -5,10 +5,10 @@
 - Raíz del repositorio: `factory-yate/`, la que contiene `AGENTS.md`.
 - Arranque estándar: `./init.sh`.
 - Verificación estándar: `./scripts/check.sh`.
-- OpenSpec: specs principales en `openspec/specs/` (18 capacidades). Cambios archivados: `2026-10-27-add-harness-loop-engine`, `2026-10-28-extend-factory-pipeline`, `2026-10-28-add-knowledge-brains`, `2026-10-29-add-library-map`, `2026-10-30-add-equipo-ideal` (sesión 007) y `2026-11-01-add-panel` (sesión 008; 5.3 cerrada el 2026-11-01 con Chrome headless, tema oscuro; specs nuevas `token-usage`, `review-hooks` y `observability-panel`). Cambios activos: `add-strands-runner` y `improve-panel-ux` (propuesto, espera a que termine `strands-runner`).
+- OpenSpec: specs principales en `openspec/specs/` (18 capacidades). Cambios archivados: `2026-10-27-add-harness-loop-engine`, `2026-10-28-extend-factory-pipeline`, `2026-10-28-add-knowledge-brains`, `2026-10-29-add-library-map`, `2026-10-30-add-equipo-ideal` (sesión 007), `2026-11-01-add-panel` (sesión 008; specs nuevas `token-usage`, `review-hooks` y `observability-panel`) y `2026-11-01-improve-panel-ux` (sesión 010; +16 requisitos en `observability-panel`). Cambios activos: `add-strands-runner` (completo, listo para archivar; la `live` pasa a seguimiento) y `add-strands-swarm` (en `.claude/worktrees/strands-swarm`).
 - Feature activa / siguiente: ver `.venv/bin/factory features list`.
 - Commits: `d7c3d5b` (commit inicial) y `9d74594` (evidencia de las features con hash real).
-- Bloqueos actuales: la prueba live (9.2) no está aprobada. El contrato de `--json-schema` se valida con el dogfooding (9.3).
+- Bloqueos actuales: la prueba live (9.2) no está aprobada, y las pruebas `live` de Strands se aplazan a un seguimiento posterior (sesión 011). El contrato de `--json-schema` se valida con el dogfooding (9.3).
 
 ## Registro de sesiones
 
@@ -375,3 +375,35 @@
   - `package.json`, `package-lock.json` y `node_modules/` de la raíz (npm `@strands-agents/harness`) no se usan, no están en `.gitignore` y no se han commiteado. Decisión del usuario.
   - **Push:** no hecho; decisión humana.
 - Mejor próximo paso: la 5.2 con permiso y credenciales; después, archivar `add-strands-runner`, `improve-panel-ux` y la fase 2 (`add-strands-swarm`).
+
+### Sesión 010 — 2026-11-02 (`improve-panel-ux`)
+
+- Objetivo: las mejoras de UX/UI y de botones del panel. Solo cambia `static/index.html`, más sus tests y su documentación.
+- Corrección de la spec: `factory goal rework` exige `--answer`, así que el botón copia `goal rework <run> --answer ` sin respuesta. Ejecutarlo sin completar falla sin hacer nada.
+- Cómo se prueba en el navegador: sin Claude in Chrome en la sesión, con un driver propio sobre Chrome headless y CDP (fuera del repo, en el scratchpad), contra el panel con los datos reales.
+- `panel-ux-fixes`: prueba de humo con 12 de 12 escenarios correctos.
+  - «Primera carga fallida» se probó con `fetch` respondiendo 500, porque con el servidor parado la página ni se sirve.
+  - «Día local distinto del UTC» se comprobó con el rótulo sobre la fecha UTC real, sin simular la zona horaria.
+- `panel-ux-actions`: prueba de humo con 9 de 9 escenarios correctos, 4 de ellos sobre un repo temporal con ids y estados que los datos reales no tienen.
+  - El portapapeles real se comprobó leyéndolo con `readText`, y también el respaldo de selección sin `navigator.clipboard`.
+  - Queda comprobado el tema claro, que faltaba de la 5.3 de `add-panel`.
+- `panel-ux-views`: prueba de humo con 10 de 10 escenarios correctos. Los escenarios de `panel-ux-fixes` y `panel-ux-actions` se repitieron con el código final de este grupo (12/12 y 9/9).
+  - Informativo: a 400 px de ancho emulado la página no se desborda; la captura desbordada de la revisión inicial era por el ancho mínimo de la ventana de headless.
+- Integración (5.1): `openspec validate improve-panel-ux --strict` válido y prueba de humo con 3 de 3:
+  - las tres pestañas con los datos reales, en tema claro y oscuro, sin errores de JS ni de CSP;
+  - en un repo temporal, una revisión nueva llega sin recargar y respeta el filtro activo.
+- Revisión independiente (`checker`): `pass_with_minor` (0 `critical`, 0 `medium`, 1 `minor`).
+  - Se corrigió también el `minor`: `button.chip[aria-pressed="true"]` usaba `outline` y tapaba el indicador `:focus-visible` del teclado; ahora usa `box-shadow` y se añade `:focus-visible` explícito en `button.chip` y `a.tile`, cubierto en `tests/test_panel_page.py`.
+- Verificación final y archivo:
+  - `factory features verify panel-ux-fixes | panel-ux-actions | panel-ux-views` → `passing`;
+  - `./scripts/check.sh` → código 0 (841 passed, ruff y doctor sin fallos);
+  - `openspec archive improve-panel-ux` → `2026-11-01-improve-panel-ux`, sincronizando `openspec/specs/observability-panel/spec.md` (+16 requisitos).
+- Pendiente para el humano: commit de `improve-panel-ux` y su archivo en `main` (dejando fuera `node_modules/`, `package*.json` y `skills/` no relacionados) y repetir `factory features verify` tras el commit si se quiere dejar el hash final en `evidence`.
+
+### Sesión 011 — 2026-11-02 (revisión de tareas OpenSpec)
+
+- Objetivo: comprobar que las tareas de OpenSpec están completas.
+- Resultado en `main`: todos los cambios archivados tienen sus tareas marcadas. El único cambio activo, `add-strands-runner`, está en 16/17.
+- **5.2 (`live`) sacada del alcance por decisión del usuario (2026-11-02)**, con `/opsx:update`: no hay credenciales del proveedor en el entorno y no se autoriza el coste. `tasks.md`, `proposal.md` y `design.md` la remiten a un seguimiento posterior. `openspec validate add-strands-runner --strict` → válido. `openspec list` → `add-strands-runner ✓ Complete`, listo para `/opsx:archive`.
+- El worktree `strands-swarm` tiene una copia antigua de `improve-panel-ux` sin marcar; está obsoleta, porque ese cambio ya está archivado en `main`. Al fusionar la rama manda el archivo de `main`.
+- `add-strands-swarm` (worktree): la 5.1 y la 5.3 se registran en el `progress.md` de esa rama.

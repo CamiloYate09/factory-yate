@@ -37,10 +37,11 @@
 ## 5. Integración
 
 - [x] 5.1 Ejecutar `./scripts/check.sh` sin el extra instalado y después con él. Verificar que termina en 0 en ambos casos.
-- [ ] 5.2 Con permiso explícito del usuario y credenciales del proveedor: añadir un test `live` (`pytest -m live tests/test_strands_runner.py`) que invoque al checker de Strands sobre un diff mínimo, y ejecutar `factory goal run` con `backend = "strands"` sobre un goal pequeño. Registrar en `progress.md` el coste, los tokens, el veredicto y la comparación con Claude Code.
+- 5.2 *(sin casilla: fuera del alcance de este cambio por decisión del usuario (2026-11-02): no hay credenciales del proveedor ni coste autorizado; pasa a un seguimiento posterior.)* Era: Con permiso explícito del usuario y credenciales del proveedor: añadir un test `live` (`pytest -m live tests/test_strands_runner.py`) que invoque al checker de Strands sobre un diff mínimo, y ejecutar `factory goal run` con `backend = "strands"` sobre un goal pequeño. Registrar en `progress.md` el coste, los tokens, el veredicto y la comparación con Claude Code.
 - [x] 5.3 Revisión independiente con el subagente `checker` sobre el diff completo y los criterios de `specs/agent-backends/spec.md`. Verificar que no quedan hallazgos `critical` ni `medium` abiertos y registrarlo en `progress.md`.
 
 ## Workflow follow-up
 
-- Archivar `add-strands-runner` (`/opsx:archive`) cuando las tres features estén en `passing` y la revisión esté limpia.
+- Archivar `add-strands-runner` (`/opsx:archive`) cuando las tres features estén en `passing` y la revisión esté limpia. La 5.2 no bloquea el archivado.
+- Seguimiento posterior: la prueba `live` (antigua 5.2), con permiso explícito y credenciales del proveedor.
 - Proponer la fase 2 (`add-strands-swarm`): el partido del equipo como `strands.multiagent.Swarm`.

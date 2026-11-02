@@ -36,7 +36,7 @@ Se llama a `create_harness(builtin_tools=[], builtin_plugins=[], session=False, 
 - **Alternativa B, descartada:** `strands.Agent` sin el harness. Perderíamos el prompt de sistema y la gestión de contexto sin ganar control, porque las herramientas ya las ponemos nosotros.
 - `context_manager=ContextManager(stash=False)`: las estrategias de `"auto"`, sin almacén ni la herramienta `retrieve_context`.
   - `"auto"` añade `retrieve_context`, que busca con una expresión regular del modelo dentro del proceso. Un patrón costoso congelaría el tiempo límite (D3b).
-  - Coste aceptado: los resultados de más de unos 1.500 tokens se recortan a una vista previa del principio y del final, con el marcador `[... N chars elided ...]`. Un archivo se puede volver a leer por tramos con `read`; la salida de `shell`, `grep` o `glob` no se recupera, y el agente tiene que acotar el comando. Su efecto en la calidad se medirá en la tarea 5.2.
+  - Coste aceptado: los resultados de más de unos 1.500 tokens se recortan a una vista previa del principio y del final, con el marcador `[... N chars elided ...]`. Un archivo se puede volver a leer por tramos con `read`; la salida de `shell`, `grep` o `glob` no se recupera, y el agente tiene que acotar el comando. Su efecto en la calidad se medirá en la prueba `live`, aplazada a un seguimiento posterior.
   - La tarea 2.3 comprobó el 2026-11-01, con strands-harness 0.3.3, un modelo falso y `session`, `memory` y `skills` desactivados, que `agent.storage` es `None` y que no se escribe nada ni en el `cwd` ni en `~/.agent`. `tests/test_strands_integration.py` lo mantiene y fija la lista exacta de herramientas.
 - `callback_handler=None`. Por defecto Strands imprime en stdout el texto que va recibiendo del modelo, lo que ensuciaría la salida de `factory`, que también se lee como JSON.
 - El uso viene en `invocation_context.usage` con claves camelCase: `inputTokens`, `outputTokens`, `cacheReadInputTokens`, `cacheWriteInputTokens` y `turns_taken`.
@@ -131,7 +131,7 @@ El partido del equipo como `strands.multiagent.Swarm`: un nodo por jugador de `.
 ## Risks / Trade-offs
 
 - **[Riesgo] Las herramientas propias son más pobres que las de Claude Code**, lo que puede dar peor calidad del maker. → Mitigación: el backend es opcional, y la comparación se hace con un goal real en la tarea 6.2 antes de recomendarlo.
-- **[Riesgo] La API de `strands-harness` 0.x cambia.** → Mitigación: versión acotada `<0.4` y un único módulo de adaptación. El test `live` detecta las roturas.
+- **[Riesgo] La API de `strands-harness` 0.x cambia.** → Mitigación: versión acotada `<0.4` y un único módulo de adaptación. `tests/test_strands_integration.py` (el `Agent` real con un modelo falso) detecta las roturas; la prueba `live` queda para un seguimiento posterior.
 - **[Riesgo] La cota de tokens por presupuesto es blanda** (D7): una llamada puede pasarse en su último turno. → Mitigación: el coste real se contabiliza, y el presupuesto de la ejecución y el diario paran el loop.
 - **[Riesgo] Los comandos permitidos salen del confinamiento con sus argumentos** (`git diff --output=…`, `python -m pytest` ejecuta código del repo). Es paridad con Claude Code, y `PathPolicy` solo confina las herramientas de archivos. → Mitigación: prefijos estrechos, sin credenciales en el entorno del shell y documentado en `loops.md`.
 - **[Riesgo] Sistemas de archivos que no distinguen mayúsculas** (APFS, NTFS). → Las denegaciones (reglas, cerebros y `.git`) se comparan sin distinguir mayúsculas. Denegar de más es el lado seguro.

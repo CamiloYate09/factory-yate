@@ -58,6 +58,6 @@ Si no se cubren, el loop perdería el aislamiento maker/checker, los permisos m�
   - `src/factory/doctor.py`;
   - plantillas de `factory init` (`factory.toml`).
 - Dependencias: extra opcional `strands = ["strands-harness>=0.3.3,<0.4"]` en `pyproject.toml`. No cambian las dependencias base ni la configuración de ruff o pytest.
-- Tests: unitarios con un agente inyectado y sin red, más un test `live` opcional.
+- Tests: unitarios con un agente inyectado y sin red. El test `live` contra un proveedor real queda para un seguimiento posterior, fuera de este cambio.
 - Documentación: `docs/harness/loops.md` (sección de backends) y `factory.toml` comentado.
 - Repo: el `package.json`, el `package-lock.json` y el `node_modules/` sin seguimiento de la raíz no son necesarios para este cambio. Lo que se haga con ellos lo decide el usuario.
