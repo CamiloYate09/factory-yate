@@ -427,7 +427,7 @@ Todos aceptan `--root <repo>` antes del subcomando. Más detalle en [docs/harnes
 | `brain-principal/` | texto de los libros, solo local (en `.gitignore`) |
 | `.factory/` | estado local de ejecuciones, ticks y bandeja (no se versiona) |
 | `.claude/agents/`, `.claude/skills/equipo/` | el equipo ideal: técnico, jugadores y reglamento de `/equipo` (paso L); los loops no pueden modificarlos |
-| `openspec/` | specs principales en `openspec/specs/` (15 capacidades); los cambios que construyeron todo esto están en `openspec/changes/archive/` |
+| `openspec/` | specs principales en `openspec/specs/` (18 capacidades); los cambios que construyeron todo esto están en `openspec/changes/archive/` |
 
 ## Reglas clave
 
