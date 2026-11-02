@@ -424,6 +424,53 @@ def _brain_checks(config: Config) -> list[Check]:
     return checks
 
 
+def _agent_checks(config: Config) -> list[Check]:
+    """Backend de agentes activo; con `strands`, dependencia instalada y precio de cada rol."""
+    from factory.agents.strands import INSTALL_HINT, strands_available  # import perezoso
+
+    backend = config.agent.backend
+    checks = [
+        Check(
+            "ciclo_de_vida",
+            "agent-backend",
+            f"Backend de agentes: {backend}",
+            RECOMMENDED,
+            True,
+        )
+    ]
+    if backend != "strands":
+        return checks
+    checks.append(
+        Check(
+            "ciclo_de_vida",
+            "agent-strands-installed",
+            "La librería del backend strands está instalada",
+            RECOMMENDED,
+            strands_available(),
+            INSTALL_HINT,
+        )
+    )
+    strands = config.agent.strands
+    missing = [
+        f"{name} ({strands.resolve_model(role.model)})"
+        for name, role in config.roles.items()
+        if strands.price_for(role.model) is None
+    ]
+    checks.append(
+        Check(
+            "ciclo_de_vida",
+            "agent-strands-prices",
+            "Todos los modelos de los roles tienen precio para calcular el coste",
+            RECOMMENDED,
+            not missing,
+            'Añade [agent.strands.prices."<modelo>"] con input y output (USD por millón de '
+            "tokens) en factory.toml; sin precio, la invocación falla.",
+            ", ".join(missing),
+        )
+    )
+    return checks
+
+
 def audit(config: Config) -> Report:
     state_checks, data = _state_checks(config)
     checks = (
@@ -434,6 +481,7 @@ def audit(config: Config) -> Report:
         + _verification_checks(config)
         + _scope_checks(data)
         + _lifecycle_checks(config)
+        + _agent_checks(config)
     )
     return Report(config.root, checks)
 

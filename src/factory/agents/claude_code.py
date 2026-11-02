@@ -8,17 +8,16 @@ El prompt va por stdin para no chocar con las opciones variádicas ni con límit
 from __future__ import annotations
 
 import json
-import re
 import subprocess
 import time
 from typing import Any
 
 from factory.agents.base import AgentRequest, AgentResult
+from factory.agents.structured import structured_output
 from factory.config import FORBIDDEN_PERMISSION_MODES
 from factory.util import command_env
 
 FORBIDDEN_FLAGS = ("--dangerously-skip-permissions", "--allow-dangerously-skip-permissions")
-FENCE_RE = re.compile(r"```(?:json)?\s*(\{.*\})\s*```", re.DOTALL)
 INSTALL_HINT = (
     "Instala Claude Code (>= 2.1) y comprueba `claude --version`, o ajusta [agent].command "
     "en factory.toml."
@@ -56,29 +55,6 @@ def build_argv(request: AgentRequest, command: str = "claude") -> list[str]:
     return argv
 
 
-def _structured(data: dict[str, Any]) -> dict[str, Any] | None:
-    """Salida validada por --json-schema: campo estructurado o, en su defecto, JSON en `result`."""
-    for key in ("structured_output", "structuredOutput", "output"):
-        value = data.get(key)
-        if isinstance(value, dict):
-            return value
-    text = data.get("result")
-    if not isinstance(text, str):
-        return None
-    candidates = [text.strip()]
-    fenced = FENCE_RE.search(text)
-    if fenced:
-        candidates.insert(0, fenced.group(1))
-    for candidate in candidates:
-        try:
-            value = json.loads(candidate)
-        except json.JSONDecodeError:
-            continue
-        if isinstance(value, dict):
-            return value
-    return None
-
-
 def _model_used(data: dict[str, Any], requested: str) -> str:
     usage = data.get("modelUsage")
     if isinstance(usage, dict) and usage:
@@ -105,7 +81,7 @@ def parse_result(stdout: str, requested_model: str) -> AgentResult:
     return AgentResult(
         ok=not is_error,
         text=text,
-        output=_structured(data),
+        output=structured_output(data),
         cost_usd=float(data.get("total_cost_usd") or 0.0),
         input_tokens=input_tokens,
         output_tokens=int(usage.get("output_tokens") or 0),

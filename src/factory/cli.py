@@ -143,7 +143,11 @@ def _goal_path(args: argparse.Namespace) -> Path:
 
 
 def make_runner(config: Config) -> AgentRunner:
-    """Agente real; los tests lo sustituyen por un FakeRunner."""
+    """Agente real del backend configurado; los tests lo sustituyen por un FakeRunner."""
+    if config.agent.backend == "strands":
+        from factory.agents.strands import StrandsRunner  # sin dependencias: Strands es perezoso
+
+        return StrandsRunner(config.agent.strands)
     return ClaudeCodeRunner(config.agent.command)
 
 

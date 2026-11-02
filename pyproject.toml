@@ -12,6 +12,8 @@ dependencies = ["pyyaml>=6.0"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "ruff>=0.6"]
+# Backend opcional de agentes (add-strands-runner): `pip install -e '.[strands]'`.
+strands = ["strands-harness[anthropic]>=0.3.3,<0.4"]
 
 [project.scripts]
 factory = "factory.cli:main"

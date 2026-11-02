@@ -121,3 +121,37 @@ def test_cerebro_principal_importado_y_valido(tmp_path, capsys):
     ids = {c["id"]: c["passed"] for c in data["checks"]}
     assert ids["brain-principal-untracked"] and ids["brain-principal-valid"]
     assert ids["brain-principal-leftovers"]
+
+
+def test_doctor_informa_del_backend_claude_code(tmp_path, capsys):
+    root = make_harness(tmp_path / "repo")
+    assert _doctor(root) == 0
+    out = capsys.readouterr().out
+    assert "Backend de agentes: claude-code" in out
+    assert "strands" not in out  # sin avisos de Strands con el backend por defecto
+
+
+def test_backend_strands_sin_precio_para_un_rol(tmp_path, capsys):
+    root = make_harness(tmp_path / "repo")
+    (root / "factory.toml").write_text(
+        '[agent]\nbackend = "strands"\n[roles.checker]\nmodel = "anthropic/claude-nuevo"\n',
+        encoding="utf-8",
+    )
+    assert _doctor(root) == 0  # es un aviso, no una comprobación crítica
+    out = capsys.readouterr().out
+    assert "Backend de agentes: strands" in out
+    assert "[WARN] [RECOMMENDED] Todos los modelos de los roles tienen precio" in out
+    assert "checker (anthropic/claude-nuevo)" in out
+    assert "maker" not in out.split("checker (anthropic/claude-nuevo)")[0].split("✗")[-1]
+
+
+def test_backend_strands_no_instalado(tmp_path, capsys, monkeypatch):
+    import sys
+
+    monkeypatch.setitem(sys.modules, "strands_harness", None)
+    root = make_harness(tmp_path / "repo")
+    (root / "factory.toml").write_text('[agent]\nbackend = "strands"\n', encoding="utf-8")
+    assert _doctor(root) == 0
+    out = capsys.readouterr().out
+    assert "[WARN] [RECOMMENDED] La librería del backend strands está instalada" in out
+    assert "pip install -e '.[strands]'" in out

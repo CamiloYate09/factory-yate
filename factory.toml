@@ -36,6 +36,10 @@ pending_lines_max = 500
 
 [agent]
 command = "claude"
+# Backend de los agentes: "claude-code" (por defecto, `claude -p`) o "strands" (librería Python
+# strands-harness; requiere `pip install -e '.[strands]'` y credenciales del proveedor).
+# Ver docs/harness/loops.md#backends-de-agentes.
+backend = "claude-code"
 
 # Roles: el maker implementa; el checker revisa en solo lectura y con otro modelo.
 # Nunca uses permission_mode = "bypassPermissions": se rechaza al cargar.

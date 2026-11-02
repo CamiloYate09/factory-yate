@@ -16,6 +16,10 @@ main_branch = "main"
 # Ejemplo: protege los tests para que un agente no los debilite.
 # protected_paths = ["tests/**"]
 
+[agent]
+# "claude-code" (por defecto) o "strands" (requiere el extra `factory-yate[strands]`).
+backend = "claude-code"
+
 [roles.maker]
 model = "sonnet"
 prompt = "prompts/maker.md"

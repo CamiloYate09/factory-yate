@@ -10,6 +10,8 @@ import tomllib
 from dataclasses import dataclass, field, fields
 from pathlib import Path
 
+from factory.agents.pricing import CACHE_WRITE_FACTOR, DEFAULT_PRICES, ModelPrice
+
 CONFIG_FILE = "factory.toml"
 
 # Modos de `claude --permission-mode` aceptados. `bypassPermissions` está prohibido siempre.
@@ -73,9 +75,40 @@ class AlertsConfig:
     pending_lines_max: int = 500
 
 
+VALID_BACKENDS = ("claude-code", "strands")
+
+
+def _default_strands_models() -> dict[str, str]:
+    return {
+        "opus": "anthropic/claude-opus-5-5",
+        "sonnet": "anthropic/claude-sonnet-5-5",
+        "haiku": "anthropic/claude-haiku-5-5",
+    }
+
+
+@dataclass
+class StrandsConfig:
+    """Backend Strands: alias de modelo de los roles y precios por modelo (diseño D4)."""
+
+    provider: str = "anthropic"
+    models: dict[str, str] = field(default_factory=_default_strands_models)
+    prices: dict[str, ModelPrice] = field(default_factory=lambda: dict(DEFAULT_PRICES))
+
+    def resolve_model(self, model: str) -> str:
+        """Alias del rol (`sonnet`) → id de Strands; un id con proveedor se usa tal cual."""
+        if model in self.models:
+            return self.models[model]
+        return model if "/" in model else f"{self.provider}/{model}"
+
+    def price_for(self, model: str) -> ModelPrice | None:
+        return self.prices.get(self.resolve_model(model))
+
+
 @dataclass
 class AgentConfig:
     command: str = "claude"
+    backend: str = "claude-code"
+    strands: StrandsConfig = field(default_factory=StrandsConfig)
 
 
 @dataclass
@@ -265,6 +298,58 @@ def apply_values(target: object, values: dict, section: str) -> None:
         setattr(target, key, _coerce(value, getattr(target, key), key, section))
 
 
+def _load_agent(agent: AgentConfig, values: dict) -> None:
+    values = dict(values)
+    strands = values.pop("strands", {})
+    if not isinstance(strands, dict):
+        raise ConfigError(f"[agent.strands] debe ser una tabla en {CONFIG_FILE}")
+    apply_values(agent, values, "agent")
+    if agent.backend not in VALID_BACKENDS:
+        raise ConfigError(
+            f"[agent].backend '{agent.backend}' desconocido; "
+            f"usa uno de: {', '.join(VALID_BACKENDS)}"
+        )
+    strands = dict(strands)
+    models = strands.pop("models", {})
+    prices = strands.pop("prices", {})
+    apply_values(agent.strands, strands, "agent.strands")
+    if not isinstance(models, dict) or not all(
+        isinstance(k, str) and isinstance(v, str) and v for k, v in models.items()
+    ):
+        raise ConfigError("[agent.strands.models] debe asociar cada alias a un id de modelo")
+    agent.strands.models.update(models)
+    if not isinstance(prices, dict):
+        raise ConfigError("[agent.strands.prices] debe ser una tabla")
+    for model, price in prices.items():
+        # La clave se normaliza como los modelos de los roles: `sonnet` o `claude-x` sin proveedor
+        # se guardan con su id resuelto y la sobrescritura no se pierde en silencio.
+        agent.strands.prices[agent.strands.resolve_model(model)] = _model_price(model, price)
+
+
+def _model_price(model: str, values: object) -> ModelPrice:
+    """`input` y `output` obligatorios; la caché, si falta, se estima sin subestimar."""
+    where = f'[agent.strands.prices."{model}"]'
+    if not isinstance(values, dict):
+        raise ConfigError(f"{where} debe ser una tabla")
+    unknown = set(values) - {"input", "output", "cache_read", "cache_write"}
+    if unknown:
+        raise ConfigError(f"Clave desconocida en {where}: {', '.join(sorted(unknown))}")
+    numbers: dict[str, float] = {}
+    for key, value in values.items():
+        if isinstance(value, bool) or not isinstance(value, (int, float)) or value < 0:
+            raise ConfigError(f"{where}.{key} debe ser un número mayor o igual que 0")
+        numbers[key] = float(value)
+    for key in ("input", "output"):
+        if key not in numbers:
+            raise ConfigError(f"{where} necesita '{key}' (USD por millón de tokens)")
+    return ModelPrice(
+        input=numbers["input"],
+        output=numbers["output"],
+        cache_read=numbers.get("cache_read", numbers["input"]),
+        cache_write=numbers.get("cache_write", numbers["input"] * CACHE_WRITE_FACTOR),
+    )
+
+
 def check_permission_mode(mode: str, where: str) -> None:
     if mode in FORBIDDEN_PERMISSION_MODES:
         raise ConfigError(
@@ -296,7 +381,7 @@ def load_config(root: Path) -> Config:
         apply_values(config.loop, _section(data, "loop"), "loop")
         apply_values(config.tick, _section(data, "tick"), "tick")
         apply_values(config.alerts, _section(data, "alerts"), "alerts")
-        apply_values(config.agent, _section(data, "agent"), "agent")
+        _load_agent(config.agent, _section(data, "agent"))
         apply_values(config.brain, _section(data, "brain"), "brain")
         roles = _section(data, "roles")
         for name, values in roles.items():

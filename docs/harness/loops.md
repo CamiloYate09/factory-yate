@@ -86,6 +86,43 @@ permission_mode = "dontAsk"
 
 Valores por defecto de `[loop]`: `max_rounds = 8`, `max_budget_usd = 5`, `no_progress_rounds = 3`, `consecutive_passes = 1`, `round_timeout_min = 20`, `agent_error_rounds = 2` y `summary_max_chars = 4000`. Los worktrees se crean fuera del repo (`../<repo>.factory-worktrees/`).
 
+## Backends de agentes
+
+`[agent] backend` elige quién ejecuta a los agentes de `goal run`, `goal rework`, `tick` e `intake`:
+
+- `claude-code` (por defecto): `claude -p` en modo headless, como hasta ahora.
+- `strands`: la librería Python [`strands-harness`](https://pypi.org/project/strands-harness/), equivalente de `@strands-agents/harness`, ejecutada dentro del proceso.
+
+```toml
+[agent]
+backend = "strands"
+
+[agent.strands]
+provider = "anthropic"             # prefijo de los modelos sin proveedor
+
+[agent.strands.models]             # alias de los roles -> id de Strands
+sonnet = "anthropic/claude-sonnet-5-5"
+
+[agent.strands.prices."anthropic/claude-sonnet-5-5"]   # USD por millón de tokens
+input = 2.0
+output = 10.0
+cache_read = 0.2                   # opcional; si falta, igual que input
+cache_write = 2.5                  # opcional; si falta, 1,25 × input
+```
+
+- **Instalación:** `.venv/bin/pip install -e '.[strands]'`. Sin el extra, cada invocación falla como error de agente con ese mismo comando en el mensaje, y el loop aplica su regla de fallos consecutivos.
+- **Credenciales:** son las del proveedor, en sus variables estándar. Por ejemplo, `ANTHROPIC_API_KEY` para `anthropic/…` o las de AWS para `bedrock/…`.
+- **Coste:** Strands solo informa de tokens, así que el coste se calcula con la tabla de precios. Si una invocación se corta por tiempo, el turno en curso se carga como estimación (su contexto y 4.096 tokens de salida, con el presupuesto de la llamada como tope), porque sus tokens no llegan a registrarse. Hay precios por defecto para Opus, Sonnet y Haiku 5.5 en la API de Anthropic. Un modelo sin precio hace fallar la invocación, para no desactivar en silencio el presupuesto ni los cortacircuitos.
+- **Garantías:**
+  - Cada invocación es un agente nuevo, sin sesión, memoria, skills ni subagentes.
+  - Las herramientas de archivos (`read`, `glob`, `grep`, `edit` y `write`) solo actúan dentro del worktree. Los cerebros son de solo lectura y `.git` no se puede escribir.
+  - Una herramienta sin equivalente hace fallar la invocación.
+  - El shell solo admite los prefijos `Bash(...)` permitidos al rol. Un comando con `; & | < > ` + "`" + ` $` o saltos de línea se rechaza aunque vaya entre comillas, así que un criterio de aceptación con esos caracteres no lo puede ejecutar el maker (lo ejecuta el orquestador igualmente).
+  - Al agotarse el tiempo de la invocación o con Ctrl-C, se mata el comando en curso. Las búsquedas de `grep` y `glob` corren en un proceso hijo con 30 s como máximo, y un patrón demasiado costoso devuelve un error al agente. Con `SIGTERM` o `SIGHUP` esos límites no se aplican: `factory` muere y el comando o la búsqueda en curso quedan huérfanos hasta que terminen.
+  - Los comandos no reciben las variables de credenciales de los proveedores: `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN`, `OPENAI_API_KEY`, `GOOGLE_API_KEY`, `GEMINI_API_KEY`, `GOOGLE_APPLICATION_CREDENTIALS` y todas las `AWS_*`. Otras variables sí pasan, y un comando sigue pudiendo leer archivos como `~/.aws/credentials`.
+- **Límites:** los comandos permitidos pueden leer o escribir fuera del worktree con sus propios argumentos, igual que con Claude Code: por ejemplo, `git diff --output=/ruta` o `python -m pytest`, que ejecuta código del repo. Concede prefijos estrechos.
+- **Volver atrás:** borra la línea `backend` o pon `backend = "claude-code"`.
+
 ## Ejecutar un objetivo: `factory goal run`
 
 ```bash

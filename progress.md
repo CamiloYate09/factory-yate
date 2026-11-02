@@ -5,7 +5,7 @@
 - Raíz del repositorio: `factory-yate/`, la que contiene `AGENTS.md`.
 - Arranque estándar: `./init.sh`.
 - Verificación estándar: `./scripts/check.sh`.
-- OpenSpec: specs principales en `openspec/specs/` (15 capacidades). Cambios archivados: `2026-10-27-add-harness-loop-engine`, `2026-10-28-extend-factory-pipeline`, `2026-10-28-add-knowledge-brains`, `2026-10-29-add-library-map` y `2026-10-30-add-equipo-ideal` (sesión 007). Cambio activo: `add-panel` (sesión 008): sus tres features están en `passing` y quedan la parte visual de la prueba de humo (5.3) y el archivado.
+- OpenSpec: specs principales en `openspec/specs/` (18 capacidades). Cambios archivados: `2026-10-27-add-harness-loop-engine`, `2026-10-28-extend-factory-pipeline`, `2026-10-28-add-knowledge-brains`, `2026-10-29-add-library-map`, `2026-10-30-add-equipo-ideal` (sesión 007) y `2026-11-01-add-panel` (sesión 008; 5.3 cerrada el 2026-11-01 con Chrome headless, tema oscuro; specs nuevas `token-usage`, `review-hooks` y `observability-panel`). Cambios activos: `add-strands-runner` y `improve-panel-ux` (propuesto, espera a que termine `strands-runner`).
 - Feature activa / siguiente: ver `.venv/bin/factory features list`.
 - Commits: `d7c3d5b` (commit inicial) y `9d74594` (evidencia de las features con hash real).
 - Bloqueos actuales: la prueba live (9.2) no está aprobada. El contrato de `--json-schema` se valida con el dogfooding (9.3).
@@ -326,3 +326,52 @@
   - **Después de 5.3:** archivar con `/opsx:archive add-panel` y subir a 18 las capacidades del README y de este archivo.
   - **Push:** no hecho; decisión humana.
 - Mejor próximo paso: la parte visual de 5.3 y, después, archivar `add-panel`.
+
+### Sesión 009 — 2026-11-01 (`add-strands-runner`)
+
+- Objetivo: construir los agentes con Strands en Python. `@strands-agents/harness` (npm) es la versión TypeScript, y el equivalente Python es `strands-harness` 0.3.3 en PyPI. Se integra como **segundo backend** detrás de `AgentRunner`, y `claude-code` sigue por defecto.
+- Completado (grupos 1–4 y 5.1 de `openspec/changes/add-strands-runner/tasks.md`):
+  - **Configuración:**
+    - `[agent] backend = "claude-code" | "strands"`, validado al cargar;
+    - `[agent.strands]` con `provider`, `models` (alias) y `prices`;
+    - `make_runner` elige el adaptador.
+  - **Precios:** `agents/pricing.py` con precios por defecto de Opus, Sonnet y Haiku 5.5, con fuente y fecha (skill `claude-api`, 2026-10-06). Haiku usa el tramo de más de 100K, que es conservador.
+  - **Herramientas (`agents/strands_tools.py`):** `read`, `glob`, `grep`, `edit`, `write` y `shell`, en Python puro.
+    - `PathPolicy`: rutas resueltas con `realpath`, `add_dirs` en solo lectura y reglas `Read/Edit/Write(...)`;
+    - `ShellPolicy`: prefijos por tokens y rechazo de `; & | < > ` $` y saltos de línea, incluso entre comillas;
+    - traducción con fallo cerrado; `Bash` a secas y los permisos con ruta son intraducibles.
+  - **Runner (`agents/strands.py`):**
+    - `create_harness` sin herramientas integradas ni plugins, y con `session`, `memory`, `skills` y `background_tasks` desactivados;
+    - `callback_handler=None`, porque si no Strands imprime en stdout;
+    - coste por tokens, con `Limits(total_tokens)` derivado del presupuesto;
+    - tiempo límite con `cancel_signal`: si no hay uso conocido, se carga el presupuesto de la llamada;
+    - salida estructurada por texto (`agents/structured.py`, extraído de `claude_code.py` sin cambiar su comportamiento).
+  - **Doctor:** informa del backend; con `strands`, avisa si falta la dependencia o algún rol no tiene precio.
+  - **Documentación:** sección "Backends de agentes" en `docs/harness/loops.md`, y `factory.toml` y su plantilla comentados.
+- Arreglo de soporte anotado: el extra queda `strands-harness[anthropic]`. Sin el SDK `anthropic`, el proveedor por defecto no carga.
+- Comprobación 2.3: con un modelo falso, el gestor de contexto no escribe en disco. Por el hallazgo de la ronda 3 se usa `ContextManager(stash=False)`, sin `retrieve_context`.
+- Verificación ejecutada (árbol final):
+  - `./scripts/check.sh` → 0 (816 passed) con el extra;
+  - copia limpia sin el extra (`init.sh` con `.[dev]`) → 0 (812 passed, 1 skipped);
+  - `factory features verify agent-backend-config | strands-tools | strands-runner` → `passing`;
+  - `openspec validate add-strands-runner --strict` → válido;
+  - `tests/test_strands_integration.py` usa el `strands.Agent` real con un modelo falso, sin red. No hubo ninguna llamada real a un proveedor.
+- Revisión independiente (`checker`, 5.3): `fail` (4 medium) → `fail` (2 medium) → `fail` (1 medium) → `pass_with_minor`. No quedan `critical` ni `medium`. Lo corregido:
+  - **Coste:** una excepción cuesta lo registrado; un tiempo agotado añade una estimación del turno cortado, con el presupuesto de la llamada como tope.
+  - **Cancelación:** el tiempo agotado y Ctrl-C matan el comando en curso.
+  - **Confinamiento:** las denegaciones no distinguen mayúsculas y `.git` no se puede escribir.
+  - **Patrones del modelo:** `grep` y `glob` los evalúan en un proceso hijo que se puede matar. Reproducido antes del arreglo: con `timeout_s=1` no volvía en 20 s; después vuelve en 1,0 s.
+  - **Lección:** los agentes falsos ocultaban fallos del coste. El test con el `Agent` real encontró que al cancelar Strands devuelve un resultado en vez de lanzar una excepción.
+- Riesgos / pendientes:
+  - **5.2 (live):** necesita permiso explícito del usuario y credenciales del proveedor. En el entorno de la sesión no había `ANTHROPIC_API_KEY` ni credenciales de AWS. Está sin medir la calidad del maker con estas herramientas, más pobres que las de Claude Code, y el coste real.
+  - **Hallazgos `low` abiertos** (código sin cambiar tras la revisión):
+    - el recorte a unos 1.500 tokens es agresivo y la salida de `shell`, `grep` y `glob` no se recupera; el checker sugiere un umbral de 8.000 como el preset `agentic`;
+    - `SEARCH_WORKER` no tiene límite propio si `factory` muere (se sugiere `signal.alarm`);
+    - `os.path.getsize` queda fuera del `try` en `SEARCH_WORKER`: un archivo borrado durante la búsqueda hace fallar toda la búsqueda;
+    - reintentar `communicate` con entrada grande solo se comprobó en Python 3.15; en 3.12–3.14 podría dar un falso "demasiado costosa" (sin verificar);
+    - `tests/test_strands_integration.py` admite hasta 57.000 caracteres donde el recorte real ronda los 3.000: la aserción debería ser más estricta.
+  - **Límites aceptados** (D7): `SIGTERM` y `SIGHUP` dejan huérfano el comando en curso; una excepción no cuenta las llamadas auxiliares; el límite de tokens por presupuesto es blando; los comandos permitidos pueden salir del worktree con sus argumentos.
+  - El hook de revisiones del panel no ve las invocaciones de Strands; los eventos y tokens sí están en `events.jsonl`.
+  - `package.json`, `package-lock.json` y `node_modules/` de la raíz (npm `@strands-agents/harness`) no se usan, no están en `.gitignore` y no se han commiteado. Decisión del usuario.
+  - **Push:** no hecho; decisión humana.
+- Mejor próximo paso: la 5.2 con permiso y credenciales; después, archivar `add-strands-runner`, `improve-panel-ux` y la fase 2 (`add-strands-swarm`).
