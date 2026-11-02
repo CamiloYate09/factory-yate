@@ -88,11 +88,13 @@ Al cerrar, se busca la tarjeta por `data-id` y se le da el foco. Hace falta, por
   | Dónde | Comando |
   |---|---|
   | Detalle de feature | `features verify <id>` |
-  | Ejecución con estado final distinto de `completed` | `goal rework <run>` |
+  | Ejecución con estado en `REWORKABLE` (`cli.py`) | `goal rework <run> --answer ` |
   | Ejecución `completed` | `land <run> --dry-run` |
   | Ejecución `running` | nada |
 
 - Antes de construir un comando, el id debe casar con `^[A-Za-z0-9._-]+$`. Si no casa, no hay botón.
+
+**Por qué `rework` termina en `--answer `:** el comando exige una respuesta humana. Sin `--answer` fallaría siempre, y con un texto de ejemplo, pegarlo lanzaría un loop de pago con una respuesta falsa. Así, ejecutarlo sin completar falla sin hacer nada (`argparse`: falta el argumento). La lista `REWORKABLE` se copia en la página, y un test comprueba que coincide con `cli.py`.
 
 **Por qué `land --dry-run` y no `land`:** integrar es una decisión humana (`AGENTS.md`). El panel sugiere el paso que comprueba sin cambiar nada.
 

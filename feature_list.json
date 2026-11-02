@@ -621,6 +621,69 @@
         }
       ],
       "notes": "OpenSpec add-strands-runner, grupo 4"
+    },
+    {
+      "id": "panel-ux-fixes",
+      "priority": 30,
+      "area": "panel",
+      "title": "Panel: correcciones y navegación",
+      "user_visible_behavior": "El panel indica que carga en lugar de decir que no hay datos, rotula los días como UTC, no presenta una revisión sin veredicto como limpia, deja a la vista el detalle de una feature y responde a Atrás, Adelante y las flechas del teclado.",
+      "status": "passing",
+      "verification": [
+        "python -m pytest -q tests/test_panel_page.py tests/test_panel_server.py"
+      ],
+      "manual_checks": [],
+      "evidence": [
+        {
+          "command": "python -m pytest -q tests/test_panel_page.py tests/test_panel_server.py",
+          "exit_code": 0,
+          "date": "2026-11-02T03:13:03+00:00",
+          "commit": "aec9910251bd1c2ab889212b817b52c6be4918da"
+        }
+      ],
+      "notes": "OpenSpec improve-panel-ux, grupo 2"
+    },
+    {
+      "id": "panel-ux-actions",
+      "priority": 31,
+      "area": "panel",
+      "title": "Panel: botones y acciones",
+      "user_visible_behavior": "El tema tiene tres posiciones, los chips filtran el feed, los indicadores llevan a su vista, se ve la antigüedad de los datos con un refresco manual, y hay botones que copian el comando de factory sin ejecutar nada.",
+      "status": "passing",
+      "verification": [
+        "python -m pytest -q tests/test_panel_page.py tests/test_panel_server.py"
+      ],
+      "manual_checks": [],
+      "evidence": [
+        {
+          "command": "python -m pytest -q tests/test_panel_page.py tests/test_panel_server.py",
+          "exit_code": 0,
+          "date": "2026-11-02T03:13:07+00:00",
+          "commit": "aec9910251bd1c2ab889212b817b52c6be4918da"
+        }
+      ],
+      "notes": "OpenSpec improve-panel-ux, grupo 3"
+    },
+    {
+      "id": "panel-ux-views",
+      "priority": 32,
+      "area": "panel",
+      "title": "Panel: legibilidad de las vistas",
+      "user_visible_behavior": "El gráfico por día puede excluir la lectura de caché, las terminadas quedan plegadas con un buscador, el texto entre comillas invertidas se ve como código, los estados salen en español y las etiquetas recortadas ofrecen el texto completo.",
+      "status": "passing",
+      "verification": [
+        "python -m pytest -q tests/test_panel_page.py tests/test_panel_server.py"
+      ],
+      "manual_checks": [],
+      "evidence": [
+        {
+          "command": "python -m pytest -q tests/test_panel_page.py tests/test_panel_server.py",
+          "exit_code": 0,
+          "date": "2026-11-02T03:13:10+00:00",
+          "commit": "aec9910251bd1c2ab889212b817b52c6be4918da"
+        }
+      ],
+      "notes": "OpenSpec improve-panel-ux, grupo 4"
     }
   ]
 }

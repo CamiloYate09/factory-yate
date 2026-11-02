@@ -26,7 +26,26 @@ La página tiene tres pestañas: **Tokens**, **Revisiones** y **Tareas**. Encima
 - revisiones en curso;
 - feature activa y bandeja.
 
+Los indicadores con « › » llevan a su vista:
+- **Coste registrado:** la tabla de ejecuciones;
+- **Revisiones en curso:** el feed filtrado por `en_curso`;
+- **Feature en curso:** su detalle.
+
+En la cabecera:
+- **«Actualizado hace N s»:** la antigüedad de los datos que ves;
+- **↻:** pide los datos en ese momento;
+- **Tema:** Sistema, Claro u Oscuro, a elegir pulsando. Se recuerda entre visitas, y en Sistema sigue al sistema operativo.
+
 El punto «En vivo» indica que el navegador recibe los avisos del servidor. Si se corta, la página se reconecta sola.
+
+Hasta que llega la primera instantánea, cada vista dice «Cargando…». Si esa petición falla, el error aparece arriba de la página.
+
+**Navegación.** El `#hash` de la URL manda: `#tokens`, `#revisiones`, `#tareas` o `#tareas/<id>`.
+- Atrás y Adelante cambian de pestaña y de feature, y cada vista se puede enlazar.
+- Con el foco en una pestaña, las flechas izquierda y derecha, Inicio y Fin cambian de pestaña.
+- Un refresco en vivo no quita el foco del control en el que estabas.
+
+**Días en UTC.** Los tokens se agrupan por día UTC, y así lo rotulan el indicador «Tokens de hoy UTC» y el eje del gráfico: en América, por la tarde, «hoy» ya puede ser el día siguiente. El gráfico muestra todos los días entre el primero y el último, y un día sin datos queda como hueco a cero.
 
 **Fuentes que lee** (también desde un worktree, porque resuelve siempre el repo principal):
 
@@ -41,6 +60,10 @@ Si un archivo falta, su parte queda vacía sin más: un repo sin ejecuciones ni 
 ## Consumo de tokens
 
 La sección `tokens` de la instantánea tiene dos partes.
+
+### Gráfico por día
+
+Por defecto, el gráfico apila entrada, escritura de caché y salida, y una nota indica cuánta lectura de caché queda oculta. Esa lectura suele ser más del 95 % del total y taparía el resto de series. «Incluir lectura de caché» la añade, y la opción se recuerda entre visitas. «Ver tabla» siempre tiene las cuatro columnas.
 
 ### `loops`: ejecuciones de factory
 
@@ -118,6 +141,14 @@ Las severidades se cuentan en los títulos y viñetas de hallazgo (`[critical]`,
 - muestra `en_curso` con el tiempo transcurrido. Pasadas 2 horas sin fin, muestra `sin_cierre`. Pasa si la sesión se cerró con el revisor trabajando, o si el lanzamiento falló y no llegó a haber subagente (por ejemplo, un tipo de agente creado después de abrir la sesión, que esta aún no conoce);
 - añade el veredicto del checker de cada ronda de los loops (`state.json`).
 
+**Estados:** salen en español («aprobado», «aprobado con menores», «fallido»…), con el valor original como título del chip.
+
+**Filtros del feed:**
+- los chips de estado filtran por ese estado. Se pueden activar varios a la vez y se combinan con el filtro de origen;
+- «Ocultar sin cierre y sin veredicto» quita esas revisiones, y la opción se recuerda entre visitas.
+
+Una revisión `sin_veredicto` muestra «—» en el recuento de hallazgos. «Sin hallazgos» queda para una revisión con veredicto y ningún hallazgo.
+
 **Latencia** (2026-10-29, 10 repeticiones): unos 68 ms por evento, incluido un `SubagentStop` que lee una transcripción de 412 KB.
 
 **Desactivar:** quita las dos entradas de `.claude/settings.json`, o usa `/hooks`. Para borrar el histórico, elimina `.factory/hooks/`.
@@ -128,17 +159,35 @@ Las severidades se cuentan en los títulos y viñetas de hallazgo (`[critical]`,
 
 La pestaña **Tareas** junta tres fuentes:
 
-- **Features** de `feature_list.json`: un tablero por estado (en curso, bloqueadas, sin empezar y terminadas). Si una feature tiene tareas en un cambio OpenSpec, muestra su avance.
+- **Features** de `feature_list.json`: un tablero por estado (en curso, bloqueadas, sin empezar y terminadas). Si una feature tiene tareas en un cambio OpenSpec, muestra su avance. Las terminadas quedan plegadas por defecto. El buscador filtra por id o título, sin distinguir mayúsculas ni tildes, y mientras tiene texto muestra también las terminadas.
 - **Cambios OpenSpec activos**: el avance de `tasks.md` por grupo. Solo cuenta una casilla `- [x]` del primer nivel; una subviñeta o una sección sin número, como *Workflow follow-up*, no son tareas. Un grupo se enlaza con una feature si su título la nombra entre comillas invertidas, como en ``## 2. Plantilla (`team-roster`)``.
 - **Ejecuciones** de factory: estado, ronda, criterios superados, último veredicto, coste y si el proceso sigue vivo. Una ejecución `running` sin proceso aparece como huérfana.
 
-Pulsar una feature abre su detalle, también enlazable como `#tareas/<id>`. El detalle reúne:
+El texto entre comillas invertidas de `tasks.md` y `feature_list.json` se muestra como código.
+
+Pulsar una feature abre su detalle, también enlazable como `#tareas/<id>`. La página se desplaza hasta él y le da el foco; «Cerrar» devuelve el foco a la tarjeta. El detalle reúne:
 
 - el comportamiento esperado;
 - los comandos de verificación;
 - la última evidencia de cada comando;
 - las tareas de su grupo, casilla a casilla;
 - las ejecuciones y las revisiones que la mencionan.
+
+### Comandos copiables
+
+Los botones **copian** al portapapeles el comando de factory que toca. El panel nunca ejecuta nada: es de solo lectura, y copiar no hace ninguna petición al servidor.
+
+| Dónde | Se copia |
+|---|---|
+| Detalle de una feature | `.venv/bin/factory features verify <id>` |
+| Ejecución `completed` | `.venv/bin/factory land <run> --dry-run` |
+| Ejecución `blocked`, `max_rounds`, `stalled`, `budget_exhausted`, `agent_error` o `interrupted` | `.venv/bin/factory goal rework <run> --answer ` |
+| Ejecución `running` | nada |
+
+- **`rework`:** el comando termina sin respuesta, porque la tienes que escribir tú (ver [revisión](revision.md)). Si lo ejecutas sin completar, falla sin lanzar nada.
+- **`land`:** se copia con `--dry-run`, que verifica sin cambiar nada. Integrar sigue siendo una decisión humana.
+- **Identificadores:** si un id tiene algo distinto de letras, dígitos, `.`, `_` o `-`, no hay botón, para no poner en el portapapeles texto que el shell interprete.
+- **Sin portapapeles:** el comando aparece seleccionado para copiarlo a mano.
 
 ## Tiempo real
 

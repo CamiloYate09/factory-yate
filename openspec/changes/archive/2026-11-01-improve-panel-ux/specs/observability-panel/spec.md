@@ -99,7 +99,7 @@ La página SHALL mostrar cuánto tiempo hace que recibió la última instantáne
 ### Requirement: Comandos copiables
 La página SHALL ofrecer botones que copian al portapapeles el comando de factory que corresponde a lo que se ve, y que nunca lo ejecutan:
 - `.venv/bin/factory features verify <id>` en el detalle de una feature;
-- `.venv/bin/factory goal rework <run>` en una ejecución terminada que no sea `completed`;
+- `.venv/bin/factory goal rework <run> --answer ` en una ejecución terminada que no sea `completed`, sin ninguna respuesta de ejemplo: la escribe el usuario;
 - `.venv/bin/factory land <run> --dry-run` en una ejecución `completed`.
 
 #### Scenario: Copiar la verificación
@@ -110,6 +110,14 @@ La página SHALL ofrecer botones que copian al portapapeles el comando de factor
 #### Scenario: Ejecución integrable
 - **WHEN** una ejecución tiene estado `completed`
 - **THEN** su botón copia el comando `land` con `--dry-run`, y no ofrece el comando `rework`
+
+#### Scenario: Ejecución para retrabajar
+- **WHEN** una ejecución tiene estado `max_rounds`
+- **THEN** su botón copia `.venv/bin/factory goal rework <run> --answer ` y el comando termina sin respuesta
+
+#### Scenario: Ejecución en marcha
+- **WHEN** una ejecución tiene estado `running`
+- **THEN** no ofrece ningún comando
 
 ### Requirement: Identificadores seguros en comandos
 Un comando copiable SHALL ofrecerse solo si el identificador de la feature o de la ejecución contiene únicamente letras, dígitos, `.`, `_` y `-`. Con cualquier otro identificador, la página MUST omitir el botón, para no poner en el portapapeles texto que el shell interprete.

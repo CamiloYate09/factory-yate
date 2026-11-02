@@ -28,7 +28,7 @@ Además, hay controles que parecen accionables y no lo son: los chips de estado 
 - Se muestra «Actualizado hace N s» y hay un botón para refrescar a mano.
 - Botones **«Copiar comando»**, que solo usan el portapapeles del navegador:
   - `factory features verify <id>` en el detalle de una feature;
-  - `factory goal rework <run>` en una ejecución terminada sin éxito;
+  - `factory goal rework <run> --answer ` en una ejecución terminada sin éxito, con la respuesta por escribir;
   - `factory land <run> --dry-run` en una ejecución `completed`.
 
   El panel nunca ejecuta nada.

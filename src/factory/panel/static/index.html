@@ -70,6 +70,7 @@
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; }
+html { scroll-padding-top: 100px; }
 body {
   background: var(--page);
   color: var(--ink);
@@ -109,6 +110,9 @@ main[data-loading="true"] { opacity: 0.6; transition: opacity 0.2s; }
 .tile, .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
 .tile { padding: 12px 14px; min-width: 0; }
 .tile .label { color: var(--ink-2); font-size: 12px; }
+a.tile { display: block; color: inherit; text-decoration: none; }
+a.tile:hover { background: var(--wash); }
+a.tile .label::after { content: " ›"; }
 .tile .value { font-size: 24px; font-weight: 600; margin-top: 2px; overflow-wrap: anywhere; }
 .tile .value.text { font-size: 17px; padding-top: 5px; }
 .tile .note { color: var(--muted); font-size: 12px; }
@@ -148,6 +152,18 @@ code { font: 12px ui-monospace, SFMono-Regular, Menlo, monospace; overflow-wrap:
   color: var(--ink);
 }
 .chip .dot { width: 8px; height: 8px; }
+button.chip { font: inherit; font-size: 12px; font-weight: 600; background: none; padding: 2px 10px; cursor: pointer; }
+button.chip:hover { background: var(--wash); }
+button.chip[aria-pressed="true"] { background: var(--wash); border-color: var(--fill); box-shadow: 0 0 0 1px var(--fill); }
+button.chip:focus-visible, a.tile:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+input[type="search"] { font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 4px 8px; width: min(100%, 320px); margin-bottom: 10px; }
+.chart-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin: 0 0 8px; color: var(--muted); font-size: 12px; }
+.column details { margin-top: 0; }
+.column summary { font-weight: 600; margin-bottom: 6px; }
+.toggle { display: inline-flex; align-items: center; gap: 6px; color: var(--ink-2); font-size: 12px; cursor: pointer; }
+.copy-wrap { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.copy { border-color: var(--border); padding: 2px 8px; font-size: 12px; white-space: nowrap; }
+.copy-manual { white-space: pre-wrap; }
 .chip[data-tone="good"] .dot { background: var(--good); }
 .chip[data-tone="warning"] .dot { background: var(--warning); }
 .chip[data-tone="critical"] .dot { background: var(--critical); }
@@ -205,20 +221,22 @@ dd { margin: 0; overflow-wrap: anywhere; }
     <span class="repo" id="repo"></span>
     <span class="spacer"></span>
     <span class="live" id="live" data-state="wait"><span class="dot"></span><span id="live-text">Conectando…</span></span>
-    <button class="ghost" id="theme" type="button" title="Cambiar tema">Tema</button>
+    <span class="live" id="fresh"></span>
+    <button class="ghost" id="refresh" type="button" title="Pedir los datos ahora" aria-label="Refrescar los datos">↻</button>
+    <button class="ghost" id="theme" type="button" title="Cambiar tema: Sistema, Claro u Oscuro">Tema: Sistema</button>
     <nav role="tablist" aria-label="Vistas">
-      <button role="tab" data-tab="tokens" aria-selected="true">Tokens</button>
-      <button role="tab" data-tab="revisiones" aria-selected="false">Revisiones</button>
-      <button role="tab" data-tab="tareas" aria-selected="false">Tareas</button>
+      <button role="tab" type="button" id="tab-tokens" aria-controls="view-tokens" data-tab="tokens" aria-selected="true">Tokens</button>
+      <button role="tab" type="button" id="tab-revisiones" aria-controls="view-revisiones" data-tab="revisiones" aria-selected="false" tabindex="-1">Revisiones</button>
+      <button role="tab" type="button" id="tab-tareas" aria-controls="view-tareas" data-tab="tareas" aria-selected="false" tabindex="-1">Tareas</button>
     </nav>
   </div>
 </header>
 <main id="main">
   <div class="warnings" id="warnings" role="status"></div>
   <section class="kpis" id="kpis" aria-label="Indicadores"></section>
-  <section id="view-tokens" role="tabpanel"></section>
-  <section id="view-revisiones" role="tabpanel" hidden></section>
-  <section id="view-tareas" role="tabpanel" hidden></section>
+  <section id="view-tokens" role="tabpanel" aria-labelledby="tab-tokens"></section>
+  <section id="view-revisiones" role="tabpanel" aria-labelledby="tab-revisiones" hidden></section>
+  <section id="view-tareas" role="tabpanel" aria-labelledby="tab-tareas" hidden></section>
 </main>
 <div class="tooltip" id="tooltip" role="tooltip"></div>
 <script>
@@ -231,9 +249,9 @@ const STACK = [
   { key: "output", label: "Salida", color: "var(--s4)" },
 ];
 const STATUS = {
-  pass: { tone: "good", icon: "✓", label: "pass" },
-  pass_with_minor: { tone: "warning", icon: "!", label: "pass_with_minor" },
-  fail: { tone: "critical", icon: "✗", label: "fail" },
+  pass: { tone: "good", icon: "✓", label: "aprobado" },
+  pass_with_minor: { tone: "warning", icon: "!", label: "aprobado con menores" },
+  fail: { tone: "critical", icon: "✗", label: "fallido" },
   en_curso: { tone: "active", icon: "●", label: "en curso" },
   sin_veredicto: { tone: "muted", icon: "?", label: "sin veredicto" },
   sin_cierre: { tone: "muted", icon: "○", label: "sin cierre" },
@@ -244,7 +262,8 @@ const FEATURE_STATUS = [
   ["not_started", "Sin empezar"],
   ["passing", "Terminadas (passing)"],
 ];
-const state = { snap: null, tab: "tokens", feature: null, origin: "todas", fetchedAt: 0, open: new Set() };
+const TABS = ["tokens", "revisiones", "tareas"];
+const state = { snap: null, tab: "tokens", feature: null, origin: "todas", fetchedAt: 0, open: new Set(), focusDetail: false, focusCard: null, focusRuns: false, statuses: new Set(), hideUnfinished: safeStorage("get", "panel-hide-unfinished") === "1", cacheRead: safeStorage("get", "panel-cache-read") === "1", search: "" };
 const numberFmt = new Intl.NumberFormat("es");
 const compactFmt = new Intl.NumberFormat("es", { notation: "compact", maximumFractionDigits: 1 });
 const usdFmt = new Intl.NumberFormat("es", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
@@ -273,6 +292,18 @@ function s(tag, attrs) {
   return el;
 }
 function clear(el) { el.replaceChildren(); return el; }
+// El texto entre comillas invertidas se muestra como código; una comilla sin pareja queda literal.
+function richText(text) {
+  const value = String(text ?? "");
+  const parts = [];
+  let last = 0;
+  for (const match of value.matchAll(/`([^`]+)`/g)) {
+    parts.push(value.slice(last, match.index), h("code", { text: match[1] }));
+    last = match.index + match[0].length;
+  }
+  parts.push(value.slice(last));
+  return parts.filter((part) => part !== "");
+}
 function tokensOf(row) { return STACK.reduce((sum, k) => sum + (row[k.key] || 0), 0); }
 function fmtDate(ts) {
   if (!ts) return "";
@@ -349,12 +380,31 @@ function table(columns, rows) {
         h("td", { class: c.num ? "num" : null, text: c.value(row) }))))))));
 }
 
-function stackedColumns(container, rows) {
+// El eje es una escala de tiempo: un día sin datos es un hueco a cero, no se omite.
+function continuousDays(rows) {
+  const stamp = (r) => Date.parse(`${r.day}T00:00:00Z`);
+  const dated = rows.filter((r) => /^\d{4}-\d{2}-\d{2}$/.test(r.day) && !Number.isNaN(stamp(r)));
+  if (!dated.length) return rows;
+  const known = new Map(dated.map((r) => [r.day, r]));
+  const stamps = dated.map(stamp);
+  const days = [];
+  for (let t = Math.min(...stamps); t <= Math.max(...stamps); t += 86400000) {
+    const day = new Date(t).toISOString().slice(0, 10);
+    days.push(known.get(day) || { day });
+  }
+  return [...days, ...rows.filter((r) => !known.has(r.day))];
+}
+
+function stackedColumns(container, rows, series) {
   const width = Math.max(280, container.clientWidth || 600);
   const height = 220, left = 48, right = 8, top = 10, bottom = 26;
   const plotW = width - left - right, plotH = height - top - bottom;
-  const max = niceMax(Math.max(...rows.map(tokensOf), 0));
-  const svg = s("svg", { viewBox: `0 0 ${width} ${height}`, role: "img", "aria-label": "Tokens por día" });
+  const stacked = (row) => series.reduce((sum, k) => sum + (row[k.key] || 0), 0);
+  const max = niceMax(Math.max(...rows.map(stacked), 0));
+  const svg = s("svg", { viewBox: `0 0 ${width} ${height}`, role: "img", "aria-label": "Tokens por día UTC" });
+  const unit = s("text", { x: 0, y: height - 8, "font-size": 11, fill: "var(--muted)" });
+  unit.textContent = "UTC";
+  svg.append(unit);
   for (let i = 0; i <= 4; i++) {
     const value = (max / 4) * i, y = top + plotH - (plotH * value) / max;
     svg.append(s("line", { x1: left, x2: width - right, y1: y, y2: y, stroke: i ? "var(--grid)" : "var(--axis)", "stroke-width": 1 }));
@@ -368,7 +418,7 @@ function stackedColumns(container, rows) {
   rows.forEach((row, i) => {
     const x = left + band * i + (band - barW) / 2;
     let y = top + plotH;
-    const visible = STACK.filter((k) => (row[k.key] || 0) > 0);
+    const visible = series.filter((k) => (row[k.key] || 0) > 0);
     visible.forEach((k, j) => {
       const hgt = (plotH * row[k.key]) / max;
       const gap = j > 0 ? 2 : 0; // hueco de superficie entre segmentos
@@ -382,7 +432,7 @@ function stackedColumns(container, rows) {
       }));
     });
     const hit = s("rect", { x: left + band * i, y: top, width: band, height: plotH, fill: "transparent" });
-    hover(hit, row.day, () => STACK.slice().reverse().map((k) => ({ color: k.color, value: numberFmt.format(row[k.key] || 0), name: k.label })));
+    hover(hit, row.day, () => series.slice().reverse().map((k) => ({ color: k.color, value: numberFmt.format(row[k.key] || 0), name: k.label })));
     svg.append(hit);
     if (i % every === 0) {
       const label = s("text", { x: left + band * i + band / 2, y: height - 8, "text-anchor": "middle", "font-size": 11, fill: "var(--muted)" });
@@ -413,7 +463,13 @@ function horizontalBars(container, rows, opts) {
     value.textContent = opts.format(opts.value(row));
     svg.append(value);
     const hit = s("rect", { x: 0, y: i * rowH, width, height: rowH, fill: "transparent" });
-    hover(hit, label, () => opts.tip(row));
+    const full = opts.full ? opts.full(row) : label;
+    hover(hit, full, () => opts.tip(row));
+    if (full !== name.textContent) { // el texto completo también como título nativo
+      const title = s("title");
+      title.textContent = full;
+      hit.append(title);
+    }
     svg.append(hit);
   });
   container.append(svg);
@@ -427,12 +483,13 @@ function chartCard(title, sub, draw, tableNode, legendNode) {
 }
 
 // --- vistas ------------------------------------------------------------------------------
-function tile(label, value, note, isText) {
-  return h("div", { class: "tile" }, h("div", { class: "label", text: label }), h("div", { class: isText ? "value text" : "value", text: value }), note ? h("div", { class: "note", text: note }) : null);
+function tile(label, value, note, isText, link) {
+  return h(link ? "a" : "div", { class: "tile", href: link && link.href, onclick: link && link.onclick, "data-fk": link && `kpi:${label}` },
+    h("div", { class: "label", text: label }), h("div", { class: isText ? "value text" : "value", text: value }), note ? h("div", { class: "note", text: note }) : null);
 }
 
 function renderKpis(snap) {
-  const kpis = clear(document.getElementById("kpis"));
+  const kpis = document.getElementById("kpis");
   const sessions = (snap.tokens && snap.tokens.sessions) || {};
   const loops = (snap.tokens && snap.tokens.loops) || {};
   const today = new Date().toISOString().slice(0, 10);
@@ -440,14 +497,24 @@ function renderKpis(snap) {
   const reviews = snap.reviews || [];
   const running = reviews.filter((r) => r.status === "en_curso").length;
   const tasks = snap.tasks || {};
-  kpis.append(
-    tile("Tokens de hoy (sesiones)", todayRow ? compactFmt.format(tokensOf(todayRow)) : "0", today),
+  const active = tasks.in_progress || [];
+  const showRunning = () => {
+    state.statuses = new Set(["en_curso"]);
+    state.origin = "todas";
+    withOpen("view-revisiones", renderReviews, state.snap);
+  };
+  const showRuns = () => {
+    state.focusRuns = true;
+    if (location.hash === "#tareas") settleFocus(); // con el mismo hash no hay `hashchange`
+  };
+  keepingFocus(kpis, () => clear(kpis).append(
+    tile("Tokens de hoy UTC (sesiones)", todayRow ? compactFmt.format(tokensOf(todayRow)) : "0", `${today} UTC`),
     tile("Tokens totales (sesiones)", compactFmt.format(sessions.total ? tokensOf(sessions.total) : 0), `${numberFmt.format((sessions.total || {}).messages || 0)} mensajes`),
     tile("Lectura de caché", pctFmt.format(sessions.cache_ratio || 0), "sobre la entrada total"),
-    tile("Coste registrado (loops)", usdFmt.format((loops.total || {}).cost_usd || 0), `${numberFmt.format((loops.runs || []).length)} ejecuciones`),
-    tile("Revisiones en curso", numberFmt.format(running), `${numberFmt.format(reviews.length)} en el feed`),
-    tile("Feature en curso", (tasks.in_progress || []).join(", ") || "ninguna", tasks.inbox ? `${tasks.inbox.pending} en la bandeja` : "", true),
-  );
+    tile("Coste registrado (loops)", usdFmt.format((loops.total || {}).cost_usd || 0), `${numberFmt.format((loops.runs || []).length)} ejecuciones`, false, { href: "#tareas", onclick: showRuns }),
+    tile("Revisiones en curso", numberFmt.format(running), `${numberFmt.format(reviews.length)} en el feed`, false, { href: "#revisiones", onclick: showRunning }),
+    tile("Feature en curso", active.join(", ") || "ninguna", tasks.inbox ? `${tasks.inbox.pending} en la bandeja` : "", true, active.length ? { href: `#${featureHash(active[0])}` } : null),
+  ));
 }
 
 function renderTokens(snap) {
@@ -459,10 +526,20 @@ function renderTokens(snap) {
     ...STACK.map((k) => ({ label: k.label, num: true, value: (r) => numberFmt.format(r[k.key] || 0) })),
     { label: "Mensajes", num: true, value: (r) => numberFmt.format(r.messages || 0) },
   ];
+  const series = state.cacheRead ? STACK : STACK.filter((k) => k.key !== "cache_read");
+  const hiddenCache = days.reduce((sum, d) => sum + (d.cache_read || 0), 0);
+  const cacheToggle = h("label", { class: "toggle" },
+    h("input", { type: "checkbox", "data-fk": "cache-read", checked: state.cacheRead, onchange: (e) => {
+      state.cacheRead = e.target.checked;
+      safeStorage("set", "panel-cache-read", e.target.checked ? "1" : "0");
+      withOpen("view-tokens", renderTokens, state.snap);
+    } }), "Incluir lectura de caché");
+  const chartTools = h("div", {}, legend(series), h("div", { class: "chart-tools" }, cacheToggle,
+    state.cacheRead ? null : h("span", { id: "cache-note", text: `Lectura de caché oculta: ${compactFmt.format(hiddenCache)}` })));
   view.append(days.length
-    ? chartCard("Tokens por día (sesiones de Claude Code)", "Sesiones del repo y de sus worktrees, con subagentes; sin USD (las transcripciones no traen coste).",
-        (el) => stackedColumns(el, days),
-        table([{ label: "Día", value: (r) => r.day }, ...tokenCols], days), legend(STACK))
+    ? chartCard("Tokens por día UTC (sesiones de Claude Code)", "Sesiones del repo y de sus worktrees, con subagentes; sin USD (las transcripciones no traen coste).",
+        (el) => stackedColumns(el, continuousDays(days), series),
+        table([{ label: "Día", value: (r) => r.day }, ...tokenCols], days), chartTools)
     : h("div", { class: "card" }, h("h2", { text: "Tokens por día" }), h("p", { class: "empty", text: `No hay transcripciones del proyecto en ${sessions.projects_dir || "~/.claude/projects"}.` })));
 
   const grid = h("div", { class: "grid" });
@@ -485,7 +562,7 @@ function renderTokens(snap) {
   const runs = (loops.runs || []).slice(0, 15);
   if (runs.length) {
     grid.append(chartCard("Coste por ejecución (loops)", "USD registrado por factory en events.jsonl", (el) => horizontalBars(el, runs, {
-      title: "Coste por ejecución", value: (r) => r.cost_usd || 0, label: (r) => r.run_id.replace(/^\d{8}-\d{6}-/, ""), format: (v) => usdFmt.format(v),
+      title: "Coste por ejecución", value: (r) => r.cost_usd || 0, label: (r) => r.run_id.replace(/^\d{8}-\d{6}-/, ""), full: (r) => r.run_id, format: (v) => usdFmt.format(v),
       tip: (r) => [{ value: usdFmt.format(r.cost_usd), name: "coste" }, { value: compactFmt.format(r.input), name: "entrada" }, { value: compactFmt.format(r.output), name: "salida" }, { value: numberFmt.format(r.turns), name: "turnos" }, ...(r.by_role || []).map((x) => ({ value: usdFmt.format(x.cost_usd), name: x.role }))],
     }), table([
       { label: "Ejecución", value: (r) => r.run_id },
@@ -500,12 +577,14 @@ function renderTokens(snap) {
 
   const top = (sessions.sessions || []).slice(0, 12);
   if (top.length) {
+    const showProject = new Set(top.map((row) => row.project)).size > 1; // una columna igual en todas las filas no informa
+    const headers = [["Última actividad"], ...(showProject ? [["Proyecto"]] : []), ["Modelos"], ["Subagentes", true], ["Tokens", true], ["Mensajes", true]];
     view.append(h("div", { class: "card", style: "margin-top:16px" }, h("h2", { text: "Sesiones recientes" }),
       h("p", { class: "sub", text: "Las 12 más recientes, con sus subagentes" }),
       h("div", { class: "table-wrap" }, h("table", {},
-        h("thead", {}, h("tr", {}, ["Última actividad", "Proyecto", "Modelos", "Subagentes", "Tokens", "Mensajes"].map((t, i) => h("th", { class: i >= 3 ? "num" : null, text: t })))),
+        h("thead", {}, h("tr", {}, headers.map(([t, num]) => h("th", { class: num ? "num" : null, text: t })))),
         h("tbody", {}, top.map((row) => h("tr", {},
-          h("td", { text: fmtDate(row.last) }), h("td", { text: row.project }), h("td", { text: (row.models || []).join(", ") }),
+          h("td", { text: fmtDate(row.last) }), showProject ? h("td", { text: row.project }) : null, h("td", { text: (row.models || []).join(", ") }),
           h("td", { class: "num", text: subagentSummary(row.subagents || []) }),
           h("td", { class: "num", text: compactFmt.format(tokensOf(row)) }), h("td", { class: "num", text: numberFmt.format(row.messages) }))))))));
   }
@@ -519,9 +598,19 @@ function subagentSummary(subagents) {
   return `${subagents.length}: ${parts.join(" · ")}`;
 }
 
+function statusInfo(status) { return STATUS[status] || { tone: "muted", icon: "·", label: status || "?" }; }
 function chip(status) {
-  const info = STATUS[status] || { tone: "muted", icon: "·", label: status || "?" };
-  return h("span", { class: "chip", "data-tone": info.tone }, h("span", { class: "dot" }), `${info.icon} ${info.label}`);
+  const info = statusInfo(status);
+  return h("span", { class: "chip", "data-tone": info.tone, title: status }, h("span", { class: "dot" }), `${info.icon} ${info.label}`);
+}
+function statusFilter(status, count) {
+  const info = statusInfo(status);
+  const toggle = () => {
+    if (!state.statuses.delete(status)) state.statuses.add(status);
+    withOpen("view-revisiones", renderReviews, state.snap);
+  };
+  return h("button", { class: "chip", type: "button", "data-tone": info.tone, title: status, "aria-pressed": String(state.statuses.has(status)), "data-fk": `status:${status}`, onclick: toggle },
+    h("span", { class: "dot" }), `${info.icon} ${info.label} · ${count}`);
 }
 function severityText(sev) {
   const parts = ["critical", "medium", "minor", "low"].filter((k) => sev && sev[k]).map((k) => `${sev[k]} ${k}`);
@@ -534,24 +623,66 @@ function reviewItem(r) {
     h("div", { class: "row" }, chip(r.status), h("span", { class: "who", text: who }),
       h("span", { class: "meta", text: r.source === "loop" ? "loop" : "hook" }),
       h("span", { class: "meta", text: fmtDate(r.finished || r.started) }), duration,
-      !["en_curso", "sin_cierre"].includes(r.status) ? h("span", { class: "sev", text: severityText(r.severities) }) : null,
+      !["en_curso", "sin_cierre"].includes(r.status) ? h("span", { class: "sev", text: r.status === "sin_veredicto" ? "—" : severityText(r.severities) }) : null,
       r.final === false ? h("span", { class: "meta", text: "terminó sin respuesta final" }) : null),
     r.description ? h("div", { class: "desc", text: r.description }) : null,
     r.excerpt ? h("details", { "data-key": `rev:${r.source}:${r.tool_use_id || r.run_id || ""}:${r.round || ""}:${r.started || ""}` }, h("summary", { text: "Ver respuesta del revisor" }), h("pre", { class: "excerpt", text: r.excerpt })) : null);
 }
+const UNFINISHED = ["sin_cierre", "sin_veredicto"];
 function renderReviews(snap) {
   const view = clear(document.getElementById("view-revisiones"));
   const all = snap.reviews || [];
-  const select = h("select", { "aria-label": "Origen", onchange: (e) => { state.origin = e.target.value; withOpen("view-revisiones", renderReviews, state.snap); } },
+  const select = h("select", { "aria-label": "Origen", "data-fk": "origin", onchange: (e) => { state.origin = e.target.value; withOpen("view-revisiones", renderReviews, state.snap); } },
     [["todas", "Todas"], ["hook", "Subagentes (hooks)"], ["loop", "Loops de factory"]].map(([v, t]) => h("option", { value: v, selected: state.origin === v, text: t })));
-  const reviews = all.filter((r) => state.origin === "todas" || r.source === state.origin);
+  const candidates = all.filter((r) => (state.origin === "todas" || r.source === state.origin) && !(state.hideUnfinished && UNFINISHED.includes(r.status)));
+  const reviews = candidates.filter((r) => !state.statuses.size || state.statuses.has(r.status));
   const counts = {};
-  for (const r of reviews) counts[r.status] = (counts[r.status] || 0) + 1;
-  view.append(h("div", { class: "filters" }, select, Object.entries(counts).map(([k, v]) => h("span", { class: "meta" }, chip(k), ` ${v}`))));
+  for (const name of state.statuses) counts[name] = 0; // un filtro activo sin revisiones sigue a la vista para poder quitarlo
+  for (const r of candidates) counts[r.status] = (counts[r.status] || 0) + 1;
+  const hide = h("input", { type: "checkbox", "data-fk": "hide-unfinished", checked: state.hideUnfinished, onchange: (e) => {
+    state.hideUnfinished = e.target.checked;
+    safeStorage("set", "panel-hide-unfinished", e.target.checked ? "1" : "0");
+    if (e.target.checked) for (const name of UNFINISHED) state.statuses.delete(name);
+    withOpen("view-revisiones", renderReviews, state.snap);
+  } });
+  // Orden fijo: un chip no cambia de sitio al pulsarlo.
+  const known = Object.keys(STATUS);
+  const rank = (name) => (known.includes(name) ? known.indexOf(name) : known.length);
+  const ordered = Object.entries(counts).sort(([a], [b]) => rank(a) - rank(b) || a.localeCompare(b));
+  view.append(h("div", { class: "filters" }, select, ordered.map(([k, v]) => statusFilter(k, v)),
+    h("label", { class: "toggle" }, hide, "Ocultar sin cierre y sin veredicto")));
   view.append(h("div", { class: "card" }, h("h2", { text: "Revisiones" }),
     h("p", { class: "sub", text: "checker (árbitro) y jugadores revisores, capturados con hooks; más el checker de cada ronda de los loops. Se actualiza solo." }),
     reviews.length ? h("ul", { class: "feed" }, reviews.map(reviewItem))
-      : h("p", { class: "empty", text: "Aún no hay revisiones. Lanza el checker o un revisor del equipo y aparecerá aquí." })));
+      : h("p", { class: "empty", text: all.length ? "Ninguna revisión coincide con los filtros." : "Aún no hay revisiones. Lanza el checker o un revisor del equipo y aparecerá aquí." })));
+}
+
+// Los botones solo copian: el panel nunca ejecuta nada. Un id que no sea seguro no da comando,
+// para no poner en el portapapeles texto que el shell interprete.
+const CLI = ".venv/bin/factory";
+const SAFE_ID = /^[A-Za-z0-9._-]+$/;
+const REWORKABLE = ["blocked", "max_rounds", "stalled", "budget_exhausted", "agent_error", "interrupted"]; // igual que cli.REWORKABLE
+function verifyCommand(id) { return SAFE_ID.test(id) ? `${CLI} features verify ${id}` : null; }
+function runCommand(run) {
+  if (!SAFE_ID.test(run.run_id)) return null;
+  if (run.status === "completed") return { label: "Copiar land --dry-run", command: `${CLI} land ${run.run_id} --dry-run` };
+  // Sin respuesta de ejemplo: ejecutarlo sin completar falla sin lanzar un loop.
+  if (REWORKABLE.includes(run.status)) return { label: "Copiar rework", command: `${CLI} goal rework ${run.run_id} --answer ` };
+  return null;
+}
+function copyButton(command, label = "Copiar comando") {
+  const manual = h("code", { class: "copy-manual", hidden: true, text: command });
+  const button = h("button", { class: "ghost copy", type: "button", title: command, "aria-label": `${label}: ${command}`, "data-fk": `copy:${command}`, text: label, onclick: async () => {
+    try {
+      await navigator.clipboard.writeText(command);
+      button.textContent = "Copiado";
+      setTimeout(() => { button.textContent = label; }, 2000);
+    } catch (error) { // sin portapapeles, queda seleccionado para copiarlo a mano
+      manual.hidden = false;
+      window.getSelection().selectAllChildren(manual);
+    }
+  } });
+  return h("span", { class: "copy-wrap", "aria-live": "polite" }, button, manual);
 }
 
 function meter(done, total) {
@@ -559,11 +690,12 @@ function meter(done, total) {
   return h("div", { class: "meter", role: "progressbar", "aria-valuemin": 0, "aria-valuemax": total, "aria-valuenow": done },
     h("div", { style: `width:${pct}%` }));
 }
+function featureHash(id) { return `tareas/${encodeURIComponent(id)}`; }
 function featureButton(f) {
   const groups = f.groups || [];
   const done = groups.reduce((a, g) => a + g.done, 0), total = groups.reduce((a, g) => a + g.total, 0);
-  return h("button", { class: "feature", type: "button", "aria-pressed": String(state.feature === f.id),
-    onclick: () => { state.feature = state.feature === f.id ? null : f.id; location.hash = state.feature ? `tareas/${state.feature}` : "tareas"; withOpen("view-tareas", renderTasks, state.snap); } },
+  return h("button", { class: "feature", type: "button", "aria-pressed": String(state.feature === f.id), "data-id": f.id, "data-fk": `feature:${f.id}`,
+    onclick: () => { location.hash = state.feature === f.id ? "tareas" : featureHash(f.id); } },
     h("div", { class: "fid", text: f.id }), h("div", { class: "ftitle", text: f.title }),
     total ? meter(done, total) : null,
     total ? h("div", { class: "ftitle", text: `${done}/${total} tareas` }) : null);
@@ -572,44 +704,69 @@ function renderDetail(f, snap) {
   const runs = ((snap.tasks || {}).runs || []).filter((r) => r.feature === f.id);
   const reviews = (snap.reviews || []).filter((r) => [r.description, r.excerpt, r.run_id].some((t) => t && t.includes(f.id)) || runs.some((x) => x.run_id === r.run_id));
   const evidence = f.evidence || [];
+  const verify = verifyCommand(f.id);
   return h("div", { class: "card" },
-    h("div", { class: "detail-head" }, h("h2", { text: `${f.id} — ${f.title}` }),
-      h("button", { class: "ghost", type: "button", text: "Cerrar", onclick: () => { state.feature = null; location.hash = "tareas"; withOpen("view-tareas", renderTasks, state.snap); } })),
+    h("div", { class: "detail-head" }, h("h2", { id: "detail-title", tabindex: "-1", "data-fk": "detail-title", text: `${f.id} — ${f.title}` }),
+      h("button", { class: "ghost", type: "button", "data-fk": "detail-close", text: "Cerrar", onclick: () => { location.hash = "tareas"; } })),
     h("dl", {},
       h("dt", { text: "Estado" }), h("dd", { text: f.status }),
       h("dt", { text: "Prioridad" }), h("dd", { text: f.priority ?? "" }),
-      h("dt", { text: "Comportamiento" }), h("dd", { text: f.user_visible_behavior }),
-      h("dt", { text: "Verificación" }), h("dd", {}, (f.verification || []).map((c) => h("div", {}, h("code", { text: c })))),
+      h("dt", { text: "Comportamiento" }), h("dd", {}, richText(f.user_visible_behavior)),
+      h("dt", { text: "Verificación" }), h("dd", {}, (f.verification || []).map((c) => h("div", {}, h("code", { text: c }))), verify ? copyButton(verify) : null),
       h("dt", { text: "Evidencia" }), h("dd", {}, evidence.length ? evidence.map((e) => h("div", {},
         `${e.exit_code === 0 ? "✓" : "✗"} código ${e.exit_code} · ${fmtDate(e.date)} · ${(e.commit || "").slice(0, 10)}`)) : "sin evidencia"),
-      f.notes ? h("dt", { text: "Notas" }) : null, f.notes ? h("dd", { text: f.notes }) : null),
+      f.notes ? h("dt", { text: "Notas" }) : null, f.notes ? h("dd", {}, richText(f.notes)) : null),
     (f.groups || []).map((g) => h("div", {},
-      h("div", { class: "progress-row" }, h("span", { text: `${g.change} · ${g.number}. ${g.title}` }), h("span", { class: "count", text: `${g.done}/${g.total}` }), meter(g.done, g.total)),
+      h("div", { class: "progress-row" }, h("span", {}, `${g.change} · ${g.number}. `, richText(g.title)), h("span", { class: "count", text: `${g.done}/${g.total}` }), meter(g.done, g.total)),
       h("ul", { class: "tasklist" }, g.tasks.map((t) => h("li", { "data-done": String(Boolean(t.done)) },
-        h("span", { class: "check", text: t.done ? "✓" : "○" }), h("span", { text: `${t.id} ${t.text}`.trim() })))))),
+        h("span", { class: "check", text: t.done ? "✓" : "○" }), h("span", {}, t.id ? `${t.id} ` : null, richText(t.text))))))),
     runs.length ? h("div", {}, h("h2", { text: "Ejecuciones", style: "margin-top:12px" }), runTable(runs)) : null,
     reviews.length ? h("div", {}, h("h2", { text: "Revisiones relacionadas", style: "margin-top:12px" }), h("ul", { class: "feed" }, reviews.map(reviewItem))) : null);
 }
 function runTable(runs) {
+  const nextStep = (run) => {
+    const next = runCommand(run);
+    return next ? copyButton(next.command, next.label) : null;
+  };
   return h("div", { class: "table-wrap" }, h("table", {},
-    h("thead", {}, h("tr", {}, ["Ejecución", "Estado", "Ronda", "Criterios", "Veredicto", "USD"].map((t, i) => h("th", { class: i === 5 ? "num" : null, text: t })))),
+    h("thead", {}, h("tr", {}, ["Ejecución", "Estado", "Ronda", "Criterios", "Veredicto", "USD", "Siguiente paso"].map((t, i) => h("th", { class: i === 5 ? "num" : null, text: t })))),
     h("tbody", {}, runs.map((r) => h("tr", {},
       h("td", {}, h("code", { text: r.run_id })),
       h("td", { text: r.status === "running" ? (r.alive ? "running (vivo)" : "running (huérfana)") : r.status }),
       h("td", { text: String(r.round) }), h("td", { text: `${r.score}/${r.criteria_total}` }),
-      h("td", {}, r.verdict ? chip(r.verdict) : ""), h("td", { class: "num", text: usdFmt.format(r.cost_usd || 0) }))))));
+      h("td", {}, r.verdict ? chip(r.verdict) : ""), h("td", { class: "num", text: usdFmt.format(r.cost_usd || 0) }), h("td", {}, nextStep(r)))))));
 }
+// Sin mayúsculas ni tildes: «cache» encuentra «caché».
+function fold(text) { return String(text ?? "").normalize("NFD").replace(/\p{M}/gu, "").toLowerCase(); }
 function renderTasks(snap) {
   const view = clear(document.getElementById("view-tareas"));
   const tasks = snap.tasks || {};
   const features = tasks.features || [];
   const selected = features.find((f) => f.id === state.feature);
   if (selected) view.append(renderDetail(selected, snap));
+  const query = fold(state.search.trim());
+  const found = features.filter((f) => !query || fold(f.id).includes(query) || fold(f.title).includes(query));
+  const paintBoard = () => withOpen("view-tareas", renderTasks, state.snap);
+  const search = h("input", { type: "search", "aria-label": "Buscar una feature por id o título", placeholder: "Buscar por id o título", "data-fk": "feature-search", value: state.search,
+    oninput: (e) => {
+      state.search = e.target.value;
+      if (!e.isComposing) paintBoard(); // redibujar a medias rompería una tecla muerta (á, é…)
+    },
+    oncompositionend: (e) => {
+      state.search = e.target.value;
+      paintBoard();
+    } });
   view.append(h("div", { class: "card" }, h("h2", { text: "Features" }),
     h("p", { class: "sub", text: "feature_list.json · WIP=1 · pulsa una feature para ver su detalle" }),
+    features.length ? search : null,
+    features.length && query && !found.length ? h("p", { class: "empty", text: `Ninguna feature coincide con «${state.search.trim()}».` }) : null,
     features.length ? h("div", { class: "board" }, FEATURE_STATUS.map(([key, label]) => {
-      const items = features.filter((f) => f.status === key);
-      return h("div", { class: "column" }, h("h3", { text: `${label} (${items.length})` }), items.map(featureButton));
+      const items = found.filter((f) => f.status === key);
+      const heading = `${label} (${items.length})`;
+      if (key !== "passing") return h("div", { class: "column" }, h("h3", { text: heading }), items.map(featureButton));
+      // Plegada salvo si el usuario la abrió; una búsqueda la abre sin cambiar esa preferencia.
+      return h("div", { class: "column" }, h("details", { "data-key": "board:passing", "data-forced": query ? "1" : null, open: Boolean(query) },
+        h("summary", { text: heading }), items.map(featureButton)));
     })) : h("p", { class: "empty", text: "No hay feature_list.json." })));
   const changes = tasks.changes || [];
   view.append(h("div", { class: "card" }, h("h2", { text: "Cambios OpenSpec activos" }),
@@ -617,10 +774,10 @@ function renderTasks(snap) {
     changes.length ? changes.map((c) => h("div", {},
       h("div", { class: "progress-row" }, h("strong", { text: c.name }), h("span", { class: "count", text: `${c.done}/${c.total}` }), meter(c.done, c.total)),
       c.groups.map((g) => h("div", { class: "progress-row", style: "margin-left:12px" },
-        h("span", { text: `${g.number}. ${g.title}` }), h("span", { class: "count", text: `${g.done}/${g.total}` }), meter(g.done, g.total)))))
+        h("span", {}, `${g.number}. `, richText(g.title)), h("span", { class: "count", text: `${g.done}/${g.total}` }), meter(g.done, g.total)))))
       : h("p", { class: "empty", text: "No hay cambios activos." })));
   const runs = tasks.runs || [];
-  view.append(h("div", { class: "card" }, h("h2", { text: "Ejecuciones de factory" }),
+  view.append(h("div", { class: "card" }, h("h2", { id: "runs-title", tabindex: "-1", text: "Ejecuciones de factory" }),
     h("p", { class: "sub", text: `Bandeja: ${(tasks.inbox || {}).pending || 0} pendiente(s)` }),
     runs.length ? runTable(runs) : h("p", { class: "empty", text: "Aún no hay ejecuciones." })));
 }
@@ -634,7 +791,7 @@ function detailsKey(el) {
 }
 document.addEventListener("toggle", (event) => {
   const el = event.target;
-  if (!(el instanceof HTMLDetailsElement)) return;
+  if (!(el instanceof HTMLDetailsElement) || el.dataset.forced) return;
   if (el.open) state.open.add(detailsKey(el)); else state.open.delete(detailsKey(el));
 }, true);
 function restoreOpen(root, scrolls) {
@@ -646,6 +803,18 @@ function restoreOpen(root, scrolls) {
     if (pre && scrolls.has(key)) pre.scrollTop = scrolls.get(key);
   }
 }
+// El foco (y la selección de un campo) sobrevive a los refrescos: se recuerda por `data-fk`.
+function keepingFocus(root, paint) {
+  const active = document.activeElement;
+  const key = active && root.contains(active) ? active.dataset.fk : null;
+  const range = key && typeof active.selectionStart === "number" ? [active.selectionStart, active.selectionEnd] : null;
+  paint();
+  if (!key) return;
+  const el = [...root.querySelectorAll("[data-fk]")].find((x) => x.dataset.fk === key);
+  if (!el) return;
+  el.focus({ preventScroll: true });
+  if (range) el.setSelectionRange(...range);
+}
 function withOpen(id, renderView, snap) {
   const root = document.getElementById(id);
   const scrolls = new Map(); // el desplazamiento de un extracto abierto también sobrevive
@@ -653,8 +822,10 @@ function withOpen(id, renderView, snap) {
     const pre = el.querySelector("pre");
     if (pre) scrolls.set(detailsKey(el), pre.scrollTop);
   }
-  renderView(snap);
-  restoreOpen(root, scrolls);
+  keepingFocus(root, () => {
+    renderView(snap);
+    restoreOpen(root, scrolls);
+  });
 }
 
 const ALL_SECTIONS = ["tokens", "reviews", "tasks"];
@@ -670,37 +841,107 @@ function render(sections = ALL_SECTIONS) {
   if (sections.includes("tokens") && state.tab === "tokens") withOpen("view-tokens", renderTokens, snap);
   if (sections.includes("reviews")) withOpen("view-revisiones", renderReviews, snap);
   if (sections.includes("tasks") || (sections.includes("reviews") && state.feature)) withOpen("view-tareas", renderTasks, snap);
+  settleFocus();
+}
+// Abrir un detalle lo deja a la vista y con el foco; cerrarlo devuelve el foco a su tarjeta.
+function settleFocus() {
+  if (!state.snap) return; // queda pendiente hasta la primera instantánea
+  const { focusDetail, focusCard, focusRuns } = state;
+  state.focusDetail = false;
+  state.focusCard = null;
+  state.focusRuns = false;
+  if (state.tab !== "tareas") return;
+  const reveal = (title) => {
+    if (!title) return;
+    title.focus({ preventScroll: true });
+    const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    title.closest(".card").scrollIntoView({ block: "start", behavior: calm ? "auto" : "smooth" });
+  };
+  if (focusRuns) reveal(document.getElementById("runs-title"));
+  else if (focusDetail) reveal(document.getElementById("detail-title"));
+  else if (focusCard) {
+    const card = [...document.querySelectorAll(".feature")].find((el) => el.dataset.id === focusCard);
+    if (card && !card.closest("details:not([open])")) card.focus();
+    else document.querySelector('[data-fk="feature-search"]')?.focus(); // su tarjeta está plegada
+  }
+}
+
+// Antes de la primera instantánea la página no sabe si hay datos: no puede decir que no los hay.
+function placeholder(text) {
+  for (const name of TABS) {
+    clear(document.getElementById(`view-${name}`)).append(h("div", { class: "card" }, h("p", { class: "empty", role: "status", text })));
+  }
 }
 
 // --- pestañas, tema y datos --------------------------------------------------------------
 function selectTab(tab) {
   state.tab = tab;
-  for (const button of document.querySelectorAll("nav button")) button.setAttribute("aria-selected", String(button.dataset.tab === tab));
-  for (const name of ["tokens", "revisiones", "tareas"]) document.getElementById(`view-${name}`).hidden = name !== tab;
+  for (const button of document.querySelectorAll("nav button")) {
+    const selected = button.dataset.tab === tab;
+    button.setAttribute("aria-selected", String(selected));
+    button.tabIndex = selected ? 0 : -1;
+  }
+  for (const name of TABS) document.getElementById(`view-${name}`).hidden = name !== tab;
   safeStorage("set", "panel-tab", tab);
-  if (tab === "tokens") withOpen("view-tokens", renderTokens, state.snap || {}); // los gráficos necesitan el ancho visible
+  if (tab === "tokens" && state.snap) withOpen("view-tokens", renderTokens, state.snap); // los gráficos necesitan el ancho visible
 }
-for (const button of document.querySelectorAll("nav button")) button.addEventListener("click", () => {
-  if (button.dataset.tab !== "tareas") state.feature = null;
-  location.hash = button.dataset.tab;
-  selectTab(button.dataset.tab);
+// El #hash es la fuente de verdad: los clics solo lo cambian, y Atrás y Adelante funcionan solos.
+function parseHash() {
+  const raw = location.hash.replace(/^#/, "");
+  const slash = raw.indexOf("/");
+  const tab = slash < 0 ? raw : raw.slice(0, slash);
+  if (!TABS.includes(tab)) return null;
+  if (tab !== "tareas" || slash < 0) return { tab, feature: null };
+  try {
+    return { tab, feature: decodeURIComponent(raw.slice(slash + 1)) || null };
+  } catch (error) { // un hash mal formado no debe impedir que arranque la página
+    return { tab, feature: null };
+  }
+}
+function applyHash() {
+  let target = parseHash();
+  if (!target) {
+    const saved = safeStorage("get", "panel-tab");
+    target = { tab: TABS.includes(saved) ? saved : "tokens", feature: null };
+    history.replaceState(null, "", `#${target.tab}`); // sin esto, Atrás no sabría volver aquí
+  }
+  const previous = state.feature;
+  state.feature = target.feature;
+  if (state.feature && state.feature !== previous) state.focusDetail = true;
+  if (!state.feature && previous) state.focusCard = previous;
+  selectTab(target.tab);
+  if (state.snap) withOpen("view-tareas", renderTasks, state.snap);
+  settleFocus();
+}
+window.addEventListener("hashchange", applyHash);
+for (const button of document.querySelectorAll("nav button")) button.addEventListener("click", () => { location.hash = button.dataset.tab; });
+document.querySelector("nav").addEventListener("keydown", (event) => {
+  const tabs = [...document.querySelectorAll("nav button")];
+  const current = tabs.indexOf(document.activeElement);
+  const next = { ArrowRight: current + 1, ArrowLeft: current - 1, Home: 0, End: tabs.length - 1 }[event.key];
+  if (current < 0 || next === undefined) return;
+  event.preventDefault();
+  const target = tabs[(next + tabs.length) % tabs.length];
+  target.focus();
+  location.hash = target.dataset.tab;
 });
-document.getElementById("theme").addEventListener("click", () => {
-  const dark = matchMedia("(prefers-color-scheme: dark)").matches;
-  const current = document.documentElement.dataset.theme || (dark ? "dark" : "light");
-  const next = current === "dark" ? "light" : "dark";
-  document.documentElement.dataset.theme = next;
-  safeStorage("set", "panel-theme", next);
-});
+const THEMES = { system: "Sistema", light: "Claro", dark: "Oscuro" };
+function applyTheme(name) {
+  if (name === "system") delete document.documentElement.dataset.theme; // manda prefers-color-scheme
+  else document.documentElement.dataset.theme = name;
+  document.getElementById("theme").textContent = `Tema: ${THEMES[name]}`;
+}
 const savedTheme = safeStorage("get", "panel-theme");
-if (savedTheme === "dark" || savedTheme === "light") document.documentElement.dataset.theme = savedTheme;
-const [hashTab, hashFeature] = location.hash.replace(/^#/, "").split("/");
-try {
-  if (hashFeature) state.feature = decodeURIComponent(hashFeature);
-} catch (error) { // un hash mal formado no debe impedir que arranque la página
-  state.feature = null;
-}
-selectTab(["tokens", "revisiones", "tareas"].includes(hashTab) ? hashTab : (safeStorage("get", "panel-tab") || "tokens"));
+let theme = Object.hasOwn(THEMES, savedTheme ?? "") ? savedTheme : "system";
+applyTheme(theme);
+document.getElementById("theme").addEventListener("click", () => {
+  const names = Object.keys(THEMES);
+  theme = names[(names.indexOf(theme) + 1) % names.length];
+  safeStorage("set", "panel-theme", theme);
+  applyTheme(theme);
+});
+placeholder("Cargando…");
+applyHash();
 
 let pending = null;
 let pendingSections = new Set();
@@ -724,6 +965,7 @@ async function refresh(sections = ALL_SECTIONS) {
     applied = ticket;
     state.snap = snap;
     state.fetchedAt = Date.now();
+    showFreshness();
     const due = [];
     for (const [name, asked] of dirty) if (asked <= ticket) { due.push(name); dirty.delete(name); }
     render(first ? ALL_SECTIONS : due);
@@ -731,10 +973,15 @@ async function refresh(sections = ALL_SECTIONS) {
     const warnings = document.getElementById("warnings");
     document.getElementById("warn-conn")?.remove(); // un solo aviso de conexión, no uno por intento
     warnings.append(h("div", { id: "warn-conn", text: `⚠ No se pudo cargar la instantánea: ${error.message}` }));
+    if (!state.snap) placeholder("Sin datos: no se pudo cargar la instantánea.");
   } finally {
     if (ticket === requested) main.dataset.loading = "false";
   }
 }
+function showFreshness() {
+  if (state.fetchedAt) document.getElementById("fresh").textContent = `Actualizado hace ${fmtDuration((Date.now() - state.fetchedAt) / 1000)}`;
+}
+document.getElementById("refresh").addEventListener("click", () => refresh());
 function scheduleRefresh(sections = ALL_SECTIONS) {
   for (const name of sections) if (ALL_SECTIONS.includes(name)) pendingSections.add(name);
   clearTimeout(pending);
@@ -771,7 +1018,8 @@ window.addEventListener("resize", () => {
   if (state.tab === "tokens" && state.snap) withOpen("view-tokens", renderTokens, state.snap);
 });
 const UNCLOSED_AFTER_S = 2 * 3600; // igual que reviews.UNCLOSED_AFTER_S
-setInterval(() => { // tiempo transcurrido de las revisiones en curso, sin pedir datos
+setInterval(() => { // antigüedad de los datos y tiempo de las revisiones en curso, sin pedir datos
+  showFreshness();
   let expired = false;
   for (const el of document.querySelectorAll(".elapsed[data-started]")) {
     const started = Date.parse(el.dataset.started);
